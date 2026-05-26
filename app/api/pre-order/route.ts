@@ -1,35 +1,146 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
+
+const getResend = () => new Resend(process.env.RESEND_API_KEY);
+
+type OrderItem = { product: string; qty: number; subtotal: number };
+
+// ─── Google Sheets via Apps Script ───────────────────────────────────────────
+
+async function appendToSheet(payload: object) {
+  const url = process.env.APPS_SCRIPT_URL;
+  if (!url) {
+    console.warn("APPS_SCRIPT_URL not set — skipping sheet append");
+    return;
+  }
+  // Apps Script Web Apps redirect on POST; follow the redirect
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    redirect: "follow",
+  });
+  if (!res.ok) {
+    throw new Error(`Apps Script responded ${res.status}`);
+  }
+}
+
+// ─── Email ────────────────────────────────────────────────────────────────────
+
+function buildEmailHtml(
+  name: string,
+  location: string,
+  phone: string,
+  email: string,
+  items: OrderItem[],
+  estimatedTotal: number,
+  date: string
+) {
+  const rows = items
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding:10px 14px;border-bottom:1px solid #2a2a2a;font-size:13px;">${item.product}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #2a2a2a;font-size:13px;text-align:center;">${item.qty}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #2a2a2a;font-size:13px;text-align:right;">&#8369;${item.subtotal.toLocaleString()}</td>
+      </tr>`
+    )
+    .join("");
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#0e0e0e;">
+  <div style="background:#131313;color:#e2e2e2;font-family:'Courier New',monospace;padding:40px 32px;max-width:600px;margin:0 auto;border:1px solid #1f1f1f;">
+
+    <p style="color:#ed0d11;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;">XZVL_STORE // NEW_PRE_ORDER</p>
+    <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:#e2e2e2;letter-spacing:-0.02em;">New Pre-Order</h1>
+    <p style="font-size:12px;color:#ebbbb4;opacity:0.5;margin:0 0 28px 0;">Submitted on ${date}</p>
+
+    <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:16px;">
+      <p style="font-size:10px;color:#ed0d11;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Customer Info</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tr><td style="padding:5px 0;color:#ebbbb4;width:90px;">Name</td><td style="padding:5px 0;">${name}</td></tr>
+        <tr><td style="padding:5px 0;color:#ebbbb4;">Location</td><td style="padding:5px 0;">${location}</td></tr>
+        <tr><td style="padding:5px 0;color:#ebbbb4;">Phone</td><td style="padding:5px 0;">${phone || "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:#ebbbb4;">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
+      </table>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:16px;">
+      <p style="font-size:10px;color:#ed0d11;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Order Items</p>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:1px solid #603e39;">
+            <th style="padding:8px 14px;text-align:left;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Product</th>
+            <th style="padding:8px 14px;text-align:center;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Qty</th>
+            <th style="padding:8px 14px;text-align:right;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div style="border:1px solid #603e39;padding:18px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td>
+            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">Estimated Total</p>
+            <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${estimatedTotal.toLocaleString()}</p>
+            <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">Shipping fee not yet included</p>
+          </td>
+          <td style="text-align:right;vertical-align:top;">
+            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">Shipping Fee</p>
+            <p style="font-size:14px;font-style:italic;color:#ebbbb4;margin:0;">TBA</p>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</body>
+</html>`;
+}
+
+// ─── Handler ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, location, phone, email, items, estimatedTotal } = body;
+    const { name, location, phone, email, items, estimatedTotal } = body as {
+      name: string;
+      location: string;
+      phone: string;
+      email: string;
+      items: OrderItem[];
+      estimatedTotal: number;
+    };
 
     if (!name || !location || (!phone && !email) || !items?.length) {
-      return NextResponse.json(
-        { error: "Missing required fields." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
-    // TODO: connect to your webhook, email service, or database here
-    // Example: await sendToWebhook(body)
-    // Example: await sendEmail({ to: email, subject: "Pre-order confirmed", ... })
-
-    console.log("New pre-order:", {
-      name,
-      location,
-      phone,
-      email,
-      items,
-      estimatedTotal,
+    const date = new Date().toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Manila",
     });
 
+    await Promise.allSettled([
+      appendToSheet({ date, name, location, phone, email, items }),
+      getResend().emails.send({
+        from: process.env.RESEND_FROM ?? "xzvl.store <onboarding@resend.dev>",
+        to: "xzvl@gmail.com",
+        subject: `New Pre-Order from ${name}`,
+        html: buildEmailHtml(name, location, phone, email, items, estimatedTotal, date),
+      }),
+    ]);
+
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error." },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error("Pre-order error:", err);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
