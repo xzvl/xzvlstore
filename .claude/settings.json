@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/xzvl/Documents/Claude/Projects/xzvl/xzvl/**)",
+      "Bash(dir \"C:\\\\Users\\\\xzvl\\\\Documents\\\\Claude\\\\Projects\\\\xzvl\\\\xzvl\" /B /A)",
+      "Bash(git -C \"c:\\\\Users\\\\xzvl\\\\Documents\\\\Claude\\\\Projects\\\\xzvl\\\\custom\\\\xzvlstore\" status)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(git init *)",
+      "Bash(git remote *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npm uninstall *)"
+    ]
+  }
+}

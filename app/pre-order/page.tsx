@@ -24,11 +24,27 @@ type ContactForm = {
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
-const inputClass =
-  "w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/30";
+const inputClass = (hasError = false) =>
+  `w-full bg-[#1f1f1f] border ${hasError ? "border-primary" : "border-[#603e39]"} text-[#e2e2e2] font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/30`;
 
 const labelClass =
   "block font-mono text-[11px] tracking-[0.15em] uppercase text-[#ebbbb4]/70 mb-2";
+
+// ─── Validators ──────────────────────────────────────────────────────────────
+
+const validateEmail = (v: string) => {
+  if (!v) return "Email is required.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return "Enter a valid email address.";
+  return "";
+};
+
+const validatePhone = (v: string) => {
+  if (!v) return "Phone is required.";
+  const digits = v.replace(/[\s\-().+]/g, "");
+  // Accepts: 09XXXXXXXXX (11 digits) or 639XXXXXXXXX (12 digits)
+  if (!/^(09\d{9}|639\d{9})$/.test(digits)) return "Enter a valid PH mobile number (e.g. 09XX XXX XXXX).";
+  return "";
+};
 
 const sectionTitle = (tag: string, title: string) => (
   <div className="mb-6">
@@ -78,18 +94,16 @@ function ProductDropdown({
       <button
         type="button"
         onClick={() => toggle(!open)}
-        className={`w-full flex items-center justify-between gap-2 bg-[#1f1f1f] border text-left px-4 font-mono text-[13px] transition-colors cursor-pointer ${
+        className={`w-full flex items-start justify-between gap-2 bg-[#1f1f1f] border text-left px-4 font-mono text-[13px] transition-colors cursor-pointer ${
           open ? "border-primary" : "border-[#603e39] hover:border-[#ebbbb4]/40"
         }`}
         style={{ paddingTop: "0.6rem", paddingBottom: "0.6rem" }}
       >
-        <span
-          className={`truncate ${selected ? "text-[#e2e2e2]" : "text-[#ebbbb4]/30"}`}
-        >
+        <span className={selected ? "text-[#e2e2e2]" : "text-[#ebbbb4]/30"}>
           {selected ? selected.name : "Select product…"}
         </span>
         <span
-          className={`material-symbols-outlined flex-shrink-0 text-[18px] transition-transform duration-200 ${
+          className={`material-symbols-outlined flex-shrink-0 text-[18px] mt-0.5 transition-transform duration-200 ${
             open ? "rotate-180 text-primary" : "text-[#ebbbb4]/40"
           }`}
         >
@@ -146,50 +160,95 @@ function ProductRowInput({
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    // Raise z-index of the whole row when its dropdown is open so the panel
-    // clears rows below (backdrop-filter creates a new stacking context per row).
     <div
-      className="flex items-end gap-3 glass-panel p-4 glitch-hover transition-all"
+      className="glass-panel p-4 glitch-hover transition-all"
       style={{ position: "relative", zIndex: dropdownOpen ? 10 : undefined }}
     >
-      <div className="flex-shrink-0 font-mono text-[10px] text-primary/60 w-5 pt-6">
-        {String(index + 1).padStart(2, "0")}
+      {/* Mobile: stacked layout */}
+      <div className="flex flex-col gap-3 sm:hidden">
+        <div>
+          <label className={labelClass}>
+            <span className="text-primary/60 mr-2">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            Product
+          </label>
+          <ProductDropdown
+            value={row.productId}
+            onChange={(productId) => onProductChange(row.id, productId)}
+            onOpenChange={setDropdownOpen}
+          />
+        </div>
+
+        <div className="flex items-end gap-3">
+          <div className="w-24">
+            <label className={labelClass}>Qty</label>
+            <input
+              type="number"
+              min={1}
+              max={999}
+              value={row.qty}
+              onChange={(e) =>
+                onQtyChange(row.id, Math.max(1, parseInt(e.target.value) || 1))
+              }
+              className={inputClass()}
+              required
+            />
+          </div>
+          {canRemove && (
+            <button
+              type="button"
+              onClick={() => onRemove(row.id)}
+              className="flex-shrink-0 w-10 h-[46px] flex items-center justify-center border border-[#603e39]/60 text-[#ebbbb4]/40 hover:border-primary hover:text-primary transition-colors"
+              aria-label="Remove row"
+            >
+              <span className="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="flex-1">
-        <label className={labelClass}>Product</label>
-        <ProductDropdown
-          value={row.productId}
-          onChange={(productId) => onProductChange(row.id, productId)}
-          onOpenChange={setDropdownOpen}
-        />
-      </div>
+      {/* Desktop: horizontal layout */}
+      <div className="hidden sm:flex items-end gap-3">
+        <div className="flex-shrink-0 font-mono text-[10px] text-primary/60 w-5 pt-6">
+          {String(index + 1).padStart(2, "0")}
+        </div>
 
-      <div className="w-24">
-        <label className={labelClass}>Qty</label>
-        <input
-          type="number"
-          min={1}
-          max={999}
-          value={row.qty}
-          onChange={(e) =>
-            onQtyChange(row.id, Math.max(1, parseInt(e.target.value) || 1))
-          }
-          className={inputClass}
-          required
-        />
-      </div>
+        <div className="flex-1">
+          <label className={labelClass}>Product</label>
+          <ProductDropdown
+            value={row.productId}
+            onChange={(productId) => onProductChange(row.id, productId)}
+            onOpenChange={setDropdownOpen}
+          />
+        </div>
 
-      {canRemove && (
-        <button
-          type="button"
-          onClick={() => onRemove(row.id)}
-          className="mb-0.5 flex-shrink-0 w-10 h-[46px] flex items-center justify-center border border-[#603e39]/60 text-[#ebbbb4]/40 hover:border-primary hover:text-primary transition-colors"
-          aria-label="Remove row"
-        >
-          <span className="material-symbols-outlined text-[18px]">close</span>
-        </button>
-      )}
+        <div className="w-24">
+          <label className={labelClass}>Qty</label>
+          <input
+            type="number"
+            min={1}
+            max={999}
+            value={row.qty}
+            onChange={(e) =>
+              onQtyChange(row.id, Math.max(1, parseInt(e.target.value) || 1))
+            }
+            className={inputClass()}
+            required
+          />
+        </div>
+
+        {canRemove && (
+          <button
+            type="button"
+            onClick={() => onRemove(row.id)}
+            className="mb-0.5 flex-shrink-0 w-10 h-[46px] flex items-center justify-center border border-[#603e39]/60 text-[#ebbbb4]/40 hover:border-primary hover:text-primary transition-colors"
+            aria-label="Remove row"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -292,12 +351,23 @@ export default function PreOrderPage() {
     { id: uid(), productId: "", qty: 1 },
   ]);
 
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
   const setContact$ = (field: keyof ContactForm, value: string) =>
     setContact((prev) => ({ ...prev, [field]: value }));
+
+  const blurPhone = () => {
+    const msg = validatePhone(contact.phone);
+    setFieldErrors((prev) => ({ ...prev, phone: msg }));
+  };
+
+  const blurEmail = () => {
+    const msg = validateEmail(contact.email);
+    setFieldErrors((prev) => ({ ...prev, email: msg }));
+  };
 
   const addRow = () =>
     setRows((prev) => [...prev, { id: uid(), productId: "", qty: 1 }]);
@@ -315,6 +385,13 @@ export default function PreOrderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const phoneErr = validatePhone(contact.phone);
+    const emailErr = validateEmail(contact.email);
+    if (phoneErr || emailErr) {
+      setFieldErrors({ phone: phoneErr, email: emailErr });
+      return;
+    }
 
     const filledRows = rows.filter((r) => r.productId);
     if (filledRows.length === 0) {
@@ -440,7 +517,7 @@ export default function PreOrderPage() {
                     placeholder="Juan dela Cruz"
                     value={contact.name}
                     onChange={(e) => setContact$("name", e.target.value)}
-                    className={inputClass}
+                    className={inputClass()}
                   />
                 </div>
                 <div>
@@ -453,7 +530,7 @@ export default function PreOrderPage() {
                     placeholder="City, Province"
                     value={contact.location}
                     onChange={(e) => setContact$("location", e.target.value)}
-                    className={inputClass}
+                    className={inputClass()}
                   />
                 </div>
               </div>
@@ -465,11 +542,21 @@ export default function PreOrderPage() {
                   <input
                     type="tel"
                     required
-                    placeholder="+63 9XX XXX XXXX"
+                    placeholder="09XX XXX XXXX"
                     value={contact.phone}
-                    onChange={(e) => setContact$("phone", e.target.value)}
-                    className={inputClass}
+                    onChange={(e) => {
+                      setContact$("phone", e.target.value);
+                      if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: "" }));
+                    }}
+                    onBlur={blurPhone}
+                    className={inputClass(!!fieldErrors.phone)}
                   />
+                  {fieldErrors.phone && (
+                    <p className="mt-1.5 font-mono text-[11px] text-primary flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">error</span>
+                      {fieldErrors.phone}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className={labelClass}>
@@ -480,9 +567,19 @@ export default function PreOrderPage() {
                     required
                     placeholder="you@example.com"
                     value={contact.email}
-                    onChange={(e) => setContact$("email", e.target.value)}
-                    className={inputClass}
+                    onChange={(e) => {
+                      setContact$("email", e.target.value);
+                      if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" }));
+                    }}
+                    onBlur={blurEmail}
+                    className={inputClass(!!fieldErrors.email)}
                   />
+                  {fieldErrors.email && (
+                    <p className="mt-1.5 font-mono text-[11px] text-primary flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">error</span>
+                      {fieldErrors.email}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

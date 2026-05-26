@@ -9,19 +9,16 @@ type OrderItem = { product: string; qty: number; subtotal: number };
 
 async function appendToSheet(payload: object) {
   const url = process.env.APPS_SCRIPT_URL;
-  if (!url) {
-    console.warn("APPS_SCRIPT_URL not set — skipping sheet append");
-    return;
-  }
-  // Apps Script Web Apps redirect on POST; follow the redirect
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    redirect: "follow",
-  });
+  if (!url) throw new Error("APPS_SCRIPT_URL env var is not set.");
+
+  // GET + query param is the reliable way to call Apps Script from a server.
+  // POST redirects (302) convert to GET and drop the body; GET redirects follow cleanly.
+  const qs = encodeURIComponent(JSON.stringify(payload));
+  const res = await fetch(`${url}?payload=${qs}`, { method: "GET", redirect: "follow" });
+
   if (!res.ok) {
-    throw new Error(`Apps Script responded ${res.status}`);
+    const text = await res.text();
+    throw new Error(`Apps Script ${res.status}: ${text.slice(0, 200)}`);
   }
 }
 
@@ -117,8 +114,16 @@ export async function POST(req: NextRequest) {
       estimatedTotal: number;
     };
 
-    if (!name || !location || (!phone && !email) || !items?.length) {
+    if (!name || !location || !phone || !email || !items?.length) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+
+    const phoneDigits = phone.replace(/[\s\-().+]/g, "");
+    if (!/^(09\d{9}|639\d{9})$/.test(phoneDigits)) {
+      return NextResponse.json({ error: "Invalid phone number." }, { status: 400 });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
     }
 
     const date = new Date().toLocaleDateString("en-PH", {
@@ -128,17 +133,33 @@ export async function POST(req: NextRequest) {
       timeZone: "Asia/Manila",
     });
 
-    await Promise.allSettled([
+    const [sheetResult, emailResult] = await Promise.allSettled([
       appendToSheet({ date, name, location, phone, email, items }),
       getResend().emails.send({
         from: process.env.RESEND_FROM ?? "xzvl.store <onboarding@resend.dev>",
-        to: "xzvl@gmail.com",
+        to: "xzviel@gmail.com",
         subject: `New Pre-Order from ${name}`,
         html: buildEmailHtml(name, location, phone, email, items, estimatedTotal, date),
       }),
     ]);
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    const errors: string[] = [];
+    if (sheetResult.status === "rejected") {
+      console.error("[pre-order] Sheets error:", sheetResult.reason);
+      errors.push(`Sheets: ${sheetResult.reason?.message ?? sheetResult.reason}`);
+    }
+    if (emailResult.status === "rejected") {
+      console.error("[pre-order] Resend error:", emailResult.reason);
+      errors.push(`Email: ${emailResult.reason?.message ?? emailResult.reason}`);
+    }
+
+    if (errors.length) {
+      // Still return 200 so the user sees the success screen,
+      // but include debug info visible in Vercel Function logs.
+      console.error("[pre-order] Integration errors:", errors);
+    }
+
+    return NextResponse.json({ success: true, errors }, { status: 200 });
   } catch (err) {
     console.error("Pre-order error:", err);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
