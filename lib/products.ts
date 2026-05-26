@@ -22,7 +22,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     id: "prod-03",
     name: "CX-14 Knight Fortress GV8-70UN",
     price: 999,
-    image: "/assets/knight-fortress.png",
+    image: "/assets/knigh-fortress.png",
   },
   {
     id: "prod-04",
