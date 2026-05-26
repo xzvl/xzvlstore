@@ -3,48 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-
-// ─── Product catalog ──────────────────────────────────────────────────────────
-
-type Product = {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-};
-
-const PRODUCTS: Product[] = [
-  {
-    id: "prod-01",
-    name: "Classic Tee — Black",
-    price: 599,
-    image: "https://placehold.co/120x120/1f1f1f/ed0d11?text=TSHIRT",
-  },
-  {
-    id: "prod-02",
-    name: "Classic Tee — White",
-    price: 599,
-    image: "https://placehold.co/120x120/e2e2e2/131313?text=TSHIRT",
-  },
-  {
-    id: "prod-03",
-    name: "Hoodie — Black",
-    price: 1299,
-    image: "https://placehold.co/120x120/1f1f1f/ed0d11?text=HOODIE",
-  },
-  {
-    id: "prod-04",
-    name: "Cap — Black",
-    price: 499,
-    image: "https://placehold.co/120x120/1f1f1f/ed0d11?text=CAP",
-  },
-  {
-    id: "prod-05",
-    name: "Tote Bag",
-    price: 349,
-    image: "https://placehold.co/120x120/1f1f1f/ed0d11?text=TOTE",
-  },
-];
+import { PRODUCTS, type Product } from "@/lib/products";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
