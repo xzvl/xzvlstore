@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PRODUCTS, type Product } from "@/lib/products";
@@ -42,6 +42,90 @@ const sectionTitle = (tag: string, title: string) => (
   </div>
 );
 
+// ─── Custom Product Dropdown ──────────────────────────────────────────────────
+
+function ProductDropdown({
+  value,
+  onChange,
+  onOpenChange,
+}: {
+  value: string;
+  onChange: (productId: string) => void;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = PRODUCTS.find((p) => p.id === value);
+
+  const toggle = (next: boolean) => {
+    setOpen(next);
+    onOpenChange(next);
+  };
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        toggle(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => toggle(!open)}
+        className={`w-full flex items-center justify-between gap-2 bg-[#1f1f1f] border text-left px-4 font-mono text-[13px] transition-colors cursor-pointer ${
+          open ? "border-primary" : "border-[#603e39] hover:border-[#ebbbb4]/40"
+        }`}
+        style={{ paddingTop: "0.6rem", paddingBottom: "0.6rem" }}
+      >
+        <span
+          className={`truncate ${selected ? "text-[#e2e2e2]" : "text-[#ebbbb4]/30"}`}
+        >
+          {selected ? selected.name : "Select product…"}
+        </span>
+        <span
+          className={`material-symbols-outlined flex-shrink-0 text-[18px] transition-transform duration-200 ${
+            open ? "rotate-180 text-primary" : "text-[#ebbbb4]/40"
+          }`}
+        >
+          expand_more
+        </span>
+      </button>
+
+      {/* Panel */}
+      {open && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-[#161616] border border-[#603e39] max-h-[220px] overflow-y-auto shadow-xl shadow-black/60">
+          {PRODUCTS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => {
+                onChange(p.id);
+                toggle(false);
+              }}
+              className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors border-b border-[#603e39]/20 last:border-0 ${
+                p.id === value
+                  ? "bg-primary/10 text-primary"
+                  : "text-[#e2e2e2] hover:bg-[#2a2a2a]"
+              }`}
+            >
+              <span className="font-mono text-[12px] leading-tight">{p.name}</span>
+              <span className="flex-shrink-0 font-mono text-[12px] text-[#ebbbb4]/60">
+                ₱{p.price.toLocaleString()}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Product Row Component ────────────────────────────────────────────────────
 
 function ProductRowInput({
@@ -59,29 +143,26 @@ function ProductRowInput({
   onRemove: (id: string) => void;
   canRemove: boolean;
 }) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
   return (
-    <div className="flex items-end gap-3 glass-panel p-4 glitch-hover transition-all">
+    // Raise z-index of the whole row when its dropdown is open so the panel
+    // clears rows below (backdrop-filter creates a new stacking context per row).
+    <div
+      className="flex items-end gap-3 glass-panel p-4 glitch-hover transition-all"
+      style={{ position: "relative", zIndex: dropdownOpen ? 10 : undefined }}
+    >
       <div className="flex-shrink-0 font-mono text-[10px] text-primary/60 w-5 pt-6">
         {String(index + 1).padStart(2, "0")}
       </div>
 
       <div className="flex-1">
         <label className={labelClass}>Product</label>
-        <select
+        <ProductDropdown
           value={row.productId}
-          onChange={(e) => onProductChange(row.id, e.target.value)}
-          className={`${inputClass} appearance-none cursor-pointer`}
-          required
-        >
-          <option value="" disabled>
-            Select product…
-          </option>
-          {PRODUCTS.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} — ₱{p.price.toLocaleString()}
-            </option>
-          ))}
-        </select>
+          onChange={(productId) => onProductChange(row.id, productId)}
+          onOpenChange={setDropdownOpen}
+        />
       </div>
 
       <div className="w-24">
@@ -408,7 +489,7 @@ export default function PreOrderPage() {
           </section>
 
           {/* ── Products ── */}
-          <section className="animate-fade-up" style={{ animationDelay: "160ms" }}>
+          <section className="animate-fade-up z-10 relative" style={{ animationDelay: "160ms" }}>
             {sectionTitle("SECTION_02", "Product Selection")}
             <div className="space-y-3">
               {rows.map((row, i) => (
@@ -436,7 +517,7 @@ export default function PreOrderPage() {
 
           {/* ── Order Summary ── */}
           {rows.some((r) => r.productId) && (
-            <section className="animate-fade-up" style={{ animationDelay: "240ms" }}>
+            <section className="animate-fade-up z-9 relative" style={{ animationDelay: "240ms" }}>
               {sectionTitle("SECTION_03", "Order Summary")}
               <OrderSummary rows={rows} />
             </section>
