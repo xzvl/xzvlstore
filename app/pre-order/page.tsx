@@ -397,8 +397,9 @@ function ProductDetailModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="glass-panel w-full max-w-lg overflow-y-auto animate-fade-up">
-        <div className="sticky top-0 bg-surface-container-lowest/95 backdrop-blur-sm border-b border-outline-variant/30 px-6 py-4 flex items-center justify-between z-10">
+      <div className="glass-panel w-full max-w-2xl overflow-hidden animate-fade-up flex flex-col">
+        {/* Mobile header */}
+        <div className="sm:hidden sticky top-0 bg-surface-container-lowest/95 backdrop-blur-sm border-b border-outline-variant/30 px-6 py-4 flex items-center justify-between z-10">
           <h3 className="font-inter font-bold text-[16px] text-[#e2e2e2]">
             Product Details
           </h3>
@@ -410,58 +411,123 @@ function ProductDetailModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          {/* Image */}
-          <div className="w-full h-[300px] relative border border-[#603e39]/30 overflow-hidden">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-cover"
-              unoptimized
-            />
-          </div>
-
-          {/* Details */}
-          <div className="space-y-4">
-            <div>
-              <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
-                Product Name
-              </p>
-              <p className="font-inter font-bold text-[18px] text-[#e2e2e2]">
-                {product.name}
-              </p>
+        {/* Desktop and mobile content */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Mobile: stacked layout */}
+          <div className="sm:hidden p-6 space-y-6">
+            {/* Image */}
+            <div className="w-full aspect-square relative border border-[#603e39]/30 overflow-hidden">
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className="object-cover"
+                unoptimized
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Details */}
+            <div className="space-y-4">
               <div>
                 <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
-                  Quantity
+                  Product Name
                 </p>
-                <p className="font-inter text-[20px] font-bold text-primary">
-                  {qty}
-                </p>
-              </div>
-              <div>
-                <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
-                  Unit Price
-                </p>
-                <p className="font-inter text-[16px] font-bold text-[#e2e2e2]">
-                  ₱{product.price.toLocaleString()}
+                <p className="font-inter font-bold text-[18px] text-[#e2e2e2]">
+                  {product.name}
                 </p>
               </div>
-            </div>
 
-            <div className="border-t border-[#603e39]/30 pt-4">
-              <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-2">
-                Subtotal
-              </p>
-              <p className="font-inter text-[24px] font-black text-primary">
-                ₱{subtotal.toLocaleString()}
-              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
+                    Quantity
+                  </p>
+                  <p className="font-inter text-[20px] font-bold text-primary">
+                    {qty}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
+                    Unit Price
+                  </p>
+                  <p className="font-inter text-[16px] font-bold text-[#e2e2e2]">
+                    ₱{product.price.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t border-[#603e39]/30 pt-4">
+                <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-2">
+                  Subtotal
+                </p>
+                <p className="font-inter text-[24px] font-black text-primary">
+                  ₱{subtotal.toLocaleString()}
+                </p>
+              </div>
             </div>
           </div>
 
+          {/* Desktop: two-column layout */}
+          <div className="hidden sm:grid grid-cols-2 gap-8 p-8 h-full">
+            {/* Left: Image */}
+            <div className="flex items-center justify-center">
+              <div className="w-full aspect-square relative border border-[#603e39]/30 overflow-hidden">
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            </div>
+
+            {/* Right: Details */}
+            <div className="flex flex-col justify-between">
+              <div className="space-y-6">
+                <div>
+                  <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-2">
+                    Product Name
+                  </p>
+                  <p className="font-inter font-bold text-[22px] text-[#e2e2e2]">
+                    {product.name}
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
+                      Quantity
+                    </p>
+                    <p className="font-inter text-[24px] font-bold text-primary">
+                      {qty}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
+                      Unit Price
+                    </p>
+                    <p className="font-inter text-[18px] font-bold text-[#e2e2e2]">
+                      ₱{product.price.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-[#603e39]/30 pt-6">
+                <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-2">
+                  Subtotal
+                </p>
+                <p className="font-inter text-[28px] font-black text-primary">
+                  ₱{subtotal.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Close button */}
+        <div className="border-t border-[#603e39]/30 bg-surface-container-lowest/95 backdrop-blur-sm px-6 py-4">
           <button
             onClick={onClose}
             className="w-full px-6 py-3 bg-primary text-white font-mono text-[12px] tracking-widest uppercase hover:brightness-110 active:scale-95 transition-all"
