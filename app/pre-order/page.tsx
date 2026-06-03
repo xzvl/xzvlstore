@@ -209,15 +209,19 @@ function ProductRowInput({
           <div className="w-24">
             <label className={labelClass}>Qty</label>
             <input
-              type="number"
-              min={1}
-              max={999}
+              type="text"
+              inputMode="numeric"
               value={row.qty}
-              onChange={(e) =>
-                onQtyChange(row.id, Math.max(1, parseInt(e.target.value) || 1))
-              }
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                onQtyChange(row.id, val === "" ? 0 : parseInt(val));
+              }}
+              onBlur={() => {
+                if (row.qty < 1) {
+                  onQtyChange(row.id, 1);
+                }
+              }}
               className={inputClass()}
-              required
             />
           </div>
           {canRemove && (
@@ -251,15 +255,19 @@ function ProductRowInput({
         <div className="w-24">
           <label className={labelClass}>Qty</label>
           <input
-            type="number"
-            min={1}
-            max={999}
+            type="text"
+            inputMode="numeric"
             value={row.qty}
-            onChange={(e) =>
-              onQtyChange(row.id, Math.max(1, parseInt(e.target.value) || 1))
-            }
+            onChange={(e) => {
+              const val = e.target.value.replace(/[^0-9]/g, "");
+              onQtyChange(row.id, val === "" ? 0 : parseInt(val));
+            }}
+            onBlur={() => {
+              if (row.qty < 1) {
+                onQtyChange(row.id, 1);
+              }
+            }}
             className={inputClass()}
-            required
           />
         </div>
 
