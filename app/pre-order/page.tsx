@@ -113,8 +113,9 @@ function ProductDropdown({
 
       {/* Panel */}
       {open && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-[#161616] border border-[#603e39] max-h-[220px] overflow-y-auto shadow-xl shadow-black/60">
-          {PRODUCTS.map((p) => (
+        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-[#161616] border border-[#603e39] max-h-[240px] overflow-y-auto shadow-xl shadow-black/60">
+          {/* Active products */}
+          {PRODUCTS.filter((p) => p.status === "active").map((p) => (
             <button
               key={p.id}
               type="button"
@@ -122,7 +123,7 @@ function ProductDropdown({
                 onChange(p.id);
                 toggle(false);
               }}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors border-b border-[#603e39]/20 last:border-0 ${
+              className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors border-b border-[#603e39]/20 ${
                 p.id === value
                   ? "bg-primary/10 text-primary"
                   : "text-[#e2e2e2] hover:bg-[#2a2a2a]"
@@ -134,6 +135,30 @@ function ProductDropdown({
               </span>
             </button>
           ))}
+
+          {/* Inactive products (disabled) */}
+          {PRODUCTS.filter((p) => p.status === "inactive").length > 0 && (
+            <>
+              <div className="sticky top-0 bg-[#1a1a1a] border-b border-[#603e39]/40 px-4 py-2">
+                <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest">
+                  Currently Unavailable
+                </p>
+              </div>
+              {PRODUCTS.filter((p) => p.status === "inactive").map((p) => (
+                <div
+                  key={p.id}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-[#603e39]/20 bg-[#0e0e0e] cursor-not-allowed opacity-50"
+                >
+                  <span className="font-mono text-[12px] leading-tight text-[#ebbbb4]/40">
+                    {p.name}
+                  </span>
+                  <span className="flex-shrink-0 font-mono text-[12px] text-[#ebbbb4]/20">
+                    ₱{p.price.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>
@@ -255,7 +280,13 @@ function ProductRowInput({
 
 // ─── Order Summary ────────────────────────────────────────────────────────────
 
-function OrderSummary({ rows }: { rows: ProductRow[] }) {
+function OrderSummary({
+  rows,
+  onProductClick,
+}: {
+  rows: ProductRow[];
+  onProductClick: (product: Product, qty: number) => void;
+}) {
   const filledRows = rows.filter((r) => r.productId);
 
   if (filledRows.length === 0) return null;
@@ -273,7 +304,8 @@ function OrderSummary({ rows }: { rows: ProductRow[] }) {
         return (
           <div
             key={row.id}
-            className="flex items-center gap-4 glass-panel p-4"
+            onClick={() => onProductClick(product, row.qty)}
+            className="flex items-center gap-4 glass-panel p-4 cursor-pointer hover:border-primary transition-colors"
           >
             <div className="flex-shrink-0 w-[60px] h-[60px] relative border border-[#603e39]/30 overflow-hidden">
               <Image
@@ -337,6 +369,111 @@ function OrderSummary({ rows }: { rows: ProductRow[] }) {
   );
 }
 
+// ─── Product Detail Modal ─────────────────────────────────────────────────────
+
+function ProductDetailModal({
+  product,
+  qty,
+  onClose,
+}: {
+  product: Product;
+  qty: number;
+  onClose: () => void;
+}) {
+  const subtotal = product.price * qty;
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center px-4 py-8 bg-background/90 backdrop-blur-xl"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="glass-panel w-full max-w-lg overflow-y-auto animate-fade-up">
+        <div className="sticky top-0 bg-surface-container-lowest/95 backdrop-blur-sm border-b border-outline-variant/30 px-6 py-4 flex items-center justify-between z-10">
+          <h3 className="font-inter font-bold text-[16px] text-[#e2e2e2]">
+            Product Details
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-[#ebbbb4]/40 hover:text-primary transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Image */}
+          <div className="w-full h-[300px] relative border border-[#603e39]/30 overflow-hidden">
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+
+          {/* Details */}
+          <div className="space-y-4">
+            <div>
+              <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
+                Product Name
+              </p>
+              <p className="font-inter font-bold text-[18px] text-[#e2e2e2]">
+                {product.name}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
+                  Quantity
+                </p>
+                <p className="font-inter text-[20px] font-bold text-primary">
+                  {qty}
+                </p>
+              </div>
+              <div>
+                <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-1">
+                  Unit Price
+                </p>
+                <p className="font-inter text-[16px] font-bold text-[#e2e2e2]">
+                  ₱{product.price.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-[#603e39]/30 pt-4">
+              <p className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-2">
+                Subtotal
+              </p>
+              <p className="font-inter text-[24px] font-black text-primary">
+                ₱{subtotal.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-full px-6 py-3 bg-primary text-white font-mono text-[12px] tracking-widest uppercase hover:brightness-110 active:scale-95 transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PreOrderPage() {
@@ -350,6 +487,11 @@ export default function PreOrderPage() {
   const [rows, setRows] = useState<ProductRow[]>([
     { id: uid(), productId: "", qty: 1 },
   ]);
+
+  const [selectedProductDetail, setSelectedProductDetail] = useState<{
+    product: Product;
+    qty: number;
+  } | null>(null);
 
   const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
   const [submitting, setSubmitting] = useState(false);
@@ -616,7 +758,12 @@ export default function PreOrderPage() {
           {rows.some((r) => r.productId) && (
             <section className="animate-fade-up z-9 relative" style={{ animationDelay: "240ms" }}>
               {sectionTitle("SECTION_03", "Order Summary")}
-              <OrderSummary rows={rows} />
+              <OrderSummary
+                rows={rows}
+                onProductClick={(product, qty) =>
+                  setSelectedProductDetail({ product, qty })
+                }
+              />
             </section>
           )}
 
@@ -646,6 +793,14 @@ export default function PreOrderPage() {
           </div>
         </form>
       </div>
+
+      {selectedProductDetail && (
+        <ProductDetailModal
+          product={selectedProductDetail.product}
+          qty={selectedProductDetail.qty}
+          onClose={() => setSelectedProductDetail(null)}
+        />
+      )}
     </main>
   );
 }

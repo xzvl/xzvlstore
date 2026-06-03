@@ -3,6 +3,7 @@ export type Product = {
   name: string;
   price: number;
   image: string;
+  status: "active" | "inactive";
 };
 
 const DEFAULT_PRODUCTS: Product[] = [
@@ -11,54 +12,63 @@ const DEFAULT_PRODUCTS: Product[] = [
     name: "BX-51 String Launcher (Black x Green)",
     price: 629,
     image: "/assets/string-launcher.png",
+    status: "active",
   },
   {
     id: "prod-02",
     name: "CX-13 Bahamut Blitz BK1-50I",
     price: 999,
     image: "/assets/blitz-bahamut.png",
+    status: "active",
   },
   {
     id: "prod-03",
     name: "CX-14 Knight Fortress GV8-70UN",
     price: 999,
     image: "/assets/knigh-fortress.png",
+    status: "active",
   },
   {
     id: "prod-04",
     name: "CX15 Ragna Rage FE4-55Y",
     price: 649,
     image: "/assets/ragna-rage.png",
+    status: "active",
   },
   {
     id: "prod-05",
     name: "CX-18 Random Booster Brachio Whip Select",
     price: 649,
     image: "/assets/brachio-whip.jpg",
+    status: "inactive",
   },
   {
     id: "prod-06",
     name: "G1682 Fort Hornet R7-60T",
     price: 1199,
     image: "/assets/fort-hornet.png",
+    status: "active",
   },
   {
     id: "prod-07",
     name: "G1534 Keel Shark 1-60Q",
     price: 899,
     image: "/assets/keel-shark-1-60.jpg",
+    status: "active",
   },
   {
     id: "prod-08",
     name: "G2738 Stun Medusa 9-60GB",
     price: 1199,
     image: "/assets/stun-medusa.jpg",
+    status: "inactive",
   },
   {
     id: "prod-09",
     name: "G1669 Tide Whale 5-80E",
     price: 799,
     image: "/assets/tide-whale.jpg",
+    status: "active",
   },
 ];
 
