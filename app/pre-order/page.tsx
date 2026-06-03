@@ -43,7 +43,7 @@ const validatePhone = (v: string) => {
   const digits = v.replace(/[\s\-().+]/g, "");
   // Accepts: 09XXXXXXXXX (11 digits) or 639XXXXXXXXX (12 digits)
   if (!/^(09\d{9}|639\d{9})$/.test(digits)) return "Enter a valid PH mobile number (e.g. 09XX XXX XXXX).";
-  return "";
+  return ""; 
 };
 
 const sectionTitle = (tag: string, title: string) => (
