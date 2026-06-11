@@ -1,0 +1,283 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import type { Order, OrderStatus } from "@/lib/supabase";
+
+const STATUS_TABS: { value: string; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "pending", label: "Pending" },
+  { value: "pre-order", label: "Pre-Order" },
+  { value: "processing", label: "Processing" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "shipped", label: "Shipped" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: "text-yellow-400 border-yellow-400/30 bg-yellow-400/10",
+  "pre-order": "text-purple-400 border-purple-400/30 bg-purple-400/10",
+  processing: "text-orange-400 border-orange-400/30 bg-orange-400/10",
+  confirmed: "text-blue-400 border-blue-400/30 bg-blue-400/10",
+  shipped: "text-green-400 border-green-400/30 bg-green-400/10",
+  completed: "text-primary border-primary/30 bg-primary/10",
+  cancelled: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
+};
+
+const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "processing", "confirmed", "shipped", "completed", "cancelled"];
+
+type Stats = {
+  totalOrders: number;
+  totalRevenue: number;
+  pendingOrders: number;
+  preOrderOrders: number;
+  confirmedOrders: number;
+  shippedOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  activeProducts: number;
+};
+
+export default function AdminOrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  const fetchOrders = async (status = filter) => {
+    setLoading(true);
+    const qs = status !== "all" ? `?status=${status}` : "";
+    const res = await fetch(`/api/admin/orders${qs}`);
+    if (res.ok) setOrders(await res.json());
+    setLoading(false);
+  };
+
+  const fetchStats = async () => {
+    const res = await fetch("/api/admin/stats");
+    if (res.ok) setStats(await res.json());
+  };
+
+  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => { fetchOrders(filter); }, [filter]);
+
+  const updateStatus = async (id: string, status: OrderStatus) => {
+    setUpdating(id);
+    const res = await fetch(`/api/admin/orders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setOrders(prev => prev.map(o => (o.id === id ? updated : o)));
+      fetchStats();
+    }
+    setUpdating(null);
+  };
+
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-PH", {
+      year: "numeric", month: "short", day: "numeric",
+      hour: "2-digit", minute: "2-digit", timeZone: "Asia/Manila",
+    });
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">ADMIN // ORDERS</p>
+          <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Orders</h1>
+        </div>
+        <Link
+          href="/admin/orders/new"
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 border border-primary text-primary font-mono text-[11px] tracking-widest uppercase hover:bg-primary/20 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[14px]">add</span>
+          New Order
+        </Link>
+      </div>
+
+      {/* Stats */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "Total Orders", value: stats.totalOrders, icon: "receipt_long" },
+            { label: "Total Revenue", value: `₱${stats.totalRevenue.toLocaleString()}`, icon: "payments" },
+            { label: "Pending", value: stats.pendingOrders, icon: "hourglass_empty" },
+            { label: "Shipped", value: stats.shippedOrders, icon: "local_shipping" },
+          ].map((s) => (
+            <div key={s.label} className="bg-[#1a1a1a] border border-[#603e39]/30 p-4 space-y-1">
+              <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest">
+                <span className="material-symbols-outlined text-[12px]">{s.icon}</span>
+                {s.label}
+              </div>
+              <p className="font-inter font-black text-[22px] text-[#e2e2e2]">{s.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Filter tabs */}
+      <div className="flex items-center gap-1 border-b border-[#603e39]/30 pb-0 overflow-x-auto">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setFilter(tab.value)}
+            className={`px-4 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors border-b-2 -mb-px whitespace-nowrap ${
+              filter === tab.value
+                ? "text-primary border-primary"
+                : "text-[#ebbbb4]/40 border-transparent hover:text-[#e2e2e2]"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Orders list */}
+      {loading ? (
+        <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-8">
+          <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+          Loading orders…
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="text-center py-16 font-mono text-[13px] text-[#ebbbb4]/30">No orders found.</div>
+      ) : (
+        <div className="space-y-2">
+          {orders.map((order) => (
+            <div key={order.id} className="bg-[#1a1a1a] border border-[#603e39]/30 overflow-hidden">
+              <div
+                className="flex flex-wrap items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#222] transition-colors"
+                onClick={() => setExpanded(expanded === order.id ? null : order.id)}
+              >
+                <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/30 flex-shrink-0">
+                  {expanded === order.id ? "expand_less" : "expand_more"}
+                </span>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 truncate">
+                    <p className="font-inter font-bold text-[14px] text-[#e2e2e2] truncate">
+                      {order.order_number != null && (
+                        <span className="text-[#ebbbb4]/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
+                      )}
+                      {order.name}
+                    </p>
+                    {order.location && (
+                      <p className="font-mono text-[11px] text-[#ebbbb4]/40 flex-shrink-0">{order.location}</p>
+                    )}
+                  </div>
+                  {order.items.length > 0 && (
+                    <p className="font-mono text-[10px] text-[#ebbbb4]/30 truncate mt-0.5">
+                      {order.items.map(it => `${it.product} ×${it.qty}`).join(" · ")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="hidden md:block font-mono text-[11px] text-[#ebbbb4]/50 min-w-[140px]">
+                  {formatDate(order.created_at)}
+                </div>
+
+                <div className="font-mono text-[13px] text-primary font-bold min-w-[90px] text-right">
+                  ₱{order.estimated_total.toLocaleString()}
+                </div>
+
+                <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-[#ebbbb4]/40"}`}>
+                  {order.status}
+                </span>
+
+                <select
+                  value={order.status}
+                  onChange={(e) => { e.stopPropagation(); updateStatus(order.id, e.target.value as OrderStatus); }}
+                  disabled={updating === order.id}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
+                >
+                  {ALL_STATUSES.map(s => (
+                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                  ))}
+                </select>
+
+                <Link
+                  href={`/admin/orders/${order.id}`}
+                  onClick={e => e.stopPropagation()}
+                  className="text-[#ebbbb4]/40 hover:text-primary transition-colors flex-shrink-0"
+                  title="Edit order"
+                >
+                  <span className="material-symbols-outlined text-[16px]">edit</span>
+                </Link>
+              </div>
+
+              {expanded === order.id && (
+                <div className="border-t border-[#603e39]/30 px-4 py-4 space-y-4 bg-[#161616]">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[12px]">
+                    {[
+                      { label: "Email", value: order.email },
+                      { label: "Phone", value: order.phone },
+                      { label: "Location", value: order.location },
+                      { label: "Date", value: formatDate(order.created_at) },
+                    ].map((f) => (
+                      <div key={f.label}>
+                        <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">{f.label}</p>
+                        <p className="font-mono text-[12px] text-[#e2e2e2]">{f.value}</p>
+                      </div>
+                    ))}
+                    {order.delivery_method && (
+                      <div>
+                        <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Delivery</p>
+                        <p className="font-mono text-[12px] text-[#e2e2e2]">{order.delivery_method}</p>
+                      </div>
+                    )}
+                    {order.payment_method && (
+                      <div>
+                        <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Payment</p>
+                        <p className="font-mono text-[12px] text-[#e2e2e2]">{order.payment_method}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-2">Items</p>
+                    <table className="w-full text-[12px]">
+                      <thead>
+                        <tr className="border-b border-[#603e39]/20">
+                          <th className="text-left font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest pb-2">Product</th>
+                          <th className="text-center font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest pb-2">Qty</th>
+                          <th className="text-right font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest pb-2">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {order.items.map((item, i) => (
+                          <tr key={i} className="border-b border-[#603e39]/10">
+                            <td className="py-2 font-mono text-[#e2e2e2]">{item.product}</td>
+                            <td className="py-2 text-center font-mono text-[#ebbbb4]/60">{item.qty}</td>
+                            <td className="py-2 text-right font-mono text-primary">₱{item.subtotal.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="space-y-1 max-w-xs ml-auto">
+                    {order.discount > 0 && (
+                      <div className="flex justify-between font-mono text-[12px]">
+                        <span className="text-[#ebbbb4]/50">Discount</span>
+                        <span className="text-green-400">−₱{order.discount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[11px] text-[#ebbbb4]/40 uppercase tracking-widest">Total</span>
+                      <span className="font-inter font-black text-[20px] text-primary">₱{order.estimated_total.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

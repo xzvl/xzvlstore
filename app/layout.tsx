@@ -17,8 +17,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "xzvl.store — Coming Soon",
-  description: "xzvl.store is coming soon.",
+  title: {
+    template: "%s | xzvl.store",
+    default: "xzvl.store",
+  },
+  description: "xzvl.store",
   icons: {
     icon: "/favicon.ico",
   },

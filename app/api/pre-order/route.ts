@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { supabase } from "@/lib/supabase";
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
@@ -133,13 +134,19 @@ export async function POST(req: NextRequest) {
       timeZone: "Asia/Manila",
     });
 
-    const [sheetResult, emailResult] = await Promise.allSettled([
+    const [sheetResult, emailResult, dbResult] = await Promise.allSettled([
       appendToSheet({ date, name, location, phone, email, items }),
       getResend().emails.send({
         from: process.env.RESEND_FROM ?? "xzvl.store <onboarding@resend.dev>",
         to: "xzviel@gmail.com",
         subject: `New Pre-Order from ${name}`,
         html: buildEmailHtml(name, location, phone, email, items, estimatedTotal, date),
+      }),
+      supabase.from("orders").insert({
+        name, email, phone, location,
+        status: "pending",
+        estimated_total: estimatedTotal,
+        items,
       }),
     ]);
 
@@ -151,6 +158,10 @@ export async function POST(req: NextRequest) {
     if (emailResult.status === "rejected") {
       console.error("[pre-order] Resend error:", emailResult.reason);
       errors.push(`Email: ${emailResult.reason?.message ?? emailResult.reason}`);
+    }
+    if (dbResult.status === "rejected") {
+      console.error("[pre-order] Supabase error:", dbResult.reason);
+      errors.push(`DB: ${dbResult.reason?.message ?? dbResult.reason}`);
     }
 
     if (errors.length) {

@@ -2,6 +2,8 @@ export type Product = {
   id: string;
   name: string;
   price: number;
+  sale_price?: number | null;
+  pre_order?: boolean;
   image: string;
   status: "active" | "inactive";
 };

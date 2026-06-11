@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body style="margin:0;padding:0;background:#0e0e0e;">
+  <div style="background:#0e0e0e;padding:40px 16px;">
+    <div style="background:#131313;color:#e2e2e2;font-family:'Courier New',Courier,monospace;padding:40px 32px;max-width:560px;margin:0 auto;border:1px solid #1f1f1f;">
+
+      <!-- Header -->
+      <p style="color:#ed0d11;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;margin:0 0 6px 0;">
+        XZVL.STORE // AUTH
+      </p>
+      <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:#e2e2e2;letter-spacing:-0.02em;font-family:'Courier New',Courier,monospace;">
+        Confirm Your Email
+      </h1>
+      <p style="font-size:12px;color:#ebbbb4;opacity:0.5;margin:0 0 32px 0;">
+        One step away from your account.
+      </p>
+
+      <!-- Info card -->
+      <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:24px;">
+        <p style="font-size:10px;color:#ed0d11;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">
+          Account Details
+        </p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr>
+            <td style="padding:5px 0;color:#ebbbb4;width:80px;opacity:0.7;">Email</td>
+            <td style="padding:5px 0;color:#e2e2e2;">{{ .Email }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- CTA -->
+      <div style="margin-bottom:24px;">
+        <p style="font-size:11px;color:#ebbbb4;opacity:0.6;margin:0 0 16px 0;letter-spacing:0.05em;">
+          Click the button below to verify your email address and activate your account.
+          This link expires in <span style="color:#e2e2e2;">24 hours</span>.
+        </p>
+        <a href="{{ .ConfirmationURL }}"
+           style="display:inline-block;background:#ed0d11;color:#ffffff;text-decoration:none;font-family:'Courier New',Courier,monospace;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:14px 32px;">
+          &#9656;&nbsp; Confirm Email Address
+        </a>
+      </div>
+
+      <!-- Divider -->
+      <div style="border-top:1px solid #1f1f1f;margin:28px 0;"></div>
+
+      <!-- Fallback link -->
+      <p style="font-size:10px;color:#ebbbb4;opacity:0.4;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.1em;">
+        Button not working?
+      </p>
+      <p style="font-size:11px;color:#ebbbb4;opacity:0.4;margin:0;word-break:break-all;">
+        Copy and paste this URL into your browser:<br/>
+        <a href="{{ .ConfirmationURL }}"
+           style="color:#ed0d11;opacity:0.7;text-decoration:none;">
+          {{ .ConfirmationURL }}
+        </a>
+      </p>
+
+      <!-- Footer -->
+      <div style="border-top:1px solid #1f1f1f;margin:28px 0 0 0;padding-top:20px;">
+        <p style="font-size:10px;color:#ebbbb4;opacity:0.3;margin:0;text-transform:uppercase;letter-spacing:0.15em;">
+          XZVL.STORE &mdash; If you didn&apos;t create an account, ignore this email.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
