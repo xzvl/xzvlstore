@@ -27,6 +27,7 @@ export async function PATCH(
   }
   if (body.gallery_images !== undefined) updates.gallery_images = body.gallery_images;
   if (body.social_image !== undefined) updates.social_image = body.social_image || null;
+  if (body.sort_order !== undefined) updates.sort_order = Number(body.sort_order);
 
   const { data, error } = await supabase
     .from("products")

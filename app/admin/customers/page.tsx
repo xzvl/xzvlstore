@@ -141,7 +141,7 @@ export default function CustomersPage() {
                         {[c.first_name, c.last_name].filter(Boolean).join(" ") || "—"}
                       </p>
                       <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-0.5">
-                        {new Date(c.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
+                        {new Date(c.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Manila" })}
                       </p>
                     </td>
 

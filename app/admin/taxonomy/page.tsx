@@ -102,7 +102,7 @@ export default function AdminTaxonomyPage() {
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-PH", {
-      year: "numeric", month: "short", day: "numeric",
+      year: "numeric", month: "short", day: "numeric", timeZone: "Asia/Manila",
     });
 
   const activeTab = TABS.find((t) => t.type === activeType)!;

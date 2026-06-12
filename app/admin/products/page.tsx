@@ -245,6 +245,8 @@ function productToForm(p: DbProduct): FormState {
   };
 }
 
+type SortKey = "name" | "sku" | "stock" | "brand";
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminProductsPage() {
@@ -258,6 +260,12 @@ export default function AdminProductsPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
+  const [reordering, setReordering] = useState<string | null>(null);
+
+  // ── Filters & sort ──────────────────────────────────────────────────────────
+  const [stockFilter, setStockFilter] = useState<"all" | "in" | "out">("all");
+  const [brandFilter, setBrandFilter] = useState("all");
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
 
   const fetch$ = async () => {
     setLoading(true);
@@ -295,6 +303,44 @@ export default function AdminProductsPage() {
 
   const brandMap = Object.fromEntries(brands.map((b) => [b.id, b.name]));
 
+  // ── Derived list ────────────────────────────────────────────────────────────
+  const isFiltered = stockFilter !== "all" || brandFilter !== "all" || sort !== null;
+
+  const displayed = (() => {
+    let list = [...products];
+    if (stockFilter === "in") list = list.filter((p) => p.stock > 0);
+    else if (stockFilter === "out") list = list.filter((p) => p.stock === 0);
+    if (brandFilter !== "all") list = list.filter((p) => p.brand_id === brandFilter);
+    if (sort) {
+      list.sort((a, b) => {
+        let va: string | number;
+        let vb: string | number;
+        switch (sort.key) {
+          case "name": va = a.name.toLowerCase(); vb = b.name.toLowerCase(); break;
+          case "sku": va = (a.sku ?? "").toLowerCase(); vb = (b.sku ?? "").toLowerCase(); break;
+          case "stock": va = a.stock; vb = b.stock; break;
+          case "brand":
+            va = (brandMap[a.brand_id ?? ""] ?? "").toLowerCase();
+            vb = (brandMap[b.brand_id ?? ""] ?? "").toLowerCase();
+            break;
+          default: va = 0; vb = 0;
+        }
+        if (va < vb) return sort.dir === "asc" ? -1 : 1;
+        if (va > vb) return sort.dir === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    return list;
+  })();
+
+  const toggleSort = (key: SortKey) =>
+    setSort((prev) =>
+      prev?.key === key
+        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: "asc" }
+    );
+
+  // ── Save ────────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!form.name.trim()) { setFormError("Product name is required."); return; }
     setSaving(true);
@@ -347,15 +393,69 @@ export default function AdminProductsPage() {
     setDeleting(null);
   };
 
+  // ── Reorder ─────────────────────────────────────────────────────────────────
+  const moveProduct = async (id: string, dir: "up" | "down") => {
+    const idx = products.findIndex((p) => p.id === id);
+    const targetIdx = dir === "up" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= products.length) return;
+
+    const current = products[idx];
+    const target = products[targetIdx];
+
+    setReordering(id);
+    try {
+      await Promise.all([
+        fetch(`/api/admin/products/${current.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sort_order: target.sort_order }),
+        }),
+        fetch(`/api/admin/products/${target.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sort_order: current.sort_order }),
+        }),
+      ]);
+      setProducts((prev) => {
+        const updated = [...prev];
+        updated[idx] = { ...current, sort_order: target.sort_order };
+        updated[targetIdx] = { ...target, sort_order: current.sort_order };
+        return updated.sort((a, b) => a.sort_order - b.sort_order);
+      });
+    } finally {
+      setReordering(null);
+    }
+  };
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
   const profit = (p: DbProduct) => (p.sale_price ?? p.price) - p.cost;
   const formProfit =
     (form.sale_price ? Number(form.sale_price) : Number(form.price || 0)) -
     Number(form.cost || 0);
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
+    new Date(iso).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric", timeZone: "Asia/Manila" });
 
   const thumb = (p: DbProduct) => p.main_image ?? (p.image || null);
+
+  const thBase = "text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3 whitespace-nowrap";
+
+  const SortTh = ({ label, sortKey }: { label: string; sortKey: SortKey }) => {
+    const active = sort?.key === sortKey;
+    return (
+      <th
+        onClick={() => toggleSort(sortKey)}
+        className={`${thBase} cursor-pointer hover:text-[#ebbbb4]/70 select-none transition-colors`}
+      >
+        <span className="flex items-center gap-1">
+          {label}
+          <span className={`material-symbols-outlined text-[11px] transition-opacity ${active ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-50"}`}>
+            {active && sort?.dir === "desc" ? "arrow_downward" : "arrow_upward"}
+          </span>
+        </span>
+      </th>
+    );
+  };
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-5">
@@ -376,6 +476,56 @@ export default function AdminProductsPage() {
         </button>
       </div>
 
+      {/* Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Stock filter */}
+        <div className="flex items-center gap-1">
+          {(["all", "in", "out"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setStockFilter(v)}
+              className={`px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase border transition-colors ${
+                stockFilter === v
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70"
+              }`}
+            >
+              {v === "all" ? "All Stock" : v === "in" ? "In Stock" : "Out of Stock"}
+            </button>
+          ))}
+        </div>
+
+        {/* Brand filter */}
+        {brands.length > 0 && (
+          <select
+            value={brandFilter}
+            onChange={(e) => setBrandFilter(e.target.value)}
+            className="bg-[#0e0e0e] border border-[#603e39]/40 text-[#ebbbb4]/60 font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+          >
+            <option value="all">All Brands</option>
+            {brands.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Clear filters */}
+        {isFiltered && (
+          <button
+            onClick={() => { setStockFilter("all"); setBrandFilter("all"); setSort(null); }}
+            className="flex items-center gap-1 font-mono text-[10px] tracking-widest uppercase text-[#ebbbb4]/30 hover:text-primary transition-colors"
+          >
+            <span className="material-symbols-outlined text-[12px]">close</span>
+            Clear
+          </button>
+        )}
+
+        {/* Count */}
+        <span className="ml-auto font-mono text-[10px] text-[#ebbbb4]/30">
+          {displayed.length} / {products.length}
+        </span>
+      </div>
+
       {/* Table */}
       {loading ? (
         <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-10">
@@ -386,170 +536,191 @@ export default function AdminProductsPage() {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse min-w-[900px]">
             <thead>
-              <tr className="border-b border-[#603e39]/40">
-                {["Image", "Name", "SKU", "Stock", "Price", "Cost", "Profit", "Brands", "Date", ""].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3 whitespace-nowrap"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+              <tr className="border-b border-[#603e39]/40 group">
+                <th className={thBase}>Image</th>
+                <SortTh label="Name" sortKey="name" />
+                <SortTh label="SKU" sortKey="sku" />
+                <SortTh label="Stock" sortKey="stock" />
+                <th className={thBase}>Price</th>
+                <th className={thBase}>Cost</th>
+                <th className={thBase}>Profit</th>
+                <SortTh label="Brands" sortKey="brand" />
+                <th className={thBase}>Date</th>
+                <th className={thBase}></th>
               </tr>
             </thead>
             <tbody>
-              {products.length === 0 ? (
+              {displayed.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="text-center py-12 font-mono text-[12px] text-[#ebbbb4]/30">
-                    No products yet.
+                    {isFiltered ? "No products match the current filters." : "No products yet."}
                   </td>
                 </tr>
               ) : (
-                products.map((p) => (
-                  <tr
-                    key={p.id}
-                    className={`border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors ${
-                      p.status === "inactive" ? "opacity-40" : ""
-                    }`}
-                  >
-                    {/* Image */}
-                    <td className="px-3 py-3">
-                      <div className="w-10 h-10 relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
-                        {thumb(p) ? (
-                          <Image src={thumb(p)!} alt={p.name} fill className="object-cover" unoptimized />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/20">
-                              image
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Name */}
-                    <td className="px-3 py-3">
-                      <p className="font-inter font-bold text-[13px] text-[#e2e2e2] leading-tight max-w-[180px] truncate">
-                        {p.name}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="font-mono text-[10px] text-[#ebbbb4]/40">{p.id}</span>
-                        {p.pre_order && (
-                          <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400">
-                            pre-order
-                          </span>
-                        )}
-                        {p.status === "inactive" && (
-                          <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-[#ebbbb4]/20 bg-[#ebbbb4]/5 text-[#ebbbb4]/40">
-                            inactive
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* SKU */}
-                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">
-                      {p.sku ?? <span className="text-[#ebbbb4]/20">—</span>}
-                    </td>
-
-                    {/* Stock */}
-                    <td className="px-3 py-3">
-                      <span
-                        className={`font-mono text-[12px] font-bold ${
-                          p.stock === 0
-                            ? "text-primary"
-                            : p.stock <= 5
-                            ? "text-yellow-400"
-                            : "text-green-400"
-                        }`}
-                      >
-                        {p.stock}
-                      </span>
-                    </td>
-
-                    {/* Price */}
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      {p.sale_price ? (
-                        <div className="flex flex-col leading-tight">
-                          <span className="font-mono text-[12px] font-bold text-primary">
-                            ₱{p.sale_price.toLocaleString()}
-                          </span>
-                          <span className="font-mono text-[10px] text-[#ebbbb4]/40 line-through">
-                            ₱{p.price.toLocaleString()}
-                          </span>
+                displayed.map((p) => {
+                  const posInFull = products.findIndex((x) => x.id === p.id);
+                  return (
+                    <tr
+                      key={p.id}
+                      className={`border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors ${
+                        p.status === "inactive" ? "opacity-40" : ""
+                      }`}
+                    >
+                      {/* Image */}
+                      <td className="px-3 py-3">
+                        <div className="w-10 h-10 relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
+                          {thumb(p) ? (
+                            <Image src={thumb(p)!} alt={p.name} fill className="object-cover" unoptimized />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/20">
+                                image
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <span className="font-mono text-[12px] text-[#e2e2e2]">
-                          ₱{p.price.toLocaleString()}
-                        </span>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* Cost */}
-                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">
-                      {p.cost > 0 ? `₱${p.cost.toLocaleString()}` : <span className="text-[#ebbbb4]/20">—</span>}
-                    </td>
+                      {/* Name */}
+                      <td className="px-3 py-3">
+                        <p className="font-inter font-bold text-[13px] text-[#e2e2e2] leading-tight max-w-[180px] truncate">
+                          {p.name}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="font-mono text-[10px] text-[#ebbbb4]/40">{p.id}</span>
+                          {p.pre_order && (
+                            <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400">
+                              pre-order
+                            </span>
+                          )}
+                          {p.status === "inactive" && (
+                            <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-[#ebbbb4]/20 bg-[#ebbbb4]/5 text-[#ebbbb4]/40">
+                              inactive
+                            </span>
+                          )}
+                        </div>
+                      </td>
 
-                    {/* Profit */}
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      {p.cost > 0 ? (
+                      {/* SKU */}
+                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">
+                        {p.sku ?? <span className="text-[#ebbbb4]/20">—</span>}
+                      </td>
+
+                      {/* Stock */}
+                      <td className="px-3 py-3">
                         <span
                           className={`font-mono text-[12px] font-bold ${
-                            profit(p) >= 0 ? "text-green-400" : "text-primary"
+                            p.stock === 0
+                              ? "text-primary"
+                              : p.stock <= 5
+                              ? "text-yellow-400"
+                              : "text-green-400"
                           }`}
                         >
-                          ₱{profit(p).toLocaleString()}
+                          {p.stock}
                         </span>
-                      ) : (
-                        <span className="font-mono text-[12px] text-[#ebbbb4]/20">—</span>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* Brands */}
-                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 max-w-[120px] truncate">
-                      {p.brand_id && brandMap[p.brand_id]
-                        ? brandMap[p.brand_id]
-                        : <span className="text-[#ebbbb4]/20">—</span>}
-                    </td>
-
-                    {/* Date */}
-                    <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/40 whitespace-nowrap">
-                      {formatDate(p.created_at)}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => openEdit(p)}
-                          className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors"
-                          title="Edit"
-                        >
-                          <span className="material-symbols-outlined text-[13px]">edit</span>
-                        </button>
-                        <button
-                          onClick={() => toggleStatus(p)}
-                          className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-blue-400 hover:text-blue-400 transition-colors"
-                          title={p.status === "active" ? "Disable" : "Enable"}
-                        >
-                          <span className="material-symbols-outlined text-[13px]">
-                            {p.status === "active" ? "visibility_off" : "visibility"}
+                      {/* Price */}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {p.sale_price ? (
+                          <div className="flex flex-col leading-tight">
+                            <span className="font-mono text-[12px] font-bold text-primary">
+                              ₱{p.sale_price.toLocaleString()}
+                            </span>
+                            <span className="font-mono text-[10px] text-[#ebbbb4]/40 line-through">
+                              ₱{p.price.toLocaleString()}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-mono text-[12px] text-[#e2e2e2]">
+                            ₱{p.price.toLocaleString()}
                           </span>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          disabled={deleting === p.id}
-                          className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40"
-                          title="Delete"
-                        >
-                          <span className="material-symbols-outlined text-[13px]">delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                        )}
+                      </td>
+
+                      {/* Cost */}
+                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">
+                        {p.cost > 0 ? `₱${p.cost.toLocaleString()}` : <span className="text-[#ebbbb4]/20">—</span>}
+                      </td>
+
+                      {/* Profit */}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {p.cost > 0 ? (
+                          <span
+                            className={`font-mono text-[12px] font-bold ${
+                              profit(p) >= 0 ? "text-green-400" : "text-primary"
+                            }`}
+                          >
+                            ₱{profit(p).toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="font-mono text-[12px] text-[#ebbbb4]/20">—</span>
+                        )}
+                      </td>
+
+                      {/* Brands */}
+                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 max-w-[120px] truncate">
+                        {p.brand_id && brandMap[p.brand_id]
+                          ? brandMap[p.brand_id]
+                          : <span className="text-[#ebbbb4]/20">—</span>}
+                      </td>
+
+                      {/* Date */}
+                      <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/40 whitespace-nowrap">
+                        {formatDate(p.created_at)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1.5">
+                          {/* Move up/down — only available when no filter/sort is active */}
+                          <button
+                            onClick={() => moveProduct(p.id, "up")}
+                            disabled={isFiltered || posInFull === 0 || reordering === p.id}
+                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                            title={isFiltered ? "Clear filters to reorder" : "Move up"}
+                          >
+                            <span className="material-symbols-outlined text-[13px]">arrow_upward</span>
+                          </button>
+                          <button
+                            onClick={() => moveProduct(p.id, "down")}
+                            disabled={isFiltered || posInFull === products.length - 1 || reordering === p.id}
+                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                            title={isFiltered ? "Clear filters to reorder" : "Move down"}
+                          >
+                            <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
+                          </button>
+
+                          <button
+                            onClick={() => openEdit(p)}
+                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors"
+                            title="Edit"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">edit</span>
+                          </button>
+                          <button
+                            onClick={() => toggleStatus(p)}
+                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-blue-400 hover:text-blue-400 transition-colors"
+                            title={p.status === "active" ? "Disable" : "Enable"}
+                          >
+                            <span className="material-symbols-outlined text-[13px]">
+                              {p.status === "active" ? "visibility_off" : "visibility"}
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(p.id)}
+                            disabled={deleting === p.id}
+                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40"
+                            title="Delete"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
