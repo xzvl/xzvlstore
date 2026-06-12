@@ -39,7 +39,7 @@ export default function RichTextEditor({
     const normalised = !value || value === "<p></p>" ? "" : value;
     const normalisedCurrent = current === "<p></p>" ? "" : current;
     if (normalisedCurrent !== normalised) {
-      editor.commands.setContent(value || "", false);
+      editor.commands.setContent(value || "", { emitUpdate: false });
     }
   }, [value, editor]);
 

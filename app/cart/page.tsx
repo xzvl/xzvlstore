@@ -86,7 +86,7 @@ function CartItem({
   onQtyChange,
   onRemove,
 }: {
-  item: { id: string; name: string; price: number; sale_price: number | null; image: string; qty: number };
+  item: { id: string; slug: string; name: string; price: number; sale_price: number | null; image: string; qty: number };
   onQtyChange: (qty: number) => void;
   onRemove: () => void;
 }) {
