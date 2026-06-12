@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { CartProvider } from "@/lib/cart-context";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,7 +43,7 @@ export default function RootLayout({
       </head>
       <body className="overflow-x-hidden">
         <div className="fixed inset-0 scanline z-[100] pointer-events-none" />
-        {children}
+        <CartProvider>{children}</CartProvider>
       </body>
     </html>
   );

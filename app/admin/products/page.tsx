@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import type { DbProduct, Taxonomy } from "@/lib/supabase";
+
+const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
 // ─── Image uploader ───────────────────────────────────────────────────────────
 
@@ -192,8 +195,13 @@ function GalleryUploader({
 
 // ─── Product form ─────────────────────────────────────────────────────────────
 
+const toSlug = (s: string) =>
+  s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 type FormState = {
   name: string;
+  slug: string;
+  description: string;
   sku: string;
   price: string;
   sale_price: string;
@@ -211,6 +219,8 @@ type FormState = {
 
 const EMPTY_FORM: FormState = {
   name: "",
+  slug: "",
+  description: "",
   sku: "",
   price: "",
   sale_price: "",
@@ -229,6 +239,8 @@ const EMPTY_FORM: FormState = {
 function productToForm(p: DbProduct): FormState {
   return {
     name: p.name,
+    slug: p.slug ?? toSlug(p.name),
+    description: p.description ?? "",
     sku: p.sku ?? "",
     price: String(p.price),
     sale_price: p.sale_price ? String(p.sale_price) : "",
@@ -787,9 +799,30 @@ export default function AdminProductsPage() {
                     </label>
                     <input
                       value={form.name}
-                      onChange={(e) => set$("name", e.target.value)}
+                      onChange={(e) => {
+                        const newName = e.target.value;
+                        setForm((prev) => ({
+                          ...prev,
+                          name: newName,
+                          slug:
+                            prev.slug === "" || prev.slug === toSlug(prev.name)
+                              ? toSlug(newName)
+                              : prev.slug,
+                        }));
+                      }}
                       placeholder="e.g. CX-13 Bahamut Blitz"
                       className="w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5">
+                      Slug
+                    </label>
+                    <input
+                      value={form.slug}
+                      onChange={(e) => set$("slug", e.target.value)}
+                      placeholder="cx-13-bahamut-blitz"
+                      className="w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20"
                     />
                   </div>
                   <div>
@@ -829,6 +862,19 @@ export default function AdminProductsPage() {
 
               <div className="h-px bg-[#603e39]/20" />
 
+              {/* ── Description ── */}
+              <div>
+                <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-3 uppercase">
+                  Description
+                </p>
+                <RichTextEditor
+                  value={form.description}
+                  onChange={(html) => set$("description", html)}
+                />
+              </div>
+
+              <div className="h-px bg-[#603e39]/20" />
+
               {/* ── Taxonomy ── */}
               <div>
                 <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-3 uppercase">
@@ -846,7 +892,7 @@ export default function AdminProductsPage() {
                         No categories yet — add them in Taxonomy.
                       </p>
                     ) : (
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {categories.map((c) => {
                           const selected = form.category_ids.includes(c.id);
                           return (
@@ -883,7 +929,7 @@ export default function AdminProductsPage() {
                         No tags yet — add them in Taxonomy.
                       </p>
                     ) : (
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {tags.map((t) => {
                           const selected = form.tag_ids.includes(t.id);
                           return (

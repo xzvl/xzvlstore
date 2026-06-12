@@ -46,6 +46,8 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchOrders = async (status = filter) => {
     setLoading(true);
@@ -76,6 +78,17 @@ export default function AdminOrdersPage() {
       fetchStats();
     }
     setUpdating(null);
+  };
+
+  const deleteOrder = async (id: string) => {
+    setDeleting(id);
+    const res = await fetch(`/api/admin/orders/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setOrders(prev => prev.filter(o => o.id !== id));
+      fetchStats();
+    }
+    setDeleting(null);
+    setConfirmDelete(null);
   };
 
   const formatDate = (iso: string) =>
@@ -208,6 +221,32 @@ export default function AdminOrdersPage() {
                 >
                   <span className="material-symbols-outlined text-[16px]">edit</span>
                 </Link>
+
+                {confirmDelete === order.id ? (
+                  <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => deleteOrder(order.id)}
+                      disabled={deleting === order.id}
+                      className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50"
+                    >
+                      {deleting === order.id ? "…" : "Yes"}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(null)}
+                      className="font-mono text-[10px] text-[#ebbbb4]/40 border border-[#603e39]/40 px-2 py-1 hover:text-[#e2e2e2] transition-colors"
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={e => { e.stopPropagation(); setConfirmDelete(order.id); }}
+                    className="text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0"
+                    title="Delete order"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                )}
               </div>
 
               {expanded === order.id && (

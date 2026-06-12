@@ -75,6 +75,8 @@ export type DbProduct = {
   social_image: string | null;
   pre_order: boolean;
   status: "active" | "inactive";
+  slug: string | null;
+  description: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;

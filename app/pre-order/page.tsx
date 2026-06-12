@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { PRODUCTS as FALLBACK_PRODUCTS, type Product } from "@/lib/products";
 import { supabaseClient } from "@/lib/supabase-client";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -380,9 +382,19 @@ export default function PreOrderPage() {
 
   useEffect(() => {
     // Fetch products
-    fetch("/api/products")
+    fetch("/api/products?preOrder=true")
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data) && data.length > 0) setProducts(data); })
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+          // Auto-select product from ?product=ID query param
+          const params = new URLSearchParams(window.location.search);
+          const productId = params.get("product");
+          if (productId && data.some((p: Product) => p.id === productId)) {
+            setRows([{ id: uid(), productId, qty: 1 }]);
+          }
+        }
+      })
       .catch(() => {});
 
     // Check auth and auto-fill
@@ -441,7 +453,7 @@ export default function PreOrderPage() {
       const orderItems = filledRows.map((r) => {
         const p = preOrderProducts.find((p) => p.id === r.productId)!;
         const price = p.sale_price ?? p.price;
-        return { product: p.name, qty: r.qty, subtotal: price * r.qty };
+        return { product_id: p.id, product: p.name, qty: r.qty, unit_price: price, subtotal: price * r.qty };
       });
       const estimatedTotal = orderItems.reduce((s, i) => s + i.subtotal, 0);
       const res = await fetch("/api/pre-order", {
@@ -463,58 +475,42 @@ export default function PreOrderPage() {
 
   if (submitted) {
     return (
-      <main className="min-h-screen bg-[#131313] cyber-grid flex flex-col items-center justify-center px-4">
-        <div className="glass-panel max-w-md w-full p-10 flex flex-col items-center text-center gap-6 animate-fade-up">
-          <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary text-[32px]">check_circle</span>
-          </div>
-          <div>
-            <p className="font-mono text-[11px] tracking-widest text-primary mb-2">ORDER_RECEIVED</p>
-            <h2 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Pre-Order Sent!</h2>
-            <p className="font-mono text-[13px] text-[#ebbbb4]/60 mt-3 leading-relaxed">
-              We received your pre-order, {contact.name}. We&apos;ll reach out to you via{" "}
-              <span className="text-primary">{contact.email || contact.phone}</span> to confirm the details.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <Link href="/" className="flex-1 px-6 py-3 bg-primary text-white font-mono text-[12px] tracking-widest uppercase hover:brightness-110 transition-all text-center">
-              Back to Home
-            </Link>
-            {userEmail && (
-              <Link href="/account" className="flex-1 px-6 py-3 border border-[#603e39] text-[#ebbbb4]/60 font-mono text-[12px] tracking-widest uppercase hover:border-primary hover:text-primary transition-all text-center">
-                View Orders
+      <>
+        <Header />
+        <main className="min-h-screen bg-[#131313] cyber-grid flex flex-col items-center justify-center px-4">
+          <div className="glass-panel max-w-md w-full p-10 flex flex-col items-center text-center gap-6 animate-fade-up">
+            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-[32px]">check_circle</span>
+            </div>
+            <div>
+              <p className="font-mono text-[11px] tracking-widest text-primary mb-2">ORDER_RECEIVED</p>
+              <h2 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Pre-Order Sent!</h2>
+              <p className="font-mono text-[13px] text-[#ebbbb4]/60 mt-3 leading-relaxed">
+                We received your pre-order, {contact.name}. We&apos;ll reach out to you via{" "}
+                <span className="text-primary">{contact.email || contact.phone}</span> to confirm the details.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <Link href="/" className="flex-1 px-6 py-3 bg-primary text-white font-mono text-[12px] tracking-widest uppercase hover:brightness-110 transition-all text-center">
+                Back to Home
               </Link>
-            )}
+              {userEmail && (
+                <Link href="/account" className="flex-1 px-6 py-3 border border-[#603e39] text-[#ebbbb4]/60 font-mono text-[12px] tracking-widest uppercase hover:border-primary hover:text-primary transition-all text-center">
+                  View Orders
+                </Link>
+              )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+        <Footer />
+      </>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#131313] cyber-grid pb-24">
-      {/* Header */}
-      <div className="border-b border-[#603e39]/30 px-4 md:px-16 py-5 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-[#e2e2e2]/60 hover:text-primary transition-colors font-mono text-[12px] tracking-widest uppercase">
-          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          Back
-        </Link>
-        <div className="flex items-center gap-4">
-          {userEmail ? (
-            <Link href="/account" className="font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors flex items-center gap-1">
-              <span className="material-symbols-outlined text-[13px]">account_circle</span>
-              My Account
-            </Link>
-          ) : (
-            <Link href="/auth/login" className="font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors flex items-center gap-1">
-              <span className="material-symbols-outlined text-[13px]">login</span>
-              Sign In
-            </Link>
-          )}
-          <span className="font-mono text-[11px] tracking-widest text-[#ebbbb4]/40 uppercase">xzvl.store</span>
-        </div>
-      </div>
-
+    <>
+      <Header />
+      <main className="min-h-screen bg-[#131313] cyber-grid pb-24">
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-14">
         {/* Page title */}
         <div className="mb-12 animate-fade-up">
@@ -674,6 +670,8 @@ export default function PreOrderPage() {
         <ProductDetailModal product={selectedProductDetail.product} qty={selectedProductDetail.qty}
           onClose={() => setSelectedProductDetail(null)} />
       )}
-    </main>
+      </main>
+      <Footer />
+    </>
   );
 }

@@ -15,6 +15,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
     name,
+    slug,
+    description,
     sku,
     price,
     sale_price,
@@ -50,6 +52,8 @@ export async function POST(req: NextRequest) {
     .insert({
       id,
       name,
+      slug: slug || null,
+      description: description || null,
       sku: sku || null,
       price: Number(price ?? 0),
       sale_price: sale_price ? Number(sale_price) : null,

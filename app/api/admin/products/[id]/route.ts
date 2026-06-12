@@ -10,6 +10,8 @@ export async function PATCH(
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
   if (body.name !== undefined) updates.name = body.name;
+  if (body.slug !== undefined) updates.slug = body.slug || null;
+  if (body.description !== undefined) updates.description = body.description || null;
   if (body.sku !== undefined) updates.sku = body.sku || null;
   if (body.price !== undefined) updates.price = Number(body.price);
   if (body.sale_price !== undefined) updates.sale_price = body.sale_price ? Number(body.sale_price) : null;

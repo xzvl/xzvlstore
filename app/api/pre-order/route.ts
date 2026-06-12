@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
-type OrderItem = { product: string; qty: number; subtotal: number };
+type OrderItem = { product_id?: string; product: string; qty: number; unit_price?: number; subtotal: number };
 
 // ─── Google Sheets via Apps Script ───────────────────────────────────────────
 
@@ -106,13 +106,18 @@ function buildEmailHtml(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, location, phone, email, items, estimatedTotal } = body as {
+    const { name, location, phone, email, items, estimatedTotal, payment_method, status, customer_id, billing, shipping } = body as {
       name: string;
       location: string;
       phone: string;
       email: string;
       items: OrderItem[];
       estimatedTotal: number;
+      payment_method?: string;
+      status?: string;
+      customer_id?: string;
+      billing?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
+      shipping?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
     };
 
     if (!name || !location || !phone || !email || !items?.length) {
@@ -144,9 +149,25 @@ export async function POST(req: NextRequest) {
       }),
       supabase.from("orders").insert({
         name, email, phone, location,
-        status: "pending",
+        status: status || "pre-order",
         estimated_total: estimatedTotal,
         items,
+        payment_method: payment_method || null,
+        customer_id: customer_id || null,
+        billing_address_1: billing?.address_1 || "",
+        billing_address_2: billing?.address_2 || "",
+        billing_city: billing?.city || "",
+        billing_state: billing?.state || "",
+        billing_postcode: billing?.postcode || "",
+        billing_region: billing?.region || "",
+        billing_phone: phone || "",
+        shipping_address_1: shipping?.address_1 || "",
+        shipping_address_2: shipping?.address_2 || "",
+        shipping_city: shipping?.city || "",
+        shipping_state: shipping?.state || "",
+        shipping_postcode: shipping?.postcode || "",
+        shipping_region: shipping?.region || "",
+        shipping_phone: phone || "",
       }),
     ]);
 
