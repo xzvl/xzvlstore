@@ -240,7 +240,7 @@ function OrderSummary({ rows, onProductClick, products }: {
             <div onClick={() => onProductClick(p, row.qty)}
               className="flex items-center gap-4 p-4 cursor-pointer hover:border-primary transition-colors">
               <div className="flex-shrink-0 w-[60px] h-[60px] relative border border-[#603e39]/30 overflow-hidden">
-                <Image src={p.image} alt={p.name} fill className="object-cover" unoptimized />
+                <Image src={p.image} alt={p.name} fill sizes="60px" className="object-cover" unoptimized />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-inter font-bold text-[14px] text-[#e2e2e2] leading-tight">
@@ -310,7 +310,7 @@ function ProductDetailModal({ product, qty, onClose }: { product: Product; qty: 
           {/* Mobile */}
           <div className="sm:hidden p-6 space-y-6">
             <div className="w-full aspect-square relative border border-[#603e39]/30 overflow-hidden">
-              <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
+              <Image src={product.image} alt={product.name} fill sizes="calc(100vw - 48px)" className="object-cover" unoptimized />
             </div>
             <div className="space-y-4">
               <div>
@@ -338,7 +338,7 @@ function ProductDetailModal({ product, qty, onClose }: { product: Product; qty: 
           <div className="hidden sm:grid grid-cols-2 gap-8 p-8 h-full">
             <div className="flex items-center justify-center">
               <div className="w-full aspect-square relative border border-[#603e39]/30 overflow-hidden">
-                <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
+                <Image src={product.image} alt={product.name} fill sizes="400px" className="object-cover" unoptimized />
               </div>
             </div>
             <div className="flex flex-col justify-between">

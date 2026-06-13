@@ -76,6 +76,7 @@ export default function HeroSlider() {
               src={s.image}
               alt={s.heading}
               fill
+              sizes="60vw"
               className="object-contain object-center"
               priority={i === 0}
             />

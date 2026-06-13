@@ -247,6 +247,7 @@ function ProductImages({ images, name }: { images: string[]; name: string }) {
           src={main}
           alt={name}
           fill
+          sizes="(max-width: 768px) 100vw, 50vw"
           className="object-contain p-6"
           unoptimized
           priority

@@ -55,7 +55,7 @@ function ImageUploader({
       >
         {value ? (
           <>
-            <Image src={value} alt={label} fill className="object-cover" unoptimized />
+            <Image src={value} alt={label} fill sizes="200px" className="object-cover" unoptimized />
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <span className="material-symbols-outlined text-white text-[20px]">upload</span>
               <span className="font-mono text-white text-[11px] uppercase tracking-wider">
@@ -151,7 +151,7 @@ function GalleryUploader({
       <div className="flex flex-wrap gap-2">
         {values.map((url, i) => (
           <div key={i} className="relative w-16 h-16 bg-[#0e0e0e] border border-[#603e39]/40 overflow-hidden group">
-            <Image src={url} alt="" fill className="object-cover" unoptimized />
+            <Image src={url} alt="" fill sizes="64px" className="object-cover" unoptimized />
             <button
               type="button"
               onClick={() => remove(i)}
@@ -573,7 +573,7 @@ export default function AdminProductsPage() {
                   {/* Left: image */}
                   <div className="relative w-16 h-16 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
                     {thumb(p) ? (
-                      <Image src={thumb(p)!} alt={p.name} fill className="object-cover" unoptimized />
+                      <Image src={thumb(p)!} alt={p.name} fill sizes="64px" className="object-cover" unoptimized />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <span className="material-symbols-outlined text-[20px] text-[#ebbbb4]/20">image</span>
@@ -686,7 +686,7 @@ export default function AdminProductsPage() {
                       <td className="px-3 py-3">
                         <div className="w-10 h-10 relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
                           {thumb(p) ? (
-                            <Image src={thumb(p)!} alt={p.name} fill className="object-cover" unoptimized />
+                            <Image src={thumb(p)!} alt={p.name} fill sizes="40px" className="object-cover" unoptimized />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/20">image</span>

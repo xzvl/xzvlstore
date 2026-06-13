@@ -195,7 +195,7 @@ export default async function HomePage() {
 
                 {/* Series image — fixed 70% height, width expands 50%→70% on hover */}
                 <div className="absolute top-0 left-0 w-[70%] h-full group-hover:w-[80%] transition-all duration-500 overflow-hidden">
-                  <Image src={s.image} alt={s.label} fill className="object-cover object-right opacity-30 group-hover:opacity-50 transition-opacity duration-500 mix-blend-luminosity" unoptimized />
+                  <Image src={s.image} alt={s.label} fill sizes="(max-width: 768px) 35vw, 18vw" className="object-cover object-right opacity-30 group-hover:opacity-50 transition-opacity duration-500 mix-blend-luminosity" unoptimized />
                 </div>
 
                 <div className="relative p-5 flex flex-col justify-end h-full">
