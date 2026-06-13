@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 const slides = [
@@ -8,10 +9,11 @@ const slides = [
     tag: "XZVL.STORE // 2026",
     heading: "Beyblade X",
     subheading: "The Next Generation",
-    body: "Discover the latest Beyblade X releases. Authentic Japanese products from Takara Tomy and Hasbro, delivered to your door across the Philippines.",
+    body: "Discover the Beyblade X. Authentic products from Takara Tomy and Hasbro, delivered to your door across the Philippines.",
     cta: "Shop Now",
     href: "/collection/new-releases",
     accent: "#ed0d11",
+    image: "/assets/shop-v2.webp",
   },
   {
     tag: "EXCLUSIVE // PRE-ORDER",
@@ -21,6 +23,7 @@ const slides = [
     cta: "Pre-Order Now",
     href: "/pre-order",
     accent: "#ed0d11",
+    image: "/assets/new-releases-v2.webp",
   },
   {
     tag: "PREMIUM // COLLECTION",
@@ -30,6 +33,7 @@ const slides = [
     cta: "Browse Collection",
     href: "/collection/takara-tomy",
     accent: "#ed0d11",
+    image: "/assets/takara-tomy-v2.webp",
   },
 ];
 
@@ -60,6 +64,27 @@ export default function HeroSlider() {
 
   return (
     <section className="relative overflow-hidden bg-[#0e0e0e] cyber-grid" style={{ minHeight: "88vh" }}>
+      {/* Right side background image */}
+      <div className="absolute inset-y-0 right-0 hidden md:block w-[60%] pointer-events-none">
+        {slides.map((s, i) => (
+          <div
+            key={i}
+            className="absolute inset-[7.5%] transition-opacity duration-700"
+            style={{ opacity: i === current ? 1 : 0 }}
+          >
+            <Image
+              src={s.image}
+              alt={s.heading}
+              fill
+              className="object-contain object-center"
+              priority={i === 0}
+            />
+          </div>
+        ))}
+        {/* Gradient fade to left so image blends into dark bg */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0e0e0e] via-[#0e0e0e]/40 to-transparent" />
+      </div>
+
       {/* Background glow */}
       <div
         className="absolute left-1/3 top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none blur-[160px] transition-opacity duration-700"
@@ -70,6 +95,7 @@ export default function HeroSlider() {
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary" />
 
       <div className="relative max-w-[1440px] mx-auto px-6 md:px-20 flex items-center" style={{ minHeight: "88vh" }}>
+        {/* Left: text content */}
         <div
           key={current}
           className="animate-fade-up max-w-2xl"
