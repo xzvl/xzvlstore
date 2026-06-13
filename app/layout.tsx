@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   },
   description: "xzvl.store",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/assets/favicon.webp",
   },
 };
 
