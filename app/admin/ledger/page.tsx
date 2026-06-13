@@ -238,7 +238,69 @@ export default function LedgerPage() {
           <p className="font-mono text-[12px] text-[#ebbbb4]/30">No entries for this period.</p>
         </div>
       ) : (
-        <div className="bg-[#1a1a1a] border border-[#603e39]/20 overflow-x-auto">
+        <>
+          {/* ── Mobile cards (hidden on md+) ── */}
+          <div className="md:hidden space-y-2">
+            {filtered.map(entry => (
+              <div key={entry.id} className="bg-[#1a1a1a] border border-[#603e39]/20">
+                <div className="px-4 py-3 space-y-1">
+                  {/* Row 1: title */}
+                  <p className="font-inter font-semibold text-[13px] text-[#e2e2e2] truncate">{entry.title}</p>
+
+                  {/* Row 2: source | date and time */}
+                  <p className="font-mono text-[11px] text-[#ebbbb4]/40 flex items-center gap-1.5">
+                    <span>{entry.source || "—"}</span>
+                    <span className="text-[#603e39]/60">|</span>
+                    <span>{formatDate(entry.entry_date)}</span>
+                  </p>
+
+                  {/* Row 3: type | amount | pencil | trash */}
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <span className={`inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-widest border px-1.5 py-px ${
+                      entry.type === "incoming"
+                        ? "text-green-400 border-green-400/30 bg-green-400/10"
+                        : "text-red-400 border-red-400/30 bg-red-400/10"
+                    }`}>
+                      <span className="material-symbols-outlined text-[10px]">
+                        {entry.type === "incoming" ? "arrow_downward" : "arrow_upward"}
+                      </span>
+                      {entry.type}
+                    </span>
+                    <span className="text-[#603e39]/60 font-mono text-[11px]">|</span>
+                    <span className={`font-mono font-bold text-[13px] ${entry.type === "incoming" ? "text-green-400" : "text-red-400"}`}>
+                      {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString()}
+                    </span>
+                    <span className="flex-1" />
+                    <button onClick={() => openEdit(entry)} className="text-[#ebbbb4]/30 hover:text-primary transition-colors" title="Edit">
+                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                    </button>
+                    <button onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)} className="text-[#ebbbb4]/30 hover:text-red-400 transition-colors" title="Delete">
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Delete confirmation */}
+                {confirmId === entry.id && (
+                  <div className="border-t border-red-900/30 bg-[#1f1212] px-4 py-3">
+                    <p className="font-mono text-[11px] text-red-300 mb-2">
+                      Delete <span className="text-white">{entry.title}</span>? Cannot be undone.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors">Cancel</button>
+                      <button onClick={() => handleDelete(entry.id)} disabled={deletingId === entry.id} className="flex items-center gap-1.5 px-3 py-1 bg-red-600/20 border border-red-600/50 text-red-400 font-mono text-[11px] uppercase tracking-widest hover:bg-red-600/30 transition-colors disabled:opacity-50">
+                        {deletingId === entry.id ? <span className="material-symbols-outlined animate-spin text-[13px]">progress_activity</span> : <span className="material-symbols-outlined text-[13px]">delete</span>}
+                        {deletingId === entry.id ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* ── Desktop table (hidden below md) ── */}
+          <div className="hidden md:block bg-[#1a1a1a] border border-[#603e39]/20 overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-[#603e39]/20">
@@ -330,7 +392,8 @@ export default function LedgerPage() {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
 
       {/* Modal */}

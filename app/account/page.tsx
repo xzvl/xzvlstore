@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase-client";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import type { Order } from "@/lib/supabase";
 
 type Tab = "info" | "billing" | "shipping" | "orders";
@@ -148,39 +149,33 @@ export default function AccountPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0e0e0e]">
-      {/* Nav */}
-      <header className="border-b border-[#603e39]/30 bg-[#131313] px-4 md:px-8 py-3 flex items-center justify-between">
-        <Link href="/" className="font-mono text-[11px] tracking-[0.2em] text-primary uppercase">xzvl.store</Link>
-        <div className="flex items-center gap-4">
-          <span className="font-mono text-[11px] text-[#ebbbb4]/50">
-            {profile.first_name || profile.email}
-          </span>
+    <div className="min-h-screen bg-[#0e0e0e] flex flex-col">
+      <Header />
+
+      <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-1">Account</p>
+            <h1 className="font-inter font-black text-[26px] uppercase text-[#e2e2e2]">
+              {profile.first_name ? `${profile.first_name} ${profile.last_name}`.trim() : "My Account"}
+            </h1>
+          </div>
           <button
             onClick={signOut}
-            className="font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors flex items-center gap-1"
+            className="font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors flex items-center gap-1 flex-shrink-0 mt-1"
           >
             <span className="material-symbols-outlined text-[14px]">logout</span>
             Sign Out
           </button>
         </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        <div>
-          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-1">Account</p>
-          <h1 className="font-inter font-black text-[26px] uppercase text-[#e2e2e2]">
-            {profile.first_name ? `${profile.first_name} ${profile.last_name}`.trim() : "My Account"}
-          </h1>
-        </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 border-b border-[#603e39]/30">
+        <div className="flex items-center gap-1 border-b border-[#603e39]/30 overflow-x-auto">
           {TABS.map(t => (
             <button
               key={t.value}
               onClick={() => setTab(t.value)}
-              className={`flex items-center gap-1.5 px-4 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors border-b-2 -mb-px ${
+              className={`flex items-center gap-1.5 px-4 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                 tab === t.value ? "text-primary border-primary" : "text-[#ebbbb4]/40 border-transparent hover:text-[#e2e2e2]"
               }`}
             >
@@ -369,6 +364,8 @@ export default function AccountPage() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

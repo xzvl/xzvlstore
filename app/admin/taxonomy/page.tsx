@@ -157,69 +157,75 @@ export default function AdminTaxonomyPage() {
           <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
           Loading…
         </div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-12 font-mono text-[12px] text-[#ebbbb4]/30">
+          No {activeTab.label.toLowerCase()} yet. Add one above.
+        </div>
       ) : (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-[#603e39]/40">
-              {["Name", "Slug", "Description", "Date", ""].map((h) => (
-                <th
-                  key={h}
-                  className="text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center py-12 font-mono text-[12px] text-[#ebbbb4]/30">
-                  No {activeTab.label.toLowerCase()} yet. Add one above.
-                </td>
+        <>
+          {/* ── Mobile cards (hidden on md+) ── */}
+          <div className="md:hidden space-y-2">
+            {items.map((item) => (
+              <div key={item.id} className="bg-[#1a1a1a] border border-[#603e39]/20 px-4 py-3 space-y-1">
+                {/* Row 1: name */}
+                <p className="font-inter font-bold text-[13px] text-[#e2e2e2]">{item.name}</p>
+
+                {/* Row 2: slug | date */}
+                <p className="font-mono text-[11px] text-[#ebbbb4]/40 flex items-center gap-1.5">
+                  <span className="truncate">{item.slug}</span>
+                  <span className="text-[#603e39]/60 flex-shrink-0">|</span>
+                  <span className="flex-shrink-0">{formatDate(item.created_at)}</span>
+                </p>
+
+                {/* Row 3: description | pencil | trash */}
+                <div className="flex items-center gap-2">
+                  <p className="font-mono text-[11px] text-[#ebbbb4]/30 flex-1 truncate">
+                    {item.description || "—"}
+                  </p>
+                  <button onClick={() => openEdit(item)} className="text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0" title="Edit">
+                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                  </button>
+                  <button onClick={() => handleDelete(item.id)} disabled={deleting === item.id} className="text-[#ebbbb4]/30 hover:text-red-500 transition-colors flex-shrink-0 disabled:opacity-40" title="Delete">
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Desktop table (hidden below md) ── */}
+          <table className="hidden md:table w-full border-collapse">
+            <thead>
+              <tr className="border-b border-[#603e39]/40">
+                {["Name", "Slug", "Description", "Date", ""].map((h) => (
+                  <th key={h} className="text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3">
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ) : (
-              items.map((item) => (
-                <tr
-                  key={item.id}
-                  className="border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors"
-                >
-                  <td className="px-3 py-3 font-inter font-bold text-[13px] text-[#e2e2e2]">
-                    {item.name}
-                  </td>
-                  <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/50">
-                    {item.slug}
-                  </td>
-                  <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/40 max-w-[240px] truncate">
-                    {item.description ?? <span className="text-[#ebbbb4]/20">—</span>}
-                  </td>
-                  <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/30 whitespace-nowrap">
-                    {formatDate(item.created_at)}
-                  </td>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id} className="border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors">
+                  <td className="px-3 py-3 font-inter font-bold text-[13px] text-[#e2e2e2]">{item.name}</td>
+                  <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/50">{item.slug}</td>
+                  <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/40 max-w-[240px] truncate">{item.description ?? <span className="text-[#ebbbb4]/20">—</span>}</td>
+                  <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/30 whitespace-nowrap">{formatDate(item.created_at)}</td>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => openEdit(item)}
-                        className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors"
-                        title="Edit"
-                      >
+                      <button onClick={() => openEdit(item)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Edit">
                         <span className="material-symbols-outlined text-[13px]">edit</span>
                       </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        disabled={deleting === item.id}
-                        className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40"
-                        title="Delete"
-                      >
+                      <button onClick={() => handleDelete(item.id)} disabled={deleting === item.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
                         <span className="material-symbols-outlined text-[13px]">delete</span>
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
 
       {/* Modal */}

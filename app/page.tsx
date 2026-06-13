@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import type { StoreProduct } from "@/lib/store-types";
 import Header from "@/components/Header";
@@ -6,6 +7,7 @@ import Footer from "@/components/Footer";
 import HeroSlider from "@/components/HeroSlider";
 import ProductCard from "@/components/ProductCard";
 import PreOrderCarousel from "@/components/PreOrderCarousel";
+import MobileProductCarousel from "@/components/MobileProductCarousel";
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
 
@@ -122,11 +124,15 @@ function SectionHeader({
 function ProductGrid({ products }: { products: StoreProduct[] }) {
   if (products.length === 0) return null;
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-      {products.map((p) => (
-        <ProductCard key={p.id} product={p} />
-      ))}
-    </div>
+    <>
+      <MobileProductCarousel products={products} />
+      {/* Desktop: grid */}
+      <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {products.map((p) => (
+          <ProductCard key={p.id} product={p} />
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -174,10 +180,10 @@ export default async function HomePage() {
           <SectionHeader tag="// Browse Series" title="Shop by Series" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { slug: "bx", label: "BX Series", sub: "Basic Line", color: "from-[#0369a1]/20" },
-              { slug: "ux", label: "UX Series", sub: "Unique Line", color: "from-[#ca8a04]/20" },
-              { slug: "cx", label: "CX Series", sub: "Custom Line", color: "from-[#ed0d11]/20" },
-              { slug: "collabs", label: "Collabs", sub: "Special Editions", color: "from-[#7c3aed]/20" },
+              { slug: "bx", label: "BX Series", sub: "Basic Line", color: "from-[#0369a1]/20", image: "/assets/bx.webp" },
+              { slug: "ux", label: "UX Series", sub: "Unique Line", color: "from-[#ca8a04]/20", image: "/assets/ux.webp" },
+              { slug: "cx", label: "CX Series", sub: "Custom Line", color: "from-[#ed0d11]/20", image: "/assets/cx.webp" },
+              { slug: "collabs", label: "Collabs", sub: "Special Editions", color: "from-[#7c3aed]/20", image: "/assets/collabs.webp" },
             ].map((s) => (
               <Link
                 key={s.slug}
@@ -186,6 +192,12 @@ export default async function HomePage() {
                 style={{ aspectRatio: "3/4" }}
               >
                 <div className="absolute inset-0 cyber-grid opacity-30" />
+
+                {/* Series image — fixed 70% height, width expands 50%→70% on hover */}
+                <div className="absolute top-0 left-0 w-[70%] h-full group-hover:w-[80%] transition-all duration-500 overflow-hidden">
+                  <Image src={s.image} alt={s.label} fill className="object-cover object-right opacity-30 group-hover:opacity-50 transition-opacity duration-500 mix-blend-luminosity" unoptimized />
+                </div>
+
                 <div className="relative p-5 flex flex-col justify-end h-full">
                   <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-[#ebbbb4]/40 mb-1">
                     {s.sub}
@@ -353,7 +365,7 @@ export default async function HomePage() {
                 Pre-Order Now
               </Link>
               <Link
-                href="/collection/new-releases"
+                href="/collection/all"
                 className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-[#603e39]/60 text-[#e2e2e2]/60 font-mono text-[11px] tracking-[0.2em] uppercase hover:border-primary hover:text-primary transition-all"
               >
                 Browse Catalog

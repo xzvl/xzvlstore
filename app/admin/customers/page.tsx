@@ -113,7 +113,76 @@ export default function CustomersPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-[#1a1a1a] border border-[#603e39]/20 overflow-x-auto">
+        <>
+          {/* ── Mobile cards (hidden on md+) ── */}
+          <div className="md:hidden space-y-2">
+            {filtered.map(c => (
+              <div key={c.id} className="bg-[#1a1a1a] border border-[#603e39]/20">
+                <div className="flex gap-3 p-3">
+                  {/* Initial circle */}
+                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="font-mono text-[11px] text-primary font-bold">{initials(c)}</span>
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    {/* Row 1: Name | provider */}
+                    <div className="flex items-center gap-2">
+                      <p className="font-inter font-semibold text-[13px] text-[#e2e2e2] truncate">
+                        {[c.first_name, c.last_name].filter(Boolean).join(" ") || "—"}
+                      </p>
+                      <span className={`font-mono text-[9px] uppercase tracking-widest border px-1.5 py-px flex-shrink-0 ${PROVIDER_COLORS[c.auth_provider] ?? PROVIDER_COLORS.email}`}>
+                        {c.auth_provider}
+                      </span>
+                    </div>
+
+                    {/* Row 2: email | phone */}
+                    <p className="font-mono text-[11px] text-[#ebbbb4]/50 flex flex-wrap items-center gap-x-1.5">
+                      <span className="truncate">{c.email}</span>
+                      {c.billing_phone && (
+                        <>
+                          <span className="text-[#603e39]/60">|</span>
+                          <span className="flex-shrink-0">{c.billing_phone}</span>
+                        </>
+                      )}
+                    </p>
+
+                    {/* Row 3: location | pencil | trash */}
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-[11px] text-[#ebbbb4]/40 flex-1 truncate">
+                        {[c.billing_city, c.billing_state].filter(Boolean).join(", ") || "—"}
+                      </p>
+                      <Link href={`/admin/customers/${c.id}`} className="text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0" title="Edit">
+                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                      </Link>
+                      <button onClick={() => setConfirmId(confirmId === c.id ? null : c.id)} className="text-[#ebbbb4]/30 hover:text-red-400 transition-colors flex-shrink-0" title="Delete">
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delete confirmation */}
+                {confirmId === c.id && (
+                  <div className="border-t border-red-900/30 bg-[#1f1212] px-4 py-3">
+                    <p className="font-mono text-[11px] text-red-300 mb-2">
+                      Delete <span className="text-white">{[c.first_name, c.last_name].filter(Boolean).join(" ") || c.email}</span>? Cannot be undone.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors">Cancel</button>
+                      <button onClick={() => handleDelete(c.id)} disabled={deletingId === c.id} className="flex items-center gap-1.5 px-3 py-1 bg-red-600/20 border border-red-600/50 text-red-400 font-mono text-[11px] uppercase tracking-widest hover:bg-red-600/30 transition-colors disabled:opacity-50">
+                        {deletingId === c.id ? <span className="material-symbols-outlined animate-spin text-[13px]">progress_activity</span> : <span className="material-symbols-outlined text-[13px]">delete</span>}
+                        {deletingId === c.id ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* ── Desktop table (hidden below md) ── */}
+        <div className="hidden md:block bg-[#1a1a1a] border border-[#603e39]/20 overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-[#603e39]/20">
@@ -224,6 +293,7 @@ export default function CustomersPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

@@ -236,21 +236,32 @@ function OrderSummary({ rows, onProductClick, products }: {
         const p = products.find((x) => x.id === row.productId)!;
         const unitPrice = p.sale_price ?? p.price;
         return (
-          <div key={row.id} onClick={() => onProductClick(p, row.qty)}
-            className="flex items-center gap-4 glass-panel p-4 cursor-pointer hover:border-primary transition-colors">
-            <div className="flex-shrink-0 w-[60px] h-[60px] relative border border-[#603e39]/30 overflow-hidden">
-              <Image src={p.image} alt={p.name} fill className="object-cover" unoptimized />
+          <div key={row.id} className="glass-panel overflow-hidden">
+            <div onClick={() => onProductClick(p, row.qty)}
+              className="flex items-center gap-4 p-4 cursor-pointer hover:border-primary transition-colors">
+              <div className="flex-shrink-0 w-[60px] h-[60px] relative border border-[#603e39]/30 overflow-hidden">
+                <Image src={p.image} alt={p.name} fill className="object-cover" unoptimized />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-inter font-bold text-[14px] text-[#e2e2e2] leading-tight">
+                  {p.name}<span className="text-[#ebbbb4]/60 font-normal"> × {row.qty}</span>
+                </p>
+                <p className="font-mono text-[11px] text-[#ebbbb4]/50 mt-0.5">₱{unitPrice.toLocaleString()} each</p>
+              </div>
+              <div className="flex-shrink-0 text-right">
+                <p className="font-mono text-[13px] text-primary font-bold">₱{(unitPrice * row.qty).toLocaleString()}</p>
+                <p className="font-mono text-[10px] text-[#ebbbb4]/40">subtotal</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-inter font-bold text-[14px] text-[#e2e2e2] leading-tight">
-                {p.name}<span className="text-[#ebbbb4]/60 font-normal"> × {row.qty}</span>
-              </p>
-              <p className="font-mono text-[11px] text-[#ebbbb4]/50 mt-0.5">₱{unitPrice.toLocaleString()} each</p>
-            </div>
-            <div className="flex-shrink-0 text-right">
-              <p className="font-mono text-[13px] text-primary font-bold">₱{(unitPrice * row.qty).toLocaleString()}</p>
-              <p className="font-mono text-[10px] text-[#ebbbb4]/40">subtotal</p>
-            </div>
+            {p.pre_order_note && (
+              <div className="border-t border-[#603e39]/30 bg-orange-400/5 px-4 py-3">
+                <p className="font-mono text-[10px] tracking-widest uppercase text-orange-400/70 mb-1.5">Pre-Order Note</p>
+                <div
+                  className="font-mono text-[12px] text-[#ebbbb4]/70 leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-[#e2e2e2] [&_p]:mb-1"
+                  dangerouslySetInnerHTML={{ __html: p.pre_order_note }}
+                />
+              </div>
+            )}
           </div>
         );
       })}
@@ -378,6 +389,7 @@ export default function PreOrderPage() {
   const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedProducts, setSubmittedProducts] = useState<Product[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -389,9 +401,10 @@ export default function PreOrderPage() {
           setProducts(data);
           // Auto-select product from ?product=ID query param
           const params = new URLSearchParams(window.location.search);
-          const productId = params.get("product");
-          if (productId && data.some((p: Product) => p.id === productId)) {
-            setRows([{ id: uid(), productId, qty: 1 }]);
+          const productParam = params.get("product");
+          if (productParam) {
+            const match = data.find((p: Product) => (p.slug ?? p.id) === productParam);
+            if (match) setRows([{ id: uid(), productId: match.id, qty: 1 }]);
           }
         }
       })
@@ -465,6 +478,7 @@ export default function PreOrderPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to submit order.");
       }
+      setSubmittedProducts(filledRows.map((r) => preOrderProducts.find((p) => p.id === r.productId)!));
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -482,7 +496,7 @@ export default function PreOrderPage() {
             <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-[32px]">check_circle</span>
             </div>
-            <div>
+            <div className="w-full">
               <p className="font-mono text-[11px] tracking-widest text-primary mb-2">ORDER_RECEIVED</p>
               <h2 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Pre-Order Sent!</h2>
               <p className="font-mono text-[13px] text-[#ebbbb4]/60 mt-3 leading-relaxed">
@@ -490,6 +504,22 @@ export default function PreOrderPage() {
                 <span className="text-primary">{contact.email || contact.phone}</span> to confirm the details.
               </p>
             </div>
+
+            {/* Per-product pre-order notes */}
+            {submittedProducts.some((p) => p.pre_order_note) && (
+              <div className="w-full space-y-3">
+                {submittedProducts.filter((p) => p.pre_order_note).map((p) => (
+                  <div key={p.id} className="border border-orange-400/30 bg-orange-400/5 px-4 py-3 text-left">
+                    <p className="font-mono text-[10px] tracking-widest uppercase text-orange-400/70 mb-1">{p.name}</p>
+                    <div
+                      className="font-mono text-[12px] text-[#ebbbb4]/70 leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-[#e2e2e2] [&_p]:mb-1"
+                      dangerouslySetInnerHTML={{ __html: p.pre_order_note! }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3 w-full">
               <Link href="/" className="flex-1 px-6 py-3 bg-primary text-white font-mono text-[12px] tracking-widest uppercase hover:brightness-110 transition-all text-center">
                 Back to Home

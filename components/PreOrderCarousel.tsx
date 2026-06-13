@@ -11,6 +11,16 @@ const AUTO_MS = 5000;
 export default function PreOrderCarousel({ products }: { products: StoreProduct[] }) {
   const n = products.length;
 
+  // Responsive visible count: 1 on mobile, 3 on desktop
+  const [visible, setVisible] = useState(VISIBLE);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setVisible(mq.matches ? 1 : VISIBLE);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   // Build extended array: [last VISIBLE clones, ...real items, first VISIBLE clones]
   // This lets us slide past either end and snap back seamlessly.
   const ext = useMemo(
@@ -88,7 +98,7 @@ export default function PreOrderCarousel({ products }: { products: StoreProduct[
   // Track width = E cards * 33.33% container = (E/VISIBLE)*100% of container.
   // translateX is in % of TRACK width, so:
   //   -(pos / E) * 100% of track = -(pos / VISIBLE) * 100% of container (1 card = 33.33%).
-  const trackW = (E / VISIBLE) * 100;           // % of container
+  const trackW = (E / visible) * 100;            // % of container
   const cardW  = (1 / E) * 100;                 // % of track
   const tx     = -(pos / E) * 100;              // % of track
 
@@ -170,7 +180,7 @@ function CarouselCard({ product }: { product: StoreProduct }) {
   const img = product.social_image ?? product.image;
   return (
     <Link
-      href={`/pre-order?product=${product.id}`}
+      href={`/pre-order?product=${product.slug ?? product.id}`}
       className="group block relative overflow-hidden border border-[#603e39]/30 hover:border-primary/60 transition-all"
       style={{ aspectRatio: "3/3" }}
     >

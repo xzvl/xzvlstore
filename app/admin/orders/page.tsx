@@ -162,8 +162,74 @@ export default function AdminOrdersPage() {
         <div className="space-y-2">
           {orders.map((order) => (
             <div key={order.id} className="bg-[#1a1a1a] border border-[#603e39]/30 overflow-hidden">
+
+              {/* ── Mobile layout (hidden on md+) ── */}
+              <div className="md:hidden px-4 py-3">
+                {/* Row 1: #number Name / Location / Items */}
+                <div
+                  className="cursor-pointer hover:opacity-80 transition-opacity mb-2"
+                  onClick={() => setExpanded(expanded === order.id ? null : order.id)}
+                >
+                  <p className="font-inter font-bold text-[14px] text-[#e2e2e2] truncate">
+                    {order.order_number != null && (
+                      <span className="text-[#ebbbb4]/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
+                    )}
+                    {order.name}
+                  </p>
+                  <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-0.5">{formatDate(order.created_at)}</p>
+                  {order.location && (
+                    <p className="font-mono text-[11px] text-[#ebbbb4]/40 mt-0.5">{order.location}</p>
+                  )}
+                  {order.items.length > 0 && (
+                    <div className="mt-0.5">
+                      {order.items.map((it, i) => (
+                        <p key={i} className="font-mono text-[10px] text-[#ebbbb4]/30 truncate">
+                          {it.product} ×{it.qty}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Row 2: total · status badge · select · edit · delete */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-[13px] text-primary font-bold">
+                    ₱{order.estimated_total.toLocaleString()}
+                  </span>
+                  <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-[#ebbbb4]/40"}`}>
+                    {order.status}
+                  </span>
+                  <select
+                    value={order.status}
+                    onChange={(e) => updateStatus(order.id, e.target.value as OrderStatus)}
+                    disabled={updating === order.id}
+                    className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
+                  >
+                    {ALL_STATUSES.map(s => (
+                      <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                    ))}
+                  </select>
+                  <Link href={`/admin/orders/${order.id}`} className="text-[#ebbbb4]/40 hover:text-primary transition-colors" title="Edit order">
+                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                  </Link>
+                  {confirmDelete === order.id ? (
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50">
+                        {deleting === order.id ? "…" : "Yes"}
+                      </button>
+                      <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-[#ebbbb4]/40 border border-[#603e39]/40 px-2 py-1 hover:text-[#e2e2e2] transition-colors">No</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmDelete(order.id)} className="text-[#ebbbb4]/30 hover:text-primary transition-colors" title="Delete order">
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Desktop layout (hidden below md) ── */}
               <div
-                className="flex flex-wrap items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#222] transition-colors"
+                className="hidden md:flex flex-wrap items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#222] transition-colors"
                 onClick={() => setExpanded(expanded === order.id ? null : order.id)}
               >
                 <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/30 flex-shrink-0">
@@ -189,7 +255,7 @@ export default function AdminOrdersPage() {
                   )}
                 </div>
 
-                <div className="hidden md:block font-mono text-[11px] text-[#ebbbb4]/50 min-w-[140px]">
+                <div className="font-mono text-[11px] text-[#ebbbb4]/50 min-w-[140px]">
                   {formatDate(order.created_at)}
                 </div>
 
@@ -224,26 +290,13 @@ export default function AdminOrdersPage() {
 
                 {confirmDelete === order.id ? (
                   <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                    <button
-                      onClick={() => deleteOrder(order.id)}
-                      disabled={deleting === order.id}
-                      className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50"
-                    >
+                    <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50">
                       {deleting === order.id ? "…" : "Yes"}
                     </button>
-                    <button
-                      onClick={() => setConfirmDelete(null)}
-                      className="font-mono text-[10px] text-[#ebbbb4]/40 border border-[#603e39]/40 px-2 py-1 hover:text-[#e2e2e2] transition-colors"
-                    >
-                      No
-                    </button>
+                    <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-[#ebbbb4]/40 border border-[#603e39]/40 px-2 py-1 hover:text-[#e2e2e2] transition-colors">No</button>
                   </div>
                 ) : (
-                  <button
-                    onClick={e => { e.stopPropagation(); setConfirmDelete(order.id); }}
-                    className="text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0"
-                    title="Delete order"
-                  >
+                  <button onClick={e => { e.stopPropagation(); setConfirmDelete(order.id); }} className="text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0" title="Delete order">
                     <span className="material-symbols-outlined text-[16px]">delete</span>
                   </button>
                 )}

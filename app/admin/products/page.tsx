@@ -212,6 +212,7 @@ type FormState = {
   tag_ids: string[];
   status: "active" | "inactive";
   pre_order: boolean;
+  pre_order_note: string;
   main_image: string;
   gallery_images: string[];
   social_image: string;
@@ -231,6 +232,7 @@ const EMPTY_FORM: FormState = {
   tag_ids: [],
   status: "active",
   pre_order: false,
+  pre_order_note: "",
   main_image: "",
   gallery_images: [],
   social_image: "",
@@ -251,6 +253,7 @@ function productToForm(p: DbProduct): FormState {
     tag_ids: p.tag_ids ?? [],
     status: p.status,
     pre_order: p.pre_order ?? false,
+    pre_order_note: p.pre_order_note ?? "",
     main_image: p.main_image ?? p.image ?? "",
     gallery_images: p.gallery_images ?? [],
     social_image: p.social_image ?? "",
@@ -275,7 +278,7 @@ export default function AdminProductsPage() {
   const [reordering, setReordering] = useState<string | null>(null);
 
   // ── Filters & sort ──────────────────────────────────────────────────────────
-  const [stockFilter, setStockFilter] = useState<"all" | "in" | "out">("all");
+  const [stockFilter, setStockFilter] = useState<"all" | "in" | "out" | "preorder">("all");
   const [brandFilter, setBrandFilter] = useState("all");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
 
@@ -322,6 +325,7 @@ export default function AdminProductsPage() {
     let list = [...products];
     if (stockFilter === "in") list = list.filter((p) => p.stock > 0);
     else if (stockFilter === "out") list = list.filter((p) => p.stock === 0);
+    else if (stockFilter === "preorder") list = list.filter((p) => p.pre_order);
     if (brandFilter !== "all") list = list.filter((p) => p.brand_id === brandFilter);
     if (sort) {
       list.sort((a, b) => {
@@ -345,12 +349,6 @@ export default function AdminProductsPage() {
     return list;
   })();
 
-  const toggleSort = (key: SortKey) =>
-    setSort((prev) =>
-      prev?.key === key
-        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
-        : { key, dir: "asc" }
-    );
 
   // ── Save ────────────────────────────────────────────────────────────────────
   const handleSave = async () => {
@@ -445,20 +443,24 @@ export default function AdminProductsPage() {
     (form.sale_price ? Number(form.sale_price) : Number(form.price || 0)) -
     Number(form.cost || 0);
 
+  const thumb = (p: DbProduct) => p.main_image ?? (p.image || null);
+
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric", timeZone: "Asia/Manila" });
 
-  const thumb = (p: DbProduct) => p.main_image ?? (p.image || null);
-
   const thBase = "text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3 whitespace-nowrap";
+
+  const toggleSort = (key: SortKey) =>
+    setSort((prev) =>
+      prev?.key === key
+        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: "asc" }
+    );
 
   const SortTh = ({ label, sortKey }: { label: string; sortKey: SortKey }) => {
     const active = sort?.key === sortKey;
     return (
-      <th
-        onClick={() => toggleSort(sortKey)}
-        className={`${thBase} cursor-pointer hover:text-[#ebbbb4]/70 select-none transition-colors`}
-      >
+      <th onClick={() => toggleSort(sortKey)} className={`${thBase} cursor-pointer hover:text-[#ebbbb4]/70 select-none transition-colors`}>
         <span className="flex items-center gap-1">
           {label}
           <span className={`material-symbols-outlined text-[11px] transition-opacity ${active ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-50"}`}>
@@ -492,17 +494,24 @@ export default function AdminProductsPage() {
       <div className="flex items-center gap-3 flex-wrap">
         {/* Stock filter */}
         <div className="flex items-center gap-1">
-          {(["all", "in", "out"] as const).map((v) => (
+          {([
+            { v: "all", label: "All Stock" },
+            { v: "in", label: "In Stock" },
+            { v: "out", label: "Out of Stock" },
+            { v: "preorder", label: "Pre-Order" },
+          ] as const).map(({ v, label }) => (
             <button
               key={v}
               onClick={() => setStockFilter(v)}
               className={`px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase border transition-colors ${
                 stockFilter === v
-                  ? "border-primary bg-primary/10 text-primary"
+                  ? v === "preorder"
+                    ? "border-orange-400/60 bg-orange-400/10 text-orange-400"
+                    : "border-primary bg-primary/10 text-primary"
                   : "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70"
               }`}
             >
-              {v === "all" ? "All Stock" : v === "in" ? "In Stock" : "Out of Stock"}
+              {label}
             </button>
           ))}
         </div>
@@ -538,205 +547,210 @@ export default function AdminProductsPage() {
         </span>
       </div>
 
-      {/* Table */}
+      {/* Product list */}
       {loading ? (
         <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-10">
           <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
           Loading products…
         </div>
+      ) : displayed.length === 0 ? (
+        <div className="text-center py-12 font-mono text-[12px] text-[#ebbbb4]/30">
+          {isFiltered ? "No products match the current filters." : "No products yet."}
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[900px]">
-            <thead>
-              <tr className="border-b border-[#603e39]/40 group">
-                <th className={thBase}>Image</th>
-                <SortTh label="Name" sortKey="name" />
-                <SortTh label="SKU" sortKey="sku" />
-                <SortTh label="Stock" sortKey="stock" />
-                <th className={thBase}>Price</th>
-                <th className={thBase}>Cost</th>
-                <th className={thBase}>Profit</th>
-                <SortTh label="Brands" sortKey="brand" />
-                <th className={thBase}>Date</th>
-                <th className={thBase}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayed.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="text-center py-12 font-mono text-[12px] text-[#ebbbb4]/30">
-                    {isFiltered ? "No products match the current filters." : "No products yet."}
-                  </td>
+        <>
+          {/* ── Mobile cards (hidden on md+) ── */}
+          <div className="md:hidden space-y-2">
+            {displayed.map((p) => {
+              const posInFull = products.findIndex((x) => x.id === p.id);
+              return (
+                <div
+                  key={p.id}
+                  className={`flex gap-3 bg-[#1a1a1a] border border-[#603e39]/30 p-3 ${
+                    p.status === "inactive" ? "opacity-40" : ""
+                  }`}
+                >
+                  {/* Left: image */}
+                  <div className="relative w-16 h-16 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
+                    {thumb(p) ? (
+                      <Image src={thumb(p)!} alt={p.name} fill className="object-cover" unoptimized />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[20px] text-[#ebbbb4]/20">image</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: details */}
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    {/* Row 1: name + badges */}
+                    <div className="flex items-start gap-2 flex-wrap">
+                      <p className="font-inter font-bold text-[13px] text-[#e2e2e2] leading-tight truncate">
+                        {p.name}
+                      </p>
+                      {p.pre_order && (
+                        <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400 flex-shrink-0">
+                          pre-order
+                        </span>
+                      )}
+                      {p.status === "inactive" && (
+                        <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-[#ebbbb4]/20 bg-[#ebbbb4]/5 text-[#ebbbb4]/40 flex-shrink-0">
+                          inactive
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Row 2: brand | Stocks */}
+                    <p className="font-mono text-[11px] text-[#ebbbb4]/50">
+                      <span>{p.brand_id && brandMap[p.brand_id] ? brandMap[p.brand_id] : "—"}</span>
+                      <span className="mx-1.5 text-[#603e39]/60">|</span>
+                      <span>
+                        Stocks:{" "}
+                        <span className={`font-bold ${p.stock === 0 ? "text-primary" : p.stock <= 5 ? "text-yellow-400" : "text-green-400"}`}>
+                          {p.stock}
+                        </span>
+                      </span>
+                    </p>
+
+                    {/* Row 3: Price | Cost | Profit */}
+                    <p className="font-mono text-[11px] text-[#ebbbb4]/50 flex flex-wrap gap-x-3">
+                      <span>
+                        Price:{" "}
+                        <span className="text-[#e2e2e2] font-bold">
+                          ₱{(p.sale_price ?? p.price).toLocaleString()}
+                        </span>
+                        {p.sale_price && (
+                          <span className="line-through text-[#ebbbb4]/30 ml-1">₱{p.price.toLocaleString()}</span>
+                        )}
+                      </span>
+                      <span>
+                        Cost:{" "}
+                        <span className="text-[#e2e2e2]">
+                          {p.cost > 0 ? `₱${p.cost.toLocaleString()}` : "—"}
+                        </span>
+                      </span>
+                      <span>
+                        Profit:{" "}
+                        <span className={`font-bold ${profit(p) >= 0 ? "text-green-400" : "text-primary"}`}>
+                          {p.cost > 0 ? `₱${profit(p).toLocaleString()}` : "—"}
+                        </span>
+                      </span>
+                    </p>
+
+                    {/* Row 4: actions */}
+                    <div className="flex items-center gap-1.5 pt-0.5">
+                      <button onClick={() => moveProduct(p.id, "up")} disabled={isFiltered || posInFull === 0 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title="Move up">
+                        <span className="material-symbols-outlined text-[13px]">arrow_upward</span>
+                      </button>
+                      <button onClick={() => moveProduct(p.id, "down")} disabled={isFiltered || posInFull === products.length - 1 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title="Move down">
+                        <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
+                      </button>
+                      <button onClick={() => openEdit(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Edit">
+                        <span className="material-symbols-outlined text-[13px]">edit</span>
+                      </button>
+                      <button onClick={() => toggleStatus(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-blue-400 hover:text-blue-400 transition-colors" title={p.status === "active" ? "Disable" : "Enable"}>
+                        <span className="material-symbols-outlined text-[13px]">{p.status === "active" ? "visibility_off" : "visibility"}</span>
+                      </button>
+                      <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
+                        <span className="material-symbols-outlined text-[13px]">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Desktop table (hidden below md) ── */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full border-collapse min-w-[900px]">
+              <thead>
+                <tr className="border-b border-[#603e39]/40 group">
+                  <th className={thBase}>Image</th>
+                  <SortTh label="Name" sortKey="name" />
+                  <SortTh label="SKU" sortKey="sku" />
+                  <SortTh label="Stock" sortKey="stock" />
+                  <th className={thBase}>Price</th>
+                  <th className={thBase}>Cost</th>
+                  <th className={thBase}>Profit</th>
+                  <SortTh label="Brand" sortKey="brand" />
+                  <th className={thBase}>Date</th>
+                  <th className={thBase}></th>
                 </tr>
-              ) : (
-                displayed.map((p) => {
+              </thead>
+              <tbody>
+                {displayed.map((p) => {
                   const posInFull = products.findIndex((x) => x.id === p.id);
                   return (
-                    <tr
-                      key={p.id}
-                      className={`border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors ${
-                        p.status === "inactive" ? "opacity-40" : ""
-                      }`}
-                    >
-                      {/* Image */}
+                    <tr key={p.id} className={`border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors ${p.status === "inactive" ? "opacity-40" : ""}`}>
                       <td className="px-3 py-3">
                         <div className="w-10 h-10 relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
                           {thumb(p) ? (
                             <Image src={thumb(p)!} alt={p.name} fill className="object-cover" unoptimized />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/20">
-                                image
-                              </span>
+                              <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/20">image</span>
                             </div>
                           )}
                         </div>
                       </td>
-
-                      {/* Name */}
                       <td className="px-3 py-3">
-                        <p className="font-inter font-bold text-[13px] text-[#e2e2e2] leading-tight max-w-[180px] truncate">
-                          {p.name}
-                        </p>
+                        <p className="font-inter font-bold text-[13px] text-[#e2e2e2] leading-tight max-w-[180px] truncate">{p.name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="font-mono text-[10px] text-[#ebbbb4]/40">{p.id}</span>
-                          {p.pre_order && (
-                            <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400">
-                              pre-order
-                            </span>
-                          )}
-                          {p.status === "inactive" && (
-                            <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-[#ebbbb4]/20 bg-[#ebbbb4]/5 text-[#ebbbb4]/40">
-                              inactive
-                            </span>
-                          )}
+                          {p.pre_order && <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400">pre-order</span>}
+                          {p.status === "inactive" && <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-[#ebbbb4]/20 bg-[#ebbbb4]/5 text-[#ebbbb4]/40">inactive</span>}
                         </div>
                       </td>
-
-                      {/* SKU */}
-                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">
-                        {p.sku ?? <span className="text-[#ebbbb4]/20">—</span>}
-                      </td>
-
-                      {/* Stock */}
+                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">{p.sku ?? <span className="text-[#ebbbb4]/20">—</span>}</td>
                       <td className="px-3 py-3">
-                        <span
-                          className={`font-mono text-[12px] font-bold ${
-                            p.stock === 0
-                              ? "text-primary"
-                              : p.stock <= 5
-                              ? "text-yellow-400"
-                              : "text-green-400"
-                          }`}
-                        >
-                          {p.stock}
-                        </span>
+                        <span className={`font-mono text-[12px] font-bold ${p.stock === 0 ? "text-primary" : p.stock <= 5 ? "text-yellow-400" : "text-green-400"}`}>{p.stock}</span>
                       </td>
-
-                      {/* Price */}
                       <td className="px-3 py-3 whitespace-nowrap">
                         {p.sale_price ? (
                           <div className="flex flex-col leading-tight">
-                            <span className="font-mono text-[12px] font-bold text-primary">
-                              ₱{p.sale_price.toLocaleString()}
-                            </span>
-                            <span className="font-mono text-[10px] text-[#ebbbb4]/40 line-through">
-                              ₱{p.price.toLocaleString()}
-                            </span>
+                            <span className="font-mono text-[12px] font-bold text-primary">₱{p.sale_price.toLocaleString()}</span>
+                            <span className="font-mono text-[10px] text-[#ebbbb4]/40 line-through">₱{p.price.toLocaleString()}</span>
                           </div>
                         ) : (
-                          <span className="font-mono text-[12px] text-[#e2e2e2]">
-                            ₱{p.price.toLocaleString()}
-                          </span>
+                          <span className="font-mono text-[12px] text-[#e2e2e2]">₱{p.price.toLocaleString()}</span>
                         )}
                       </td>
-
-                      {/* Cost */}
-                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">
-                        {p.cost > 0 ? `₱${p.cost.toLocaleString()}` : <span className="text-[#ebbbb4]/20">—</span>}
-                      </td>
-
-                      {/* Profit */}
+                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">{p.cost > 0 ? `₱${p.cost.toLocaleString()}` : <span className="text-[#ebbbb4]/20">—</span>}</td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         {p.cost > 0 ? (
-                          <span
-                            className={`font-mono text-[12px] font-bold ${
-                              profit(p) >= 0 ? "text-green-400" : "text-primary"
-                            }`}
-                          >
-                            ₱{profit(p).toLocaleString()}
-                          </span>
+                          <span className={`font-mono text-[12px] font-bold ${profit(p) >= 0 ? "text-green-400" : "text-primary"}`}>₱{profit(p).toLocaleString()}</span>
                         ) : (
                           <span className="font-mono text-[12px] text-[#ebbbb4]/20">—</span>
                         )}
                       </td>
-
-                      {/* Brands */}
-                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 max-w-[120px] truncate">
-                        {p.brand_id && brandMap[p.brand_id]
-                          ? brandMap[p.brand_id]
-                          : <span className="text-[#ebbbb4]/20">—</span>}
-                      </td>
-
-                      {/* Date */}
-                      <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/40 whitespace-nowrap">
-                        {formatDate(p.created_at)}
-                      </td>
-
-                      {/* Actions */}
+                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 max-w-[120px] truncate">{p.brand_id && brandMap[p.brand_id] ? brandMap[p.brand_id] : <span className="text-[#ebbbb4]/20">—</span>}</td>
+                      <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/40 whitespace-nowrap">{formatDate(p.created_at)}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1.5">
-                          {/* Move up/down — only available when no filter/sort is active */}
-                          <button
-                            onClick={() => moveProduct(p.id, "up")}
-                            disabled={isFiltered || posInFull === 0 || reordering === p.id}
-                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
-                            title={isFiltered ? "Clear filters to reorder" : "Move up"}
-                          >
+                          <button onClick={() => moveProduct(p.id, "up")} disabled={isFiltered || posInFull === 0 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title={isFiltered ? "Clear filters to reorder" : "Move up"}>
                             <span className="material-symbols-outlined text-[13px]">arrow_upward</span>
                           </button>
-                          <button
-                            onClick={() => moveProduct(p.id, "down")}
-                            disabled={isFiltered || posInFull === products.length - 1 || reordering === p.id}
-                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
-                            title={isFiltered ? "Clear filters to reorder" : "Move down"}
-                          >
+                          <button onClick={() => moveProduct(p.id, "down")} disabled={isFiltered || posInFull === products.length - 1 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title={isFiltered ? "Clear filters to reorder" : "Move down"}>
                             <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
                           </button>
-
-                          <button
-                            onClick={() => openEdit(p)}
-                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors"
-                            title="Edit"
-                          >
+                          <button onClick={() => openEdit(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Edit">
                             <span className="material-symbols-outlined text-[13px]">edit</span>
                           </button>
-                          <button
-                            onClick={() => toggleStatus(p)}
-                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-blue-400 hover:text-blue-400 transition-colors"
-                            title={p.status === "active" ? "Disable" : "Enable"}
-                          >
-                            <span className="material-symbols-outlined text-[13px]">
-                              {p.status === "active" ? "visibility_off" : "visibility"}
-                            </span>
+                          <button onClick={() => toggleStatus(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-blue-400 hover:text-blue-400 transition-colors" title={p.status === "active" ? "Disable" : "Enable"}>
+                            <span className="material-symbols-outlined text-[13px]">{p.status === "active" ? "visibility_off" : "visibility"}</span>
                           </button>
-                          <button
-                            onClick={() => handleDelete(p.id)}
-                            disabled={deleting === p.id}
-                            className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40"
-                            title="Delete"
-                          >
+                          <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
                             <span className="material-symbols-outlined text-[13px]">delete</span>
                           </button>
                         </div>
                       </td>
                     </tr>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* ── Modal ── */}
@@ -1074,6 +1088,19 @@ export default function AdminProductsPage() {
                       </div>
                     </button>
                   </div>
+
+                  {/* Pre-Order Note — shown only when pre_order is active */}
+                  {form.pre_order && (
+                    <div className="col-span-2">
+                      <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-orange-400/70 mb-1.5">
+                        Pre-Order Note
+                      </label>
+                      <RichTextEditor
+                        value={form.pre_order_note}
+                        onChange={(html) => set$("pre_order_note", html)}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 

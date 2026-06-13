@@ -74,6 +74,7 @@ export type DbProduct = {
   gallery_images: string[];
   social_image: string | null;
   pre_order: boolean;
+  pre_order_note: string | null;
   status: "active" | "inactive";
   slug: string | null;
   description: string | null;

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 
 const navLinks = [
+  { href: "/collection/all", label: "All Products" },
   { href: "/collection/new-releases", label: "New Releases" },
   { href: "/collection/takara-tomy", label: "Takara Tomy" },
   { href: "/collection/hasbro", label: "Hasbro" },

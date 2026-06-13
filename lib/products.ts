@@ -1,9 +1,11 @@
 export type Product = {
   id: string;
+  slug?: string;
   name: string;
   price: number;
   sale_price?: number | null;
   pre_order?: boolean;
+  pre_order_note?: string | null;
   image: string;
   status: "active" | "inactive";
 };

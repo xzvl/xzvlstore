@@ -173,7 +173,7 @@ export default async function ProductPage({
               {/* Pre-order shortcut */}
               {product.pre_order && (
                 <Link
-                  href={`/pre-order?product=${product.id}`}
+                  href={`/pre-order?product=${product.slug ?? product.id}`}
                   className="flex items-center justify-center gap-2 w-full py-3 border border-[#603e39]/50 font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2]/50 hover:border-primary hover:text-primary transition-all"
                 >
                   <span className="material-symbols-outlined text-[16px]">schedule</span>

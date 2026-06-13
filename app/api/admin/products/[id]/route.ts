@@ -20,6 +20,7 @@ export async function PATCH(
   if (body.brands !== undefined) updates.brands = body.brands || null;
   if (body.status !== undefined) updates.status = body.status;
   if (body.pre_order !== undefined) updates.pre_order = Boolean(body.pre_order);
+  if (body.pre_order_note !== undefined) updates.pre_order_note = body.pre_order_note || null;
   if (body.brand_id !== undefined) updates.brand_id = body.brand_id || null;
   if (body.category_ids !== undefined) updates.category_ids = body.category_ids;
   if (body.tag_ids !== undefined) updates.tag_ids = body.tag_ids;

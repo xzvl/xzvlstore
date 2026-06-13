@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
     brands,
     status = "active",
     pre_order = false,
+    pre_order_note,
     brand_id,
     category_ids,
     tag_ids,
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
       category_ids: category_ids ?? [],
       tag_ids: tag_ids ?? [],
       pre_order: Boolean(pre_order),
+      pre_order_note: pre_order_note || null,
       status,
       sort_order,
     })

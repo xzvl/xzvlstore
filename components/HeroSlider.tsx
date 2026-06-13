@@ -11,7 +11,7 @@ const slides = [
     subheading: "The Next Generation",
     body: "Discover the Beyblade X. Authentic products from Takara Tomy and Hasbro, delivered to your door across the Philippines.",
     cta: "Shop Now",
-    href: "/collection/new-releases",
+    href: "/collection/all",
     accent: "#ed0d11",
     image: "/assets/shop-v2.webp",
   },
