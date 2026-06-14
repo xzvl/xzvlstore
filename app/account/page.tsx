@@ -48,6 +48,7 @@ export default function AccountPage() {
   const [saveMsg, setSaveMsg] = useState("");
   const [saveError, setSaveError] = useState("");
   const [token, setToken] = useState("");
+  const [emailVerified, setEmailVerified] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -60,6 +61,7 @@ export default function AccountPage() {
       if (!data.session) { router.replace("/auth/login"); return; }
       const t = data.session.access_token;
       setToken(t);
+      setEmailVerified(!!data.session.user.email_confirmed_at);
       const [profileRes, ordersRes] = await Promise.all([
         fetch("/api/account/profile", { headers: { Authorization: `Bearer ${t}` } }),
         fetch("/api/account/orders", { headers: { Authorization: `Bearer ${t}` } }),
@@ -168,6 +170,19 @@ export default function AccountPage() {
             Sign Out
           </button>
         </div>
+
+        {/* Email verification banner */}
+        {!emailVerified && (
+          <div className="flex items-start gap-3 border border-yellow-400/30 bg-yellow-400/5 px-4 py-3">
+            <span className="material-symbols-outlined text-yellow-400 text-[18px] flex-shrink-0 mt-0.5">mark_email_unread</span>
+            <div>
+              <p className="font-mono text-[11px] text-yellow-400 tracking-wide">Verify your email address</p>
+              <p className="font-mono text-[10px] text-[#ebbbb4]/50 mt-0.5 leading-relaxed">
+                Check your inbox and click the confirmation link to activate all account features.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex items-center gap-1 border-b border-[#603e39]/30 overflow-x-auto">
@@ -340,6 +355,14 @@ export default function AccountPage() {
                         <span className="text-[#ebbbb4]/50">Total</span>
                         <span className="text-primary font-bold">₱{order.estimated_total.toLocaleString()}</span>
                       </div>
+                      {order.notes?.length > 0 && (
+                        <div className="pt-2 border-t border-[#603e39]/20 space-y-1.5">
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-[#ebbbb4]/40">Notes</p>
+                          {order.notes.map((note, i) => (
+                            <p key={i} className="font-mono text-[11px] text-[#ebbbb4]/60 leading-relaxed">{note}</p>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

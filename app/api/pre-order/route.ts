@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabase } from "@/lib/supabase";
+import { adjustStock } from "@/lib/stock";
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
@@ -189,6 +190,14 @@ export async function POST(req: NextRequest) {
       // Still return 200 so the user sees the success screen,
       // but include debug info visible in Vercel Function logs.
       console.error("[pre-order] Integration errors:", errors);
+    }
+
+    // Reduce stock for each item
+    if (dbResult.status === "fulfilled") {
+      await adjustStock(
+        items.map((it) => ({ product_id: it.product_id ?? null, qty: it.qty })),
+        -1
+      );
     }
 
     return NextResponse.json({ success: true, errors }, { status: 200 });

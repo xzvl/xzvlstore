@@ -153,6 +153,7 @@ ALTER TABLE taxonomy DISABLE ROW LEVEL SECURITY;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount numeric NOT NULL DEFAULT 0;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_method text;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method text;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes text[] NOT NULL DEFAULT '{}';
 
 -- ─── If taxonomy table is new, just run the CREATE TABLE above ───────────────
 

@@ -66,19 +66,31 @@ type FormState = {
   shipping_region: string;
   shipping_phone: string;
   items: ItemRow[];
+  notes: string[];
 };
 
 const EMPTY_ITEM: ItemRow = { product_id: "", product: "", qty: "1", unit_price: "", subtotal: "" };
 
+// Returns current time in Asia/Manila as a datetime-local string (YYYY-MM-DDTHH:mm)
+function nowPH(): string {
+  return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 16);
+}
+
+// Converts a UTC ISO string to a datetime-local string in PH time
+function toPHLocal(iso: string): string {
+  return new Date(new Date(iso).getTime() + 8 * 3600 * 1000).toISOString().slice(0, 16);
+}
+
 const EMPTY_FORM: FormState = {
   customer_id: "", name: "", email: "", phone: "", location: "",
-  status: "pending", order_date: new Date().toISOString().slice(0, 16),
+  status: "pending", order_date: nowPH(),
   delivery_method: "", payment_method: "", discount: "",
   billing_address_1: "", billing_address_2: "", billing_city: "", billing_state: "",
   billing_postcode: "", billing_region: "Philippines", billing_phone: "",
   shipping_address_1: "", shipping_address_2: "", shipping_city: "", shipping_state: "",
   shipping_postcode: "", shipping_region: "Philippines", shipping_phone: "",
   items: [{ ...EMPTY_ITEM }],
+  notes: [],
 };
 
 const INPUT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
@@ -384,7 +396,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             phone: order.phone ?? "",
             location: order.location ?? "",
             status: order.status ?? "pending",
-            order_date: order.created_at ? new Date(order.created_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+            order_date: order.created_at ? toPHLocal(order.created_at) : nowPH(),
             delivery_method: order.delivery_method ?? "",
             payment_method: order.payment_method ?? "",
             discount: order.discount ? String(order.discount) : "",
@@ -409,6 +421,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
               unit_price: String(it.unit_price ?? 0),
               subtotal: String(it.subtotal ?? 0),
             })),
+            notes: Array.isArray(order.notes) ? order.notes : [],
           });
           setLoading(false);
         });
@@ -507,7 +520,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         customer_id: form.customer_id || null,
         name: form.name, email: form.email, phone: form.phone, location: form.location,
         status: form.status,
-        created_at: form.order_date ? new Date(form.order_date).toISOString() : undefined,
+        created_at: form.order_date ? new Date(form.order_date + ":00+08:00").toISOString() : undefined,
         delivery_method: form.delivery_method || null,
         payment_method: form.payment_method || null,
         discount: discountAmt,
@@ -533,6 +546,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
           unit_price: parseFloat(it.unit_price) || 0,
           subtotal: parseFloat(it.subtotal) || 0,
         })),
+        notes: form.notes.length > 0 ? form.notes : null,
       };
       const res = await fetch(
         orderId ? `/api/admin/orders/${orderId}` : "/api/admin/orders",
@@ -703,35 +717,46 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
 
         <div className="space-y-2">
           {form.items.map((item, i) => (
-            <div key={i} className="relative grid grid-cols-[1fr_70px_110px_110px_32px] gap-3 items-center" style={{ zIndex: form.items.length - i }}>
-              <ProductCombobox
-                value={item.product_id}
-                onChange={(id) => selectProduct(i, id)}
-                products={products}
-              />
-              <input
-                value={item.qty}
-                onChange={(e) => setItem(i, "qty", e.target.value)}
-                type="number" min="1"
-                className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors text-center"
-              />
-              <input
-                value={item.unit_price}
-                onChange={(e) => setItem(i, "unit_price", e.target.value)}
-                type="number" min="0" placeholder="0"
-                className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors"
-              />
-              <div className="font-mono text-[13px] text-primary font-bold px-1">
-                ₱{(parseFloat(item.subtotal) || 0).toLocaleString()}
+            <div key={i} className="relative" style={{ zIndex: form.items.length - i }}>
+              {/* Mobile layout */}
+              <div className="md:hidden bg-[#0e0e0e] border border-[#603e39]/40 p-3 space-y-2">
+                <ProductCombobox value={item.product_id} onChange={(id) => selectProduct(i, id)} products={products} />
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Qty</p>
+                    <input value={item.qty} onChange={(e) => setItem(i, "qty", e.target.value)} type="number" min="1"
+                      className="w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors text-center" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Unit (₱)</p>
+                    <input value={item.unit_price} onChange={(e) => setItem(i, "unit_price", e.target.value)} type="number" min="0" placeholder="0"
+                      className="w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Subtotal</p>
+                    <p className="font-mono text-[13px] text-primary font-bold px-1 py-1.5">₱{(parseFloat(item.subtotal) || 0).toLocaleString()}</p>
+                  </div>
+                  <button type="button" onClick={() => removeItem(i)} disabled={form.items.length === 1}
+                    className="flex-shrink-0 text-[#ebbbb4]/30 hover:text-primary transition-colors disabled:opacity-20 mt-4">
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => removeItem(i)}
-                disabled={form.items.length === 1}
-                className="text-[#ebbbb4]/30 hover:text-primary transition-colors disabled:opacity-20"
-              >
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
+              {/* Desktop layout */}
+              <div className="hidden md:grid grid-cols-[1fr_70px_110px_110px_32px] gap-3 items-center">
+                <ProductCombobox value={item.product_id} onChange={(id) => selectProduct(i, id)} products={products} />
+                <input value={item.qty} onChange={(e) => setItem(i, "qty", e.target.value)} type="number" min="1"
+                  className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors text-center" />
+                <input value={item.unit_price} onChange={(e) => setItem(i, "unit_price", e.target.value)} type="number" min="0" placeholder="0"
+                  className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors" />
+                <div className="font-mono text-[13px] text-primary font-bold px-1">
+                  ₱{(parseFloat(item.subtotal) || 0).toLocaleString()}
+                </div>
+                <button type="button" onClick={() => removeItem(i)} disabled={form.items.length === 1}
+                  className="text-[#ebbbb4]/30 hover:text-primary transition-colors disabled:opacity-20">
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -754,7 +779,65 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         </div>
       </div>
 
+      {/* Notes */}
+      <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Order Notes</p>
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, notes: [...f.notes, ""] }))}
+            className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/50 hover:text-primary transition-colors"
+          >
+            <span className="material-symbols-outlined text-[13px]">add</span>
+            Add note
+          </button>
+        </div>
+        {form.notes.length === 0 ? (
+          <p className="font-mono text-[11px] text-[#ebbbb4]/30 italic">No notes yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {form.notes.map((note, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <textarea
+                  value={note}
+                  onChange={(e) => setForm((f) => {
+                    const notes = [...f.notes];
+                    notes[i] = e.target.value;
+                    return { ...f, notes };
+                  })}
+                  rows={2}
+                  placeholder={`Note ${i + 1}…`}
+                  className="flex-1 bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors resize-y placeholder:text-[#ebbbb4]/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, notes: f.notes.filter((_, idx) => idx !== i) }))}
+                  className="flex-shrink-0 text-[#ebbbb4]/30 hover:text-primary transition-colors mt-1"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {error && <p className="font-mono text-[11px] text-red-400">{error}</p>}
+
+      {/* Bottom save button */}
+      <div className="flex justify-end">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary/10 border border-primary text-primary font-mono text-[11px] tracking-widest uppercase hover:bg-primary/20 transition-colors disabled:opacity-50"
+        >
+          {saving
+            ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+            : <span className="material-symbols-outlined text-[14px]">save</span>
+          }
+          {saving ? "Saving…" : "Save Order"}
+        </button>
+      </div>
     </div>
   );
 }

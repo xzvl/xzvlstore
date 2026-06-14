@@ -44,6 +44,7 @@ export type Order = {
   shipping_postcode: string;
   shipping_region: string;
   shipping_phone: string;
+  notes: string[];
 };
 
 export type TaxonomyType = "brand" | "category" | "tag";

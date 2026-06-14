@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
     first_name = "", last_name = "", email, password,
+    facebook_url = "", instagram_url = "", tiktok_url = "", twitter_url = "",
     billing_address_1 = "", billing_address_2 = "",
     billing_city = "", billing_state = "", billing_postcode = "",
     billing_region = "Philippines", billing_phone = "",
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
     .from("customers")
     .update({
       first_name, last_name,
+      facebook_url, instagram_url, tiktok_url, twitter_url,
       billing_address_1, billing_address_2, billing_city, billing_state,
       billing_postcode, billing_region, billing_phone,
       shipping_address_1, shipping_address_2, shipping_city, shipping_state,

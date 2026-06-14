@@ -391,10 +391,18 @@ function ProductDetailModal({ product, qty, onClose }: { product: Product; qty: 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+type ProfileAddresses = {
+  billing_address_1: string; billing_address_2: string; billing_city: string;
+  billing_state: string; billing_postcode: string; billing_region: string;
+  shipping_address_1: string; shipping_address_2: string; shipping_city: string;
+  shipping_state: string; shipping_postcode: string; shipping_region: string;
+};
+
 export default function PreOrderPage() {
   const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [autoFilled, setAutoFilled] = useState(false);
+  const [profileAddresses, setProfileAddresses] = useState<ProfileAddresses | null>(null);
 
   const [contact, setContact] = useState<ContactForm>({ name: "", location: "", phone: "", email: "" });
   const [rows, setRows] = useState<ProductRow[]>([{ id: uid(), productId: "", qty: 1 }]);
@@ -446,6 +454,20 @@ export default function PreOrderPage() {
         phone: profile.billing_phone || "",
         location: location || "",
       });
+      setProfileAddresses({
+        billing_address_1: profile.billing_address_1 || "",
+        billing_address_2: profile.billing_address_2 || "",
+        billing_city: profile.billing_city || "",
+        billing_state: profile.billing_state || "",
+        billing_postcode: profile.billing_postcode || "",
+        billing_region: profile.billing_region || "Philippines",
+        shipping_address_1: profile.shipping_address_1 || "",
+        shipping_address_2: profile.shipping_address_2 || "",
+        shipping_city: profile.shipping_city || "",
+        shipping_state: profile.shipping_state || "",
+        shipping_postcode: profile.shipping_postcode || "",
+        shipping_region: profile.shipping_region || "Philippines",
+      });
       setAutoFilled(true);
     });
   }, []);
@@ -482,10 +504,26 @@ export default function PreOrderPage() {
         return { product_id: p.id, product: p.name, qty: r.qty, unit_price: price, subtotal: price * r.qty };
       });
       const estimatedTotal = orderItems.reduce((s, i) => s + i.subtotal, 0);
+      const billing = profileAddresses ? {
+        address_1: profileAddresses.billing_address_1,
+        address_2: profileAddresses.billing_address_2,
+        city: profileAddresses.billing_city,
+        state: profileAddresses.billing_state,
+        postcode: profileAddresses.billing_postcode,
+        region: profileAddresses.billing_region,
+      } : undefined;
+      const shipping = profileAddresses ? {
+        address_1: profileAddresses.shipping_address_1,
+        address_2: profileAddresses.shipping_address_2,
+        city: profileAddresses.shipping_city,
+        state: profileAddresses.shipping_state,
+        postcode: profileAddresses.shipping_postcode,
+        region: profileAddresses.shipping_region,
+      } : undefined;
       const res = await fetch("/api/pre-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...contact, items: orderItems, estimatedTotal }),
+        body: JSON.stringify({ ...contact, items: orderItems, estimatedTotal, billing, shipping }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

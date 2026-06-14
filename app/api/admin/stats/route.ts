@@ -16,7 +16,7 @@ export async function GET() {
 
   return NextResponse.json({
     totalOrders: orders.length,
-    totalRevenue: orders.reduce((sum, o) => sum + (o.estimated_total ?? 0), 0),
+    totalRevenue: orders.filter((o) => o.status === "completed").reduce((sum, o) => sum + (o.estimated_total ?? 0), 0),
     pendingOrders: orders.filter((o) => o.status === "pending").length,
     preOrderOrders: orders.filter((o) => o.status === "pre-order").length,
     confirmedOrders: orders.filter((o) => o.status === "confirmed").length,

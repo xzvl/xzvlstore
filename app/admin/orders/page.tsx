@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Order, OrderStatus } from "@/lib/supabase";
 
@@ -39,10 +39,87 @@ type Stats = {
   activeProducts: number;
 };
 
+function ProductFilterCombobox({
+  names,
+  selected,
+  onSelect,
+}: {
+  names: string[];
+  selected: string;
+  onSelect: (name: string | null) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = query.trim()
+    ? names.filter((n) => n.toLowerCase().includes(query.toLowerCase()))
+    : names;
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  if (selected) {
+    return (
+      <div className="flex items-center gap-2 bg-[#0e0e0e] border border-primary/40 px-3 py-1.5 min-w-[220px]">
+        <span className="font-mono text-[12px] text-[#e2e2e2] flex-1 truncate">{selected}</span>
+        <button
+          type="button"
+          onClick={() => { onSelect(null); setQuery(""); }}
+          className="flex-shrink-0 text-[#ebbbb4]/40 hover:text-primary transition-colors"
+        >
+          <span className="material-symbols-outlined text-[15px]">close</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative min-w-[220px]">
+      <div className="flex items-center gap-2 bg-[#0e0e0e] border border-[#603e39] focus-within:border-primary transition-colors px-3">
+        <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[15px] flex-shrink-0">search</span>
+        <input
+          type="text"
+          placeholder="Search product…"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          className="flex-1 bg-transparent text-[#e2e2e2] font-mono text-[12px] py-1.5 focus:outline-none placeholder:text-[#ebbbb4]/20"
+        />
+      </div>
+      {open && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-[#161616] border border-[#603e39] max-h-[200px] overflow-y-auto shadow-xl shadow-black/60">
+          {filtered.length === 0 ? (
+            <div className="px-3 py-4 font-mono text-[11px] text-[#ebbbb4]/30 text-center">No products found.</div>
+          ) : (
+            filtered.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => { onSelect(name); setQuery(""); setOpen(false); }}
+                className="w-full text-left px-3 py-2.5 font-mono text-[12px] text-[#e2e2e2] hover:bg-[#222] border-b border-[#603e39]/10 transition-colors truncate"
+              >
+                {name}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [filter, setFilter] = useState("all");
+  const [productFilter, setProductFilter] = useState("all");
+  const [allProductNames, setAllProductNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -53,7 +130,14 @@ export default function AdminOrdersPage() {
     setLoading(true);
     const qs = status !== "all" ? `?status=${status}` : "";
     const res = await fetch(`/api/admin/orders${qs}`);
-    if (res.ok) setOrders(await res.json());
+    if (res.ok) {
+      const data: Order[] = await res.json();
+      setOrders(data);
+      const names = Array.from(
+        new Set(data.flatMap((o) => o.items.map((it) => it.product)).filter(Boolean))
+      ).sort();
+      setAllProductNames(names);
+    }
     setLoading(false);
   };
 
@@ -97,6 +181,10 @@ export default function AdminOrdersPage() {
       hour: "2-digit", minute: "2-digit", timeZone: "Asia/Manila",
     });
 
+  const visibleOrders = productFilter === "all"
+    ? orders
+    : orders.filter((o) => o.items.some((it) => it.product === productFilter));
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-start justify-between">
@@ -119,7 +207,7 @@ export default function AdminOrdersPage() {
           {[
             { label: "Total Orders", value: stats.totalOrders, icon: "receipt_long" },
             { label: "Total Revenue", value: `₱${stats.totalRevenue.toLocaleString()}`, icon: "payments" },
-            { label: "Pending", value: stats.pendingOrders, icon: "hourglass_empty" },
+            { label: "Pre-Order", value: stats.preOrderOrders, icon: "schedule" },
             { label: "Shipped", value: stats.shippedOrders, icon: "local_shipping" },
           ].map((s) => (
             <div key={s.label} className="bg-[#1a1a1a] border border-[#603e39]/30 p-4 space-y-1">
@@ -150,17 +238,29 @@ export default function AdminOrdersPage() {
         ))}
       </div>
 
+      {/* Product filter */}
+      {allProductNames.length > 0 && (
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest flex-shrink-0">Filter by product</span>
+          <ProductFilterCombobox
+            names={allProductNames}
+            selected={productFilter === "all" ? "" : productFilter}
+            onSelect={(name) => setProductFilter(name ?? "all")}
+          />
+        </div>
+      )}
+
       {/* Orders list */}
       {loading ? (
         <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-8">
           <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
           Loading orders…
         </div>
-      ) : orders.length === 0 ? (
+      ) : visibleOrders.length === 0 ? (
         <div className="text-center py-16 font-mono text-[13px] text-[#ebbbb4]/30">No orders found.</div>
       ) : (
         <div className="space-y-2">
-          {orders.map((order) => (
+          {visibleOrders.map((order) => (
             <div key={order.id} className="bg-[#1a1a1a] border border-[#603e39]/30 overflow-hidden">
 
               {/* ── Mobile layout (hidden on md+) ── */}
