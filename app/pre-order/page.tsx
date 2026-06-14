@@ -696,6 +696,17 @@ export default function PreOrderPage() {
             </p>
           )}
 
+          {/* Cancellation policy notice */}
+          <div className="border border-[#603e39]/40 bg-[#1a1a1a] px-4 py-4 flex gap-3">
+            <span className="material-symbols-outlined text-[18px] text-primary/70 flex-shrink-0 mt-0.5">info</span>
+            <div className="space-y-1">
+              <p className="font-mono text-[11px] tracking-widest uppercase text-[#ebbbb4]/60">Pre-Order Policy</p>
+              <p className="font-mono text-[12px] text-[#ebbbb4]/50 leading-relaxed">
+                Pre-orders <span className="text-[#e2e2e2]/80">cannot be cancelled</span> once placed. Your reservation will only be voided if the total number of pre-orders does not meet the required allocation.
+              </p>
+            </div>
+          </div>
+
           <div className="pt-2">
             <button type="submit" disabled={submitting || preOrderProducts.length === 0}
               className="w-full sm:w-auto px-12 py-4 bg-primary text-white font-mono text-[12px] tracking-[0.15em] uppercase hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3">
