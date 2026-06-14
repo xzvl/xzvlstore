@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import type { StoreProduct } from "@/lib/store-types";
 
@@ -9,6 +10,7 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { addItem, items } = useCart();
+  const router = useRouter();
 
   const stock = product.stock;
   const isPreOrder = product.pre_order;
@@ -29,6 +31,10 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
   }
 
   function handleAdd() {
+    if (isPreOrder) {
+      router.push(`/pre-order?product=${product.slug}`);
+      return;
+    }
     if (stock != null && !isPreOrder && currentInCart + qty > stock) {
       showError(`Only ${stock} in stock — ${stock - currentInCart} remaining`);
       return;

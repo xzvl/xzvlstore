@@ -157,6 +157,35 @@ function ProductRowInput({
   excludeIds: string[];
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const selectedProduct = products.find((p) => p.id === row.productId);
+  const maxQty = selectedProduct?.stock ?? undefined;
+
+  function handleQtyChange(raw: string) {
+    const v = raw.replace(/[^0-9]/g, "");
+    const parsed = v === "" ? 0 : parseInt(v);
+    const capped = maxQty != null ? Math.min(parsed, maxQty) : parsed;
+    onQtyChange(row.id, capped);
+  }
+
+  function handleQtyBlur() {
+    const min = Math.max(1, row.qty);
+    const capped = maxQty != null ? Math.min(min, maxQty) : min;
+    onQtyChange(row.id, capped);
+  }
+
+  const qtyInput = (
+    <div className="w-24">
+      <label className={labelClass}>
+        Qty{maxQty != null && <span className="text-[#ebbbb4]/40 normal-case tracking-normal ml-1">(max {maxQty})</span>}
+      </label>
+      <input
+        type="text" inputMode="numeric" value={row.qty}
+        onChange={(e) => handleQtyChange(e.target.value)}
+        onBlur={handleQtyBlur}
+        className={inputClass()}
+      />
+    </div>
+  );
 
   return (
     <div className="glass-panel p-4 glitch-hover transition-all" style={{ position: "relative", zIndex: dropdownOpen ? 10 : undefined }}>
@@ -170,15 +199,7 @@ function ProductRowInput({
           <ProductDropdown value={row.productId} onChange={(id) => onProductChange(row.id, id)} onOpenChange={setDropdownOpen} products={products} excludeIds={excludeIds} />
         </div>
         <div className="flex items-end gap-3">
-          <div className="w-24">
-            <label className={labelClass}>Qty</label>
-            <input
-              type="text" inputMode="numeric" value={row.qty}
-              onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ""); onQtyChange(row.id, v === "" ? 0 : parseInt(v)); }}
-              onBlur={() => { if (row.qty < 1) onQtyChange(row.id, 1); }}
-              className={inputClass()}
-            />
-          </div>
+          {qtyInput}
           {canRemove && (
             <button type="button" onClick={() => onRemove(row.id)}
               className="flex-shrink-0 w-10 h-[46px] flex items-center justify-center border border-[#603e39]/60 text-[#ebbbb4]/40 hover:border-primary hover:text-primary transition-colors">
@@ -195,15 +216,7 @@ function ProductRowInput({
           <label className={labelClass}>Product</label>
           <ProductDropdown value={row.productId} onChange={(id) => onProductChange(row.id, id)} onOpenChange={setDropdownOpen} products={products} excludeIds={excludeIds} />
         </div>
-        <div className="w-24">
-          <label className={labelClass}>Qty</label>
-          <input
-            type="text" inputMode="numeric" value={row.qty}
-            onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ""); onQtyChange(row.id, v === "" ? 0 : parseInt(v)); }}
-            onBlur={() => { if (row.qty < 1) onQtyChange(row.id, 1); }}
-            className={inputClass()}
-          />
-        </div>
+        {qtyInput}
         {canRemove && (
           <button type="button" onClick={() => onRemove(row.id)}
             className="mb-0.5 flex-shrink-0 w-10 h-[46px] flex items-center justify-center border border-[#603e39]/60 text-[#ebbbb4]/40 hover:border-primary hover:text-primary transition-colors">

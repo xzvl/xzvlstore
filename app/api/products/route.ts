@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
 const PRODUCT_FIELDS =
-  "id, slug, name, price, sale_price, image, main_image, gallery_images, social_image, pre_order, pre_order_note, status, brand_id, brands, category_ids";
+  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, pre_order_note, status, brand_id, brands, category_ids";
 
 function mapProduct(p: Record<string, unknown>) {
   return {
@@ -11,6 +11,7 @@ function mapProduct(p: Record<string, unknown>) {
     name: p.name,
     price: p.price,
     sale_price: (p.sale_price as number | null) ?? null,
+    stock: (p.stock as number | null) ?? undefined,
     pre_order: (p.pre_order as boolean) ?? false,
     pre_order_note: (p.pre_order_note as string | null) ?? null,
     image: (p.main_image as string | null) ?? (p.image as string),

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import type { StoreProduct } from "@/lib/store-types";
 
@@ -11,12 +12,17 @@ export default function ProductCard({ product }: { product: StoreProduct }) {
   const [adding, setAdding] = useState(false);
   const [stockLimited, setStockLimited] = useState(false);
   const { addItem, items } = useCart();
+  const router = useRouter();
 
   const displayImage = hoverImg ?? product.image;
   const hasGallery = product.gallery_images.length > 0;
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
+    if (product.pre_order) {
+      router.push(`/pre-order?product=${product.slug}`);
+      return;
+    }
     const ok = addItem({
       id: product.id,
       slug: product.slug,

@@ -82,17 +82,6 @@ export default function PreOrderCarousel({ products }: { products: StoreProduct[
 
   if (n === 0) return null;
 
-  // If too few items for a real carousel, render statically
-  if (n <= VISIBLE) {
-    return (
-      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }}>
-        {products.map((p) => (
-          <CarouselCard key={p.id} product={p} />
-        ))}
-      </div>
-    );
-  }
-
   // ── CSS maths ────────────────────────────────────────────────────────────────
   // Container = 100%. Each card = 100%/VISIBLE = 33.33% of container.
   // Track width = E cards * 33.33% container = (E/VISIBLE)*100% of container.

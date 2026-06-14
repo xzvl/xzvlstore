@@ -6,6 +6,7 @@ export type Product = {
   sale_price?: number | null;
   pre_order?: boolean;
   pre_order_note?: string | null;
+  stock?: number;
   image: string;
   status: "active" | "inactive";
 };
