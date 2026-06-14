@@ -9,22 +9,29 @@ import type { StoreProduct } from "@/lib/store-types";
 export default function ProductCard({ product }: { product: StoreProduct }) {
   const [hoverImg, setHoverImg] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const { addItem } = useCart();
+  const [stockLimited, setStockLimited] = useState(false);
+  const { addItem, items } = useCart();
 
   const displayImage = hoverImg ?? product.image;
   const hasGallery = product.gallery_images.length > 0;
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
-    setAdding(true);
-    addItem({
+    const ok = addItem({
       id: product.id,
       slug: product.slug,
       name: product.name,
       price: product.price,
       sale_price: product.sale_price,
       image: product.image,
+      stock: product.stock,
     });
+    if (!ok) {
+      setStockLimited(true);
+      setTimeout(() => setStockLimited(false), 2000);
+      return;
+    }
+    setAdding(true);
     setTimeout(() => setAdding(false), 1200);
   }
 
@@ -104,12 +111,14 @@ export default function ProductCard({ product }: { product: StoreProduct }) {
         <button
           onClick={handleAddToCart}
           className={`w-full py-2 font-mono text-[10px] tracking-widest uppercase transition-all ${
-            adding
+            stockLimited
+              ? "bg-transparent border border-red-500/60 text-red-400"
+              : adding
               ? "bg-primary text-white"
               : "bg-transparent border border-[#603e39]/50 text-[#e2e2e2]/60 hover:border-primary hover:text-primary"
           }`}
         >
-          {adding ? "Added!" : product.pre_order ? "Pre-Order" : "Add to Cart"}
+          {stockLimited ? "Stock Limit Reached" : adding ? "Added!" : product.pre_order ? "Pre-Order" : "Add to Cart"}
         </button>
       </div>
     </div>

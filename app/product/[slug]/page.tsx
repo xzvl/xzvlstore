@@ -9,7 +9,7 @@ import ProductCard from "@/components/ProductCard";
 import AddToCartButton from "./AddToCartButton";
 
 const FIELDS =
-  "id, slug, name, price, sale_price, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids";
+  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids";
 
 function mapProduct(p: Record<string, unknown>): StoreProduct {
   return {

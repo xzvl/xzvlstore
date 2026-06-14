@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/lib/cart-context";
@@ -86,12 +87,23 @@ function CartItem({
   onQtyChange,
   onRemove,
 }: {
-  item: { id: string; slug: string; name: string; price: number; sale_price: number | null; image: string; qty: number };
+  item: { id: string; slug: string; name: string; price: number; sale_price: number | null; image: string; qty: number; stock?: number };
   onQtyChange: (qty: number) => void;
   onRemove: () => void;
 }) {
+  const [error, setError] = useState<string | null>(null);
   const unitPrice = item.sale_price ?? item.price;
   const subtotal = unitPrice * item.qty;
+  const atMax = item.stock != null && item.qty >= item.stock;
+
+  function handleIncrement() {
+    if (atMax) {
+      setError(`Max stock is ${item.stock}`);
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    onQtyChange(item.qty + 1);
+  }
 
   return (
     <div className="flex gap-4 bg-[#1a1a1a] border border-[#603e39]/25 p-4">
@@ -130,30 +142,36 @@ function CartItem({
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center border border-[#603e39]/40">
+        <div className="flex flex-col gap-1 mt-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center border border-[#603e39]/40">
+              <button
+                onClick={() => onQtyChange(item.qty - 1)}
+                className="w-8 h-8 flex items-center justify-center text-[#e2e2e2]/40 hover:text-primary transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]">remove</span>
+              </button>
+              <span className="w-8 text-center font-mono text-[13px] text-[#e2e2e2]">
+                {item.qty}
+              </span>
+              <button
+                onClick={handleIncrement}
+                disabled={atMax}
+                className="w-8 h-8 flex items-center justify-center text-[#e2e2e2]/40 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <span className="material-symbols-outlined text-[16px]">add</span>
+              </button>
+            </div>
             <button
-              onClick={() => onQtyChange(item.qty - 1)}
-              className="w-8 h-8 flex items-center justify-center text-[#e2e2e2]/40 hover:text-primary transition-colors"
+              onClick={onRemove}
+              className="font-mono text-[10px] tracking-widest uppercase text-[#e2e2e2]/25 hover:text-primary transition-colors"
             >
-              <span className="material-symbols-outlined text-[16px]">remove</span>
-            </button>
-            <span className="w-8 text-center font-mono text-[13px] text-[#e2e2e2]">
-              {item.qty}
-            </span>
-            <button
-              onClick={() => onQtyChange(item.qty + 1)}
-              className="w-8 h-8 flex items-center justify-center text-[#e2e2e2]/40 hover:text-primary transition-colors"
-            >
-              <span className="material-symbols-outlined text-[16px]">add</span>
+              Remove
             </button>
           </div>
-          <button
-            onClick={onRemove}
-            className="font-mono text-[10px] tracking-widest uppercase text-[#e2e2e2]/25 hover:text-primary transition-colors"
-          >
-            Remove
-          </button>
+          {error && (
+            <p className="font-mono text-[10px] text-red-400">{error}</p>
+          )}
         </div>
       </div>
 

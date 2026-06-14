@@ -17,11 +17,12 @@ export type CartItem = {
   sale_price: number | null;
   image: string;
   qty: number;
+  stock?: number;
 };
 
 type CartContextType = {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, "qty">, qty?: number) => void;
+  addItem: (item: Omit<CartItem, "qty">, qty?: number) => boolean;
   removeItem: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
   clearCart: () => void;
@@ -57,16 +58,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, [items, hydrated]);
 
-  const addItem = useCallback((item: Omit<CartItem, "qty">, qty = 1) => {
+  const addItem = useCallback((item: Omit<CartItem, "qty">, qty = 1): boolean => {
+    let accepted = true;
     setItems((prev) => {
       const existing = prev.find((i) => i.id === item.id);
+      const currentQty = existing?.qty ?? 0;
+      if (item.stock != null && currentQty + qty > item.stock) {
+        accepted = false;
+        return prev;
+      }
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, qty: i.qty + qty } : i
+          i.id === item.id ? { ...i, qty: currentQty + qty, stock: item.stock ?? i.stock } : i
         );
       }
       return [...prev, { ...item, qty }];
     });
+    return accepted;
   }, []);
 
   const removeItem = useCallback((id: string) => {
@@ -79,7 +87,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems((prev) => prev.filter((i) => i.id !== id));
         return;
       }
-      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, qty } : i)));
+      setItems((prev) =>
+        prev.map((i) => {
+          if (i.id !== id) return i;
+          const cappedQty = i.stock != null ? Math.min(qty, i.stock) : qty;
+          return { ...i, qty: cappedQty };
+        })
+      );
     },
     []
   );

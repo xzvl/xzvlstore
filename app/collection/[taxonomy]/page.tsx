@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 
 const FIELDS =
-  "id, slug, name, price, sale_price, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids";
+  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids";
 
 function mapProduct(p: Record<string, unknown>): StoreProduct {
   return {
@@ -16,6 +16,7 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     price: p.price as number,
     sale_price: (p.sale_price as number | null) ?? null,
     pre_order: (p.pre_order as boolean) ?? false,
+    stock: (p.stock as number) ?? 0,
     image: (p.main_image as string | null) ?? (p.image as string),
     gallery_images: ((p.gallery_images as string[] | null) ?? []).filter(Boolean),
     social_image: (p.social_image as string | null) ?? null,
