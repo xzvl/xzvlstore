@@ -185,6 +185,19 @@ export default function AdminOrdersPage() {
     ? orders
     : orders.filter((o) => o.items.some((it) => it.product === productFilter));
 
+  const filteredProductStats = productFilter !== "all"
+    ? visibleOrders.reduce(
+        (acc, o) => {
+          const matched = o.items.filter((it) => it.product === productFilter);
+          return {
+            qty: acc.qty + matched.reduce((s, it) => s + it.qty, 0),
+            total: acc.total + matched.reduce((s, it) => s + it.subtotal, 0),
+          };
+        },
+        { qty: 0, total: 0 }
+      )
+    : null;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-start justify-between">
@@ -240,13 +253,25 @@ export default function AdminOrdersPage() {
 
       {/* Product filter */}
       {allProductNames.length > 0 && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest flex-shrink-0">Filter by product</span>
           <ProductFilterCombobox
             names={allProductNames}
             selected={productFilter === "all" ? "" : productFilter}
             onSelect={(name) => setProductFilter(name ?? "all")}
           />
+          {filteredProductStats && (
+            <div className="flex items-center gap-4 border-l border-[#603e39]/30 pl-4">
+              <div>
+                <p className="font-mono text-[9px] text-[#ebbbb4]/30 uppercase tracking-widest">Total Qty</p>
+                <p className="font-mono text-[14px] font-bold text-[#e2e2e2]">{filteredProductStats.qty}</p>
+              </div>
+              <div>
+                <p className="font-mono text-[9px] text-[#ebbbb4]/30 uppercase tracking-widest">Total Amount</p>
+                <p className="font-mono text-[14px] font-bold text-primary">₱{filteredProductStats.total.toLocaleString()}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
