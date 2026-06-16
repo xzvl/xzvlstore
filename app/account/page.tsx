@@ -38,6 +38,18 @@ const STATUS_COLORS: Record<string, string> = {
 const INPUT = "w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
 const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
 
+function getTrackingUrl(deliveryMethod: string, trackingNumber: string): string {
+  const tn = encodeURIComponent(trackingNumber);
+  switch (deliveryMethod) {
+    case "J&T Express": return `https://www.jtexpress.ph/trajectoryQuery?flag=1&waybillNo=${tn}`;
+    case "LBC": return `https://www.lbcexpress.com/search?waybillNo=${tn}`;
+    case "Shopee Express": return `https://spx.ph/track?waybillNo=${tn}`;
+    case "Grab Express": return `https://express.grab.com/track/orders?ids=${tn}`;
+    case "Lalamove": return `https://web.lalamove.com/login?waybillNo=${tn}`;
+    default: return "";
+  }
+}
+
 export default function AccountPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("orders");
@@ -327,6 +339,12 @@ export default function AccountPage() {
                       {order.delivery_method && (
                         <p className="font-mono text-[11px] text-[#ebbbb4]/50">
                           Delivery: <span className="text-[#e2e2e2]">{order.delivery_method}</span>
+                          {order.tracking_number && (() => {
+                            const url = getTrackingUrl(order.delivery_method!, order.tracking_number!);
+                            return url
+                              ? <> · <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline">{order.tracking_number}</a></>
+                              : <> · <span className="text-[#e2e2e2]">{order.tracking_number}</span></>;
+                          })()}
                         </p>
                       )}
                       {order.payment_method && (

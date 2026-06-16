@@ -29,6 +29,7 @@ export type Order = {
   discount: number;
   delivery_method: string | null;
   payment_method: string | null;
+  tracking_number: string | null;
   items: OrderItem[];
   billing_address_1: string;
   billing_address_2: string;

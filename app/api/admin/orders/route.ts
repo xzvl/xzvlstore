@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const {
     name, email, phone, location,
     status = "pending", items = [],
-    discount = 0, delivery_method = null, payment_method = null,
+    discount = 0, delivery_method = null, payment_method = null, tracking_number = null,
     estimated_total, customer_id = null, notes = null, created_at = null,
     billing_address_1 = "", billing_address_2 = "",
     billing_city = "", billing_state = "", billing_postcode = "",
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     .insert({
       name, email: email || "", phone: phone || "", location: location || "",
       status, estimated_total: Math.max(0, total), items,
-      discount: Number(discount) || 0, delivery_method, payment_method,
+      discount: Number(discount) || 0, delivery_method, payment_method, tracking_number,
       customer_id: customer_id || null, notes: notes || null,
       ...(created_at ? { created_at } : {}),
       billing_address_1, billing_address_2, billing_city, billing_state,

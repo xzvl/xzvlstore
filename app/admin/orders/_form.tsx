@@ -50,6 +50,7 @@ type FormState = {
   order_date: string;
   delivery_method: string;
   payment_method: string;
+  tracking_number: string;
   discount: string;
   billing_address_1: string;
   billing_address_2: string;
@@ -84,7 +85,7 @@ function toPHLocal(iso: string): string {
 const EMPTY_FORM: FormState = {
   customer_id: "", name: "", email: "", phone: "", location: "",
   status: "pending", order_date: nowPH(),
-  delivery_method: "", payment_method: "", discount: "",
+  delivery_method: "", payment_method: "", tracking_number: "", discount: "",
   billing_address_1: "", billing_address_2: "", billing_city: "", billing_state: "",
   billing_postcode: "", billing_region: "Philippines", billing_phone: "",
   shipping_address_1: "", shipping_address_2: "", shipping_city: "", shipping_state: "",
@@ -399,6 +400,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             order_date: order.created_at ? toPHLocal(order.created_at) : nowPH(),
             delivery_method: order.delivery_method ?? "",
             payment_method: order.payment_method ?? "",
+            tracking_number: order.tracking_number ?? "",
             discount: order.discount ? String(order.discount) : "",
             billing_address_1: order.billing_address_1 ?? "",
             billing_address_2: order.billing_address_2 ?? "",
@@ -523,6 +525,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         created_at: form.order_date ? new Date(form.order_date + ":00+08:00").toISOString() : undefined,
         delivery_method: form.delivery_method || null,
         payment_method: form.payment_method || null,
+        tracking_number: form.tracking_number || null,
         discount: discountAmt,
         estimated_total: total,
         billing_address_1: form.billing_address_1,
@@ -683,6 +686,13 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             <input value={form.discount} onChange={(e) => set$("discount", e.target.value)} placeholder="0" type="number" min="0" className={INPUT} />
           </div>
           <div>
+            <label className={LABEL}>Payment Method</label>
+            <select value={form.payment_method} onChange={(e) => set$("payment_method", e.target.value)} className={SELECT}>
+              <option value="">— Select —</option>
+              {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+          <div>
             <label className={LABEL}>Delivery Method</label>
             <select value={form.delivery_method} onChange={(e) => set$("delivery_method", e.target.value)} className={SELECT}>
               <option value="">— Select —</option>
@@ -690,11 +700,8 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             </select>
           </div>
           <div>
-            <label className={LABEL}>Payment Method</label>
-            <select value={form.payment_method} onChange={(e) => set$("payment_method", e.target.value)} className={SELECT}>
-              <option value="">— Select —</option>
-              {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
+            <label className={LABEL}>Tracking Number</label>
+            <input value={form.tracking_number} onChange={(e) => set$("tracking_number", e.target.value)} placeholder="Waybill / tracking no." className={INPUT} />
           </div>
         </div>
       </div>
