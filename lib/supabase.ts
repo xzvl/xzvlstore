@@ -30,6 +30,8 @@ export type Order = {
   delivery_method: string | null;
   payment_method: string | null;
   tracking_number: string | null;
+  official_receipt: string | null;
+  down_payment: number;
   items: OrderItem[];
   billing_address_1: string;
   billing_address_2: string;
@@ -77,6 +79,9 @@ export type DbProduct = {
   social_image: string | null;
   pre_order: boolean;
   pre_order_note: string | null;
+  taxable: boolean;
+  max_purchase_enabled: boolean;
+  max_purchase_limit: number | null;
   status: "active" | "inactive";
   slug: string | null;
   description: string | null;

@@ -31,6 +31,7 @@ export default function ProductCard({ product }: { product: StoreProduct }) {
       sale_price: product.sale_price,
       image: product.image,
       stock: product.stock,
+      max_purchase_limit: product.max_purchase_enabled ? product.max_purchase_limit ?? null : null,
     });
     if (!ok) {
       setStockLimited(true);
@@ -124,7 +125,7 @@ export default function ProductCard({ product }: { product: StoreProduct }) {
               : "bg-transparent border border-[#603e39]/50 text-[#e2e2e2]/60 hover:border-primary hover:text-primary"
           }`}
         >
-          {stockLimited ? "Stock Limit Reached" : adding ? "Added!" : product.pre_order ? "Pre-Order" : "Add to Cart"}
+          {stockLimited ? "Limit Reached" : adding ? "Added!" : product.pre_order ? "Pre-Order" : "Add to Cart"}
         </button>
       </div>
     </div>

@@ -6,6 +6,8 @@ export type StoreProduct = {
   sale_price: number | null;
   pre_order: boolean;
   stock?: number;
+  max_purchase_enabled?: boolean;
+  max_purchase_limit?: number | null;
   image: string;
   gallery_images: string[];
   social_image: string | null;

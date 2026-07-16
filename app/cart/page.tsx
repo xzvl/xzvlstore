@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/lib/cart-context";
@@ -8,7 +8,12 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export default function CartPage() {
-  const { items, removeItem, updateQty, total, count } = useCart();
+  const { items, removeItem, updateQty, total, count, revalidateCart } = useCart();
+
+  useEffect(() => {
+    revalidateCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
@@ -87,18 +92,23 @@ function CartItem({
   onQtyChange,
   onRemove,
 }: {
-  item: { id: string; slug: string; name: string; price: number; sale_price: number | null; image: string; qty: number; stock?: number };
+  item: { id: string; slug: string; name: string; price: number; sale_price: number | null; image: string; qty: number; stock?: number; max_purchase_limit?: number | null };
   onQtyChange: (qty: number) => void;
   onRemove: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
   const unitPrice = item.sale_price ?? item.price;
   const subtotal = unitPrice * item.qty;
-  const atMax = item.stock != null && item.qty >= item.stock;
+
+  const purchaseLimitBinding =
+    item.max_purchase_limit != null &&
+    (item.stock == null || item.max_purchase_limit <= item.stock);
+  const cap = purchaseLimitBinding ? item.max_purchase_limit! : item.stock;
+  const atMax = cap != null && item.qty >= cap;
 
   function handleIncrement() {
     if (atMax) {
-      setError(`Max stock is ${item.stock}`);
+      setError(purchaseLimitBinding ? `Max ${cap} per customer` : `Max stock is ${cap}`);
       setTimeout(() => setError(null), 3000);
       return;
     }

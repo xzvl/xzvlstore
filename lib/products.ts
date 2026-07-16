@@ -7,6 +7,8 @@ export type Product = {
   pre_order?: boolean;
   pre_order_note?: string | null;
   stock?: number;
+  max_purchase_enabled?: boolean;
+  max_purchase_limit?: number | null;
   image: string;
   status: "active" | "inactive";
 };

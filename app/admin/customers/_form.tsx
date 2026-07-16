@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+
+const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
 const INPUT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
 const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
@@ -30,6 +33,8 @@ type FormState = {
   shipping_postcode: string;
   shipping_region: string;
   shipping_phone: string;
+  is_blocked: boolean;
+  block_reason: string;
 };
 
 const EMPTY: FormState = {
@@ -39,6 +44,7 @@ const EMPTY: FormState = {
   billing_postcode: "", billing_region: "Philippines", billing_phone: "",
   shipping_address_1: "", shipping_address_2: "", shipping_city: "", shipping_state: "",
   shipping_postcode: "", shipping_region: "Philippines", shipping_phone: "",
+  is_blocked: false, block_reason: "",
 };
 
 function AddressBlock({
@@ -134,6 +140,8 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
           shipping_postcode: data.shipping_postcode ?? "",
           shipping_region: data.shipping_region || "Philippines",
           shipping_phone: data.shipping_phone ?? "",
+          is_blocked: data.is_blocked ?? false,
+          block_reason: data.block_reason ?? "",
         });
         setLoading(false);
       });
@@ -160,7 +168,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
     setSaving(true);
     setError("");
     try {
-      const payload: Record<string, string> = { ...form };
+      const payload: Record<string, unknown> = { ...form };
       if (!isNew) delete payload.password;
 
       const res = await fetch(
@@ -261,6 +269,42 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Account Status */}
+      <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-4">
+        <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Account Status</p>
+        <button
+          type="button"
+          onClick={() => setForm(f => ({ ...f, is_blocked: !f.is_blocked }))}
+          className={`w-full flex items-center justify-between px-4 py-3 border transition-colors ${
+            form.is_blocked
+              ? "border-red-500/50 bg-red-500/10"
+              : "border-[#603e39]/50 bg-[#0e0e0e] hover:border-[#ebbbb4]/30"
+          }`}
+        >
+          <div>
+            <p className="font-mono text-[11px] tracking-widest uppercase text-left text-[#e2e2e2]">Block Account</p>
+            <p className="font-mono text-[10px] text-[#ebbbb4]/40 text-left mt-0.5">
+              Blocked customers cannot sign in or place orders
+            </p>
+          </div>
+          <div className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${form.is_blocked ? "bg-red-500" : "bg-[#603e39]/40"}`}>
+            <span
+              className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-white transition-transform"
+              style={{ transform: `translateX(${form.is_blocked ? "0.125rem" : "-1.125rem"})` }}
+            />
+          </div>
+        </button>
+
+        {form.is_blocked && (
+          <div>
+            <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-red-400/70 mb-1.5">
+              Reason Block
+            </label>
+            <RichTextEditor value={form.block_reason} onChange={(html) => set$("block_reason", html)} />
+          </div>
+        )}
       </div>
 
       {/* Billing & Shipping */}

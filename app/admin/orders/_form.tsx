@@ -51,7 +51,9 @@ type FormState = {
   delivery_method: string;
   payment_method: string;
   tracking_number: string;
+  official_receipt: string;
   discount: string;
+  down_payment: string;
   billing_address_1: string;
   billing_address_2: string;
   billing_city: string;
@@ -85,7 +87,8 @@ function toPHLocal(iso: string): string {
 const EMPTY_FORM: FormState = {
   customer_id: "", name: "", email: "", phone: "", location: "",
   status: "pending", order_date: nowPH(),
-  delivery_method: "", payment_method: "", tracking_number: "", discount: "",
+  delivery_method: "", payment_method: "", tracking_number: "",
+  official_receipt: "", discount: "", down_payment: "",
   billing_address_1: "", billing_address_2: "", billing_city: "", billing_state: "",
   billing_postcode: "", billing_region: "Philippines", billing_phone: "",
   shipping_address_1: "", shipping_address_2: "", shipping_city: "", shipping_state: "",
@@ -401,7 +404,9 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             delivery_method: order.delivery_method ?? "",
             payment_method: order.payment_method ?? "",
             tracking_number: order.tracking_number ?? "",
+            official_receipt: order.official_receipt ?? "",
             discount: order.discount ? String(order.discount) : "",
+            down_payment: order.down_payment ? String(order.down_payment) : "",
             billing_address_1: order.billing_address_1 ?? "",
             billing_address_2: order.billing_address_2 ?? "",
             billing_city: order.billing_city ?? "",
@@ -526,7 +531,9 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         delivery_method: form.delivery_method || null,
         payment_method: form.payment_method || null,
         tracking_number: form.tracking_number || null,
+        official_receipt: form.official_receipt || null,
         discount: discountAmt,
+        down_payment: Number(form.down_payment) || 0,
         estimated_total: total,
         billing_address_1: form.billing_address_1,
         billing_address_2: form.billing_address_2,
@@ -663,7 +670,11 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       {/* Order Details */}
       <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-4">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Order Details</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className={LABEL}>Official Receipt</label>
+            <input value={form.official_receipt} onChange={(e) => set$("official_receipt", e.target.value)} placeholder="OR number" className={INPUT} />
+          </div>
           <div>
             <label className={LABEL}>Status</label>
             <select value={form.status} onChange={(e) => set$("status", e.target.value)} className={SELECT}>
@@ -684,6 +695,10 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
           <div>
             <label className={LABEL}>Discount (₱)</label>
             <input value={form.discount} onChange={(e) => set$("discount", e.target.value)} placeholder="0" type="number" min="0" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Down Payment (₱)</label>
+            <input value={form.down_payment} onChange={(e) => set$("down_payment", e.target.value)} placeholder="0" type="number" min="0" className={INPUT} />
           </div>
           <div>
             <label className={LABEL}>Payment Method</label>

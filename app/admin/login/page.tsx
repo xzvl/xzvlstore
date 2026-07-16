@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +21,7 @@ export default function AdminLoginPage() {
         const data = await res.json();
         throw new Error(data.error || "Invalid password.");
       }
-      router.push("/admin/orders");
+      window.location.href = "/admin";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {

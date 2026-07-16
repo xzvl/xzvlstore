@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabase } from "@/lib/supabase";
 import { adjustStock } from "@/lib/stock";
+import { getPurchasedQtyMap, PURCHASE_LIMIT_WINDOW_DAYS } from "@/lib/purchase-limit";
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
@@ -26,16 +27,8 @@ async function appendToSheet(payload: object) {
 
 // ─── Email ────────────────────────────────────────────────────────────────────
 
-function buildEmailHtml(
-  name: string,
-  location: string,
-  phone: string,
-  email: string,
-  items: OrderItem[],
-  estimatedTotal: number,
-  date: string
-) {
-  const rows = items
+function orderItemsRows(items: OrderItem[]) {
+  return items
     .map(
       (item) => `
       <tr>
@@ -45,6 +38,18 @@ function buildEmailHtml(
       </tr>`
     )
     .join("");
+}
+
+function buildPreOrderEmailHtml(
+  name: string,
+  location: string,
+  phone: string,
+  email: string,
+  items: OrderItem[],
+  estimatedTotal: number,
+  date: string
+) {
+  const rows = orderItemsRows(items);
 
   return `
 <!DOCTYPE html>
@@ -102,12 +107,81 @@ function buildEmailHtml(
 </html>`;
 }
 
+function buildCheckoutEmailHtml(
+  name: string,
+  location: string,
+  phone: string,
+  email: string,
+  paymentMethod: string | null,
+  items: OrderItem[],
+  estimatedTotal: number,
+  date: string
+) {
+  const rows = orderItemsRows(items);
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#0e0e0e;">
+  <div style="background:#131313;color:#e2e2e2;font-family:'Courier New',monospace;padding:40px 32px;max-width:600px;margin:0 auto;border:1px solid #1f1f1f;">
+
+    <p style="color:#22c55e;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;">XZVL_STORE // NEW_ORDER</p>
+    <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:#e2e2e2;letter-spacing:-0.02em;">New Order</h1>
+    <p style="font-size:12px;color:#ebbbb4;opacity:0.5;margin:0 0 28px 0;">Placed on ${date}</p>
+
+    <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:16px;">
+      <p style="font-size:10px;color:#22c55e;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Customer Info</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tr><td style="padding:5px 0;color:#ebbbb4;width:110px;">Name</td><td style="padding:5px 0;">${name}</td></tr>
+        <tr><td style="padding:5px 0;color:#ebbbb4;">Location</td><td style="padding:5px 0;">${location}</td></tr>
+        <tr><td style="padding:5px 0;color:#ebbbb4;">Phone</td><td style="padding:5px 0;">${phone || "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:#ebbbb4;">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:#ebbbb4;">Payment Method</td><td style="padding:5px 0;">${paymentMethod || "—"}</td></tr>
+      </table>
+    </div>
+
+    <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:16px;">
+      <p style="font-size:10px;color:#22c55e;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Order Items</p>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:1px solid #603e39;">
+            <th style="padding:8px 14px;text-align:left;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Product</th>
+            <th style="padding:8px 14px;text-align:center;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Qty</th>
+            <th style="padding:8px 14px;text-align:right;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div style="border:1px solid #603e39;padding:18px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td>
+            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">Order Total</p>
+            <p style="font-size:24px;font-weight:900;color:#22c55e;margin:0;">&#8369;${estimatedTotal.toLocaleString()}</p>
+            <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">Shipping fee not yet included</p>
+          </td>
+          <td style="text-align:right;vertical-align:top;">
+            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">Shipping Fee</p>
+            <p style="font-size:14px;font-style:italic;color:#ebbbb4;margin:0;">TBA</p>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</body>
+</html>`;
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, location, phone, email, items, estimatedTotal, payment_method, status, customer_id, billing, shipping } = body as {
+    const { name, location, phone, email, items, estimatedTotal, payment_method, status, customer_id, billing, shipping, order_type } = body as {
       name: string;
       location: string;
       phone: string;
@@ -119,7 +193,10 @@ export async function POST(req: NextRequest) {
       customer_id?: string;
       billing?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
       shipping?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
+      order_type?: "checkout" | "pre-order";
     };
+
+    const isCheckout = order_type === "checkout";
 
     if (!name || !location || !phone || !email || !items?.length) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
@@ -131,6 +208,46 @@ export async function POST(req: NextRequest) {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
       return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
+    }
+
+    if (customer_id) {
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("is_blocked")
+        .eq("id", customer_id)
+        .single();
+      if (customer?.is_blocked) {
+        return NextResponse.json({ error: "This account has been blocked and cannot place orders." }, { status: 403 });
+      }
+
+      const productIds = Array.from(new Set(items.map((it) => it.product_id).filter((id): id is string => !!id)));
+      if (productIds.length > 0) {
+        const { data: limitedProducts } = await supabase
+          .from("products")
+          .select("id, name, max_purchase_enabled, max_purchase_limit")
+          .in("id", productIds)
+          .eq("max_purchase_enabled", true);
+
+        if (limitedProducts && limitedProducts.length > 0) {
+          const purchasedMap = await getPurchasedQtyMap(customer_id, limitedProducts.map((p) => p.id));
+          for (const p of limitedProducts) {
+            const orderedQty = items
+              .filter((it) => it.product_id === p.id)
+              .reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
+            const alreadyPurchased = purchasedMap.get(p.id) ?? 0;
+            const limit = p.max_purchase_limit ?? Infinity;
+            if (alreadyPurchased + orderedQty > limit) {
+              const remainingAllowance = Math.max(0, limit - alreadyPurchased);
+              return NextResponse.json(
+                {
+                  error: `Purchase limit reached for "${p.name}" — max ${limit} per customer every ${PURCHASE_LIMIT_WINDOW_DAYS} days (${remainingAllowance} remaining right now).`,
+                },
+                { status: 403 }
+              );
+            }
+          }
+        }
+      }
     }
 
     const date = new Date().toLocaleDateString("en-PH", {
@@ -145,8 +262,10 @@ export async function POST(req: NextRequest) {
       getResend().emails.send({
         from: process.env.RESEND_FROM ?? "xzvl.store <onboarding@resend.dev>",
         to: "xzviel@gmail.com",
-        subject: `New Pre-Order from ${name}`,
-        html: buildEmailHtml(name, location, phone, email, items, estimatedTotal, date),
+        subject: isCheckout ? `New Order from ${name}` : `New Pre-Order from ${name}`,
+        html: isCheckout
+          ? buildCheckoutEmailHtml(name, location, phone, email, payment_method || null, items, estimatedTotal, date)
+          : buildPreOrderEmailHtml(name, location, phone, email, items, estimatedTotal, date),
       }),
       supabase.from("orders").insert({
         name, email, phone, location,

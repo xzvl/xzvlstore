@@ -190,11 +190,16 @@ function AddressFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
-  const { items, total, clearCart } = useCart();
+  const { items, total, clearCart, revalidateCart } = useCart();
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [autoFilled, setAutoFilled] = useState(false);
+
+  useEffect(() => {
+    revalidateCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [form, setForm] = useState<CheckoutForm>({
     name: "",
@@ -292,6 +297,16 @@ export default function CheckoutPage() {
     setSubmitError("");
     setSubmitting(true);
 
+    // Re-check availability, stock, and purchase limits right before placing
+    // the order — the cart in memory may be stale (e.g. an item went out of
+    // stock, was disabled, or its purchase limit changed since it was added).
+    const { changed } = await revalidateCart();
+    if (changed) {
+      setSubmitError("Your cart changed — please review the updated items below and try again.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const orderItems = items.map((item) => ({
         product_id: item.id,
@@ -316,6 +331,7 @@ export default function CheckoutPage() {
           location: [form.billing.city, form.billing.state].filter(Boolean).join(", "),
           payment_method: form.payment_method,
           status: "pending",
+          order_type: "checkout",
           customer_id: userId,
           billing: form.billing,
           shipping: form.ship_to_different ? form.shipping : form.billing,

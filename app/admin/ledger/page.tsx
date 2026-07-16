@@ -30,13 +30,23 @@ const INPUT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-m
 const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
 const SELECT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors";
 
+// Returns current time in Asia/Manila as a datetime-local string (YYYY-MM-DDTHH:mm)
+function nowPH(): string {
+  return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 16);
+}
+
+// Converts a UTC ISO string to a datetime-local string in PH time
+function toPHLocal(iso: string): string {
+  return new Date(new Date(iso).getTime() + 8 * 3600 * 1000).toISOString().slice(0, 16);
+}
+
 function emptyForm(): FormState {
   return {
     title: "",
     source: "",
     type: "incoming",
     amount: "",
-    entry_date: new Date().toISOString().slice(0, 16),
+    entry_date: nowPH(),
   };
 }
 
@@ -47,6 +57,7 @@ export default function LedgerPage() {
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>(String(now.getFullYear()));
   const [filterType, setFilterType] = useState<string>("all");
+  const [filterSource, setFilterSource] = useState<string>("all");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<LedgerEntry | null>(null);
@@ -74,8 +85,11 @@ export default function LedgerPage() {
     const monthMatch = filterMonth === "all" || d.getMonth() + 1 === Number(filterMonth);
     const yearMatch = filterYear === "" || d.getFullYear() === Number(filterYear);
     const typeMatch = filterType === "all" || e.type === filterType;
-    return monthMatch && yearMatch && typeMatch;
+    const sourceMatch = filterSource === "all" || e.source === filterSource;
+    return monthMatch && yearMatch && typeMatch && sourceMatch;
   });
+
+  const sources = Array.from(new Set(entries.map(e => e.source).filter(Boolean))).sort();
 
   const totalIncoming = filtered.filter(e => e.type === "incoming").reduce((s, e) => s + e.amount, 0);
   const totalOutgoing = filtered.filter(e => e.type === "outgoing").reduce((s, e) => s + e.amount, 0);
@@ -95,7 +109,7 @@ export default function LedgerPage() {
       source: entry.source,
       type: entry.type,
       amount: String(entry.amount),
-      entry_date: new Date(entry.entry_date).toISOString().slice(0, 16),
+      entry_date: toPHLocal(entry.entry_date),
     });
     setFormError("");
     setModalOpen(true);
@@ -116,7 +130,7 @@ export default function LedgerPage() {
       source: form.source.trim(),
       type: form.type,
       amount: Number(form.amount),
-      entry_date: form.entry_date ? new Date(form.entry_date).toISOString() : new Date().toISOString(),
+      entry_date: form.entry_date ? new Date(form.entry_date + ":00+08:00").toISOString() : new Date().toISOString(),
     };
     const res = await fetch(
       editing ? `/api/admin/ledger/${editing.id}` : "/api/admin/ledger",
@@ -223,6 +237,16 @@ export default function LedgerPage() {
           <option value="incoming">Incoming</option>
           <option value="outgoing">Outgoing</option>
         </select>
+        <select
+          value={filterSource}
+          onChange={e => setFilterSource(e.target.value)}
+          className="bg-[#1a1a1a] border border-[#603e39]/40 text-[#e2e2e2] font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+        >
+          <option value="all">All Source</option>
+          {sources.map(s => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
         <span className="font-mono text-[11px] text-[#ebbbb4]/30">{filtered.length} {filtered.length === 1 ? "entry" : "entries"}</span>
       </div>
 
@@ -300,28 +324,28 @@ export default function LedgerPage() {
           </div>
 
           {/* ── Desktop table (hidden below md) ── */}
-          <div className="hidden md:block bg-[#1a1a1a] border border-[#603e39]/20 overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#603e39]/20">
+              <tr className="border-b border-[#603e39]/40">
                 {["Title", "Source", "Type", "Amount", "Date", ""].map((h, i) => (
-                  <th key={i} className={`px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[#ebbbb4]/30 whitespace-nowrap ${i >= 3 ? "text-right" : "text-left"}`}>
+                  <th key={i} className={`text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3 whitespace-nowrap ${i >= 3 ? "text-right" : "text-left"} ${i === 0 ? "w-[240px]" : ""}`}>
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#603e39]/10">
+            <tbody>
               {filtered.map(entry => (
                 <Fragment key={entry.id}>
-                  <tr className="hover:bg-[#212121] transition-colors">
-                    <td className="px-4 py-3 font-inter font-semibold text-[13px] text-[#e2e2e2] whitespace-nowrap">
+                  <tr className="border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors">
+                    <td className="px-3 py-3 font-inter font-semibold text-[13px] text-[#e2e2e2] max-w-[240px] truncate" title={entry.title}>
                       {entry.title}
                     </td>
-                    <td className="px-4 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">
                       {entry.source || "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <span className={`inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest border px-2 py-0.5 ${
                         entry.type === "incoming"
                           ? "text-green-400 border-green-400/30 bg-green-400/10"
@@ -333,15 +357,15 @@ export default function LedgerPage() {
                         {entry.type}
                       </span>
                     </td>
-                    <td className={`px-4 py-3 font-mono font-bold text-[13px] text-right whitespace-nowrap ${
+                    <td className={`px-3 py-3 font-mono font-bold text-[13px] text-right whitespace-nowrap ${
                       entry.type === "incoming" ? "text-green-400" : "text-red-400"
                     }`}>
                       {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 font-mono text-[11px] text-[#ebbbb4]/40 text-right whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/40 text-right whitespace-nowrap">
                       {formatDate(entry.entry_date)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           onClick={() => openEdit(entry)}
@@ -362,8 +386,8 @@ export default function LedgerPage() {
                   </tr>
 
                   {confirmId === entry.id && (
-                    <tr className="bg-[#1f1212]">
-                      <td colSpan={6} className="px-5 py-3 border-t border-red-900/30">
+                    <tr className="border-b border-[#603e39]/15 bg-[#1f1212]">
+                      <td colSpan={6} className="px-5 py-3">
                         <div className="flex items-center justify-between gap-4">
                           <p className="font-mono text-[11px] text-red-300">
                             Delete <span className="text-white">{entry.title}</span>? This cannot be undone.

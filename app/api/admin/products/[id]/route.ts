@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const { data, error } = await supabase.from("products").select("*").eq("id", id).single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  return NextResponse.json(data);
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -21,6 +31,9 @@ export async function PATCH(
   if (body.status !== undefined) updates.status = body.status;
   if (body.pre_order !== undefined) updates.pre_order = Boolean(body.pre_order);
   if (body.pre_order_note !== undefined) updates.pre_order_note = body.pre_order_note || null;
+  if (body.taxable !== undefined) updates.taxable = Boolean(body.taxable);
+  if (body.max_purchase_enabled !== undefined) updates.max_purchase_enabled = Boolean(body.max_purchase_enabled);
+  if (body.max_purchase_limit !== undefined) updates.max_purchase_limit = body.max_purchase_limit ? Number(body.max_purchase_limit) : null;
   if (body.brand_id !== undefined) updates.brand_id = body.brand_id || null;
   if (body.category_ids !== undefined) updates.category_ids = body.category_ids;
   if (body.tag_ids !== undefined) updates.tag_ids = body.tag_ids;

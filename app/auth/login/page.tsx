@@ -1,30 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase-client";
+import { stripHtml } from "@/lib/strip-html";
 
 const INPUT = "w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (searchParams.get("blocked") === "1") {
+      setError("Your account has been blocked. Please contact support.");
+    }
+  }, [searchParams]);
+
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
-      router.push("/account");
+      return;
     }
+
+    const userId = data.user?.id;
+    if (userId) {
+      const { data: customer } = await supabaseClient
+        .from("customers")
+        .select("is_blocked, block_reason")
+        .eq("id", userId)
+        .single();
+      if (customer?.is_blocked) {
+        await supabaseClient.auth.signOut();
+        const reason = customer.block_reason ? stripHtml(customer.block_reason) : "";
+        setError(`Your account has been blocked.${reason ? ` Reason: ${reason}` : ""}`);
+        setLoading(false);
+        return;
+      }
+    }
+
+    router.push("/account");
   };
 
   const signInWithGoogle = async () => {
@@ -118,5 +143,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
   );
 }

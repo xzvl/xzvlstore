@@ -158,6 +158,19 @@ ALTER TABLE taxonomy DISABLE ROW LEVEL SECURITY;
 
 -- ─── If taxonomy table is new, just run the CREATE TABLE above ───────────────
 
+-- ─── Admin overhaul additions (official receipt, down payment, taxable) ───────
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS official_receipt text;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS down_payment numeric NOT NULL DEFAULT 0;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS taxable boolean NOT NULL DEFAULT false;
+
+-- ─── Customer account blocking ─────────────────────────────────────────────────
+-- ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_blocked boolean NOT NULL DEFAULT false;
+-- ALTER TABLE customers ADD COLUMN IF NOT EXISTS block_reason text;
+
+-- ─── Per-product maximum purchase limit ────────────────────────────────────────
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS max_purchase_enabled boolean NOT NULL DEFAULT false;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS max_purchase_limit integer;
+
 -- ─── Supabase Storage ─────────────────────────────────────────────────────────
 -- 1. Go to Storage → New bucket
 -- 2. Name: product-images

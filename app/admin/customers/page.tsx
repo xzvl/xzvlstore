@@ -9,9 +9,15 @@ type Customer = {
   last_name: string;
   email: string;
   auth_provider: string;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  tiktok_url: string | null;
+  twitter_url: string | null;
   billing_phone: string;
   billing_city: string;
   billing_state: string;
+  is_blocked: boolean;
+  block_reason: string | null;
   created_at: string;
 };
 
@@ -21,8 +27,37 @@ const PROVIDER_COLORS: Record<string, string> = {
   facebook: "text-blue-500 border-blue-500/40",
 };
 
+const SOCIALS: { key: keyof Customer; icon: string; title: string }[] = [
+  { key: "facebook_url", icon: "group", title: "Facebook" },
+  { key: "instagram_url", icon: "photo_camera", title: "Instagram" },
+  { key: "tiktok_url", icon: "music_video", title: "TikTok" },
+  { key: "twitter_url", icon: "alternate_email", title: "X / Twitter" },
+];
+
 function initials(c: Customer) {
   return `${c.first_name?.[0] ?? ""}${c.last_name?.[0] ?? ""}`.toUpperCase() || c.email[0].toUpperCase();
+}
+
+function SocialIcons({ c }: { c: Customer }) {
+  const links = SOCIALS.filter((s) => c[s.key]);
+  if (links.length === 0) return null;
+  return (
+    <span className="inline-flex items-center gap-1">
+      {links.map((s) => (
+        <a
+          key={s.key}
+          href={c[s.key] as string}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={s.title}
+          onClick={(e) => e.stopPropagation()}
+          className="text-[#ebbbb4]/40 hover:text-primary transition-colors"
+        >
+          <span className="material-symbols-outlined !text-[14px]">{s.icon}</span>
+        </a>
+      ))}
+    </span>
+  );
 }
 
 export default function CustomersPage() {
@@ -31,12 +66,13 @@ export default function CustomersPage() {
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [blockingId, setBlockingId] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
     fetch("/api/admin/customers")
       .then(r => r.json())
-      .then(data => { setCustomers(data); setLoading(false); });
+      .then(data => { setCustomers(Array.isArray(data) ? data : []); setLoading(false); });
   };
 
   useEffect(() => { load(); }, []);
@@ -56,6 +92,20 @@ export default function CustomersPage() {
     setDeletingId(null);
     setConfirmId(null);
     load();
+  };
+
+  const handleToggleBlock = async (c: Customer) => {
+    setBlockingId(c.id);
+    const res = await fetch(`/api/admin/customers/${c.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_blocked: !c.is_blocked }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setCustomers(prev => prev.map(x => (x.id === c.id ? { ...x, ...updated } : x)));
+    }
+    setBlockingId(null);
   };
 
   return (
@@ -131,6 +181,12 @@ export default function CustomersPage() {
                       <p className="font-inter font-semibold text-[13px] text-[#e2e2e2] truncate">
                         {[c.first_name, c.last_name].filter(Boolean).join(" ") || "—"}
                       </p>
+                      <SocialIcons c={c} />
+                      {c.is_blocked && (
+                        <span className="font-mono text-[9px] uppercase tracking-widest border border-red-500/40 bg-red-500/10 text-red-400 px-1.5 py-px flex-shrink-0">
+                          blocked
+                        </span>
+                      )}
                       <span className={`font-mono text-[9px] uppercase tracking-widest border px-1.5 py-px flex-shrink-0 ${PROVIDER_COLORS[c.auth_provider] ?? PROVIDER_COLORS.email}`}>
                         {c.auth_provider}
                       </span>
@@ -155,6 +211,14 @@ export default function CustomersPage() {
                       <Link href={`/admin/customers/${c.id}`} className="text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0" title="Edit">
                         <span className="material-symbols-outlined text-[16px]">edit</span>
                       </Link>
+                      <button
+                        onClick={() => handleToggleBlock(c)}
+                        disabled={blockingId === c.id}
+                        className={`transition-colors flex-shrink-0 disabled:opacity-40 ${c.is_blocked ? "text-red-400 hover:text-green-400" : "text-[#ebbbb4]/30 hover:text-red-400"}`}
+                        title={c.is_blocked ? "Unblock" : "Block"}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">{c.is_blocked ? "lock_open" : "block"}</span>
+                      </button>
                       <button onClick={() => setConfirmId(confirmId === c.id ? null : c.id)} className="text-[#ebbbb4]/30 hover:text-red-400 transition-colors flex-shrink-0" title="Delete">
                         <span className="material-symbols-outlined text-[16px]">delete</span>
                       </button>
@@ -182,62 +246,70 @@ export default function CustomersPage() {
           </div>
 
           {/* ── Desktop table (hidden below md) ── */}
-        <div className="hidden md:block bg-[#1a1a1a] border border-[#603e39]/20 overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#603e39]/20">
+              <tr className="border-b border-[#603e39]/40">
                 {["", "Name", "Email", "Provider", "Location", "Phone", ""].map((h, i) => (
-                  <th key={i} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-[#ebbbb4]/30 whitespace-nowrap">
+                  <th key={i} className="text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3 whitespace-nowrap">
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#603e39]/10">
+            <tbody>
               {filtered.map(c => (
                 <Fragment key={c.id}>
-                  <tr className="hover:bg-[#212121] transition-colors">
+                  <tr className="border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors">
                     {/* Avatar */}
-                    <td className="px-4 py-3 w-10">
+                    <td className="px-3 py-3 w-10">
                       <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
                         <span className="font-mono text-[10px] text-primary font-bold">{initials(c)}</span>
                       </div>
                     </td>
 
                     {/* Name */}
-                    <td className="px-4 py-3">
-                      <p className="font-inter font-semibold text-[13px] text-[#e2e2e2] whitespace-nowrap">
-                        {[c.first_name, c.last_name].filter(Boolean).join(" ") || "—"}
-                      </p>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-inter font-semibold text-[13px] text-[#e2e2e2] whitespace-nowrap">
+                          {[c.first_name, c.last_name].filter(Boolean).join(" ") || "—"}
+                        </p>
+                        <SocialIcons c={c} />
+                        {c.is_blocked && (
+                          <span className="font-mono text-[9px] uppercase tracking-widest border border-red-500/40 bg-red-500/10 text-red-400 px-1.5 py-px flex-shrink-0">
+                            blocked
+                          </span>
+                        )}
+                      </div>
                       <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-0.5">
                         {new Date(c.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Manila" })}
                       </p>
                     </td>
 
                     {/* Email */}
-                    <td className="px-4 py-3 font-mono text-[12px] text-[#ebbbb4]/70 whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/70 whitespace-nowrap">
                       {c.email}
                     </td>
 
                     {/* Provider */}
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <span className={`inline-flex items-center font-mono text-[10px] uppercase tracking-widest border px-2 py-0.5 ${PROVIDER_COLORS[c.auth_provider] ?? PROVIDER_COLORS.email}`}>
                         {c.auth_provider}
                       </span>
                     </td>
 
                     {/* Location */}
-                    <td className="px-4 py-3 font-mono text-[12px] text-[#ebbbb4]/50 whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/50 whitespace-nowrap">
                       {[c.billing_city, c.billing_state].filter(Boolean).join(", ") || "—"}
                     </td>
 
                     {/* Phone */}
-                    <td className="px-4 py-3 font-mono text-[12px] text-[#ebbbb4]/50 whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/50 whitespace-nowrap">
                       {c.billing_phone || "—"}
                     </td>
 
                     {/* Actions */}
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <div className="flex items-center gap-1 justify-end">
                         <Link
                           href={`/admin/customers/${c.id}`}
@@ -246,6 +318,14 @@ export default function CustomersPage() {
                         >
                           <span className="material-symbols-outlined text-[16px]">edit</span>
                         </Link>
+                        <button
+                          onClick={() => handleToggleBlock(c)}
+                          disabled={blockingId === c.id}
+                          className={`p-1.5 transition-colors disabled:opacity-40 ${c.is_blocked ? "text-red-400 hover:text-green-400" : "text-[#ebbbb4]/30 hover:text-red-400"}`}
+                          title={c.is_blocked ? "Unblock" : "Block"}
+                        >
+                          <span className="material-symbols-outlined text-[16px]">{c.is_blocked ? "lock_open" : "block"}</span>
+                        </button>
                         <button
                           onClick={() => setConfirmId(confirmId === c.id ? null : c.id)}
                           className="p-1.5 text-[#ebbbb4]/30 hover:text-red-400 transition-colors"
@@ -259,8 +339,8 @@ export default function CustomersPage() {
 
                   {/* Delete confirmation row */}
                   {confirmId === c.id && (
-                    <tr className="bg-[#1f1212]">
-                      <td colSpan={7} className="px-5 py-3 border-t border-red-900/30">
+                    <tr className="border-b border-[#603e39]/15 bg-[#1f1212]">
+                      <td colSpan={7} className="px-5 py-3">
                         <div className="flex items-center justify-between gap-4">
                           <p className="font-mono text-[11px] text-red-300">
                             Delete <span className="text-white">{[c.first_name, c.last_name].filter(Boolean).join(" ") || c.email}</span>? This also deletes their account and cannot be undone.

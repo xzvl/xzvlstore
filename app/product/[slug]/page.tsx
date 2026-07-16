@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { StoreProduct } from "@/lib/store-types";
@@ -7,9 +6,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import AddToCartButton from "./AddToCartButton";
+import ProductImages from "./ProductImages";
 
 const FIELDS =
-  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids";
+  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
 
 function mapProduct(p: Record<string, unknown>): StoreProduct {
   return {
@@ -20,6 +20,8 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     sale_price: (p.sale_price as number | null) ?? null,
     pre_order: (p.pre_order as boolean) ?? false,
     stock: (p.stock as number) ?? 0,
+    max_purchase_enabled: (p.max_purchase_enabled as boolean) ?? false,
+    max_purchase_limit: (p.max_purchase_limit as number | null) ?? null,
     image: (p.main_image as string | null) ?? (p.image as string),
     gallery_images: ((p.gallery_images as string[] | null) ?? []).filter(Boolean),
     social_image: (p.social_image as string | null) ?? null,
@@ -50,7 +52,7 @@ async function getRecommended(brandId: string | null, excludeId: string): Promis
 }
 
 const PRODUCT_SELECT =
-  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids";
+  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
 
 const nameToSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -230,42 +232,5 @@ export default async function ProductPage({
       </main>
       <Footer />
     </>
-  );
-}
-
-// ─── Product images client component (extracted to avoid async boundary) ─────
-
-function ProductImages({ images, name }: { images: string[]; name: string }) {
-  // This is a server component — gallery interaction is handled via the client AddToCartButton
-  // For full gallery interactivity, we inline-render the first image + thumbnails
-  const [main, ...thumbs] = images;
-  return (
-    <div className="flex flex-col gap-3">
-      {/* Main image */}
-      <div className="relative aspect-square bg-[#1a1a1a] border border-[#603e39]/30 overflow-hidden">
-        <Image
-          src={main}
-          alt={name}
-          fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-contain p-6"
-          unoptimized
-          priority
-        />
-      </div>
-      {/* Thumbnails */}
-      {thumbs.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {images.map((img, i) => (
-            <div
-              key={i}
-              className={`shrink-0 w-16 h-16 border overflow-hidden ${i === 0 ? "border-primary" : "border-[#603e39]/40"} bg-[#1a1a1a]`}
-            >
-              <img src={img} alt={`${name} view ${i + 1}`} className="w-full h-full object-contain p-1" />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }

@@ -8,12 +8,25 @@ export default function AuthCallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
-    supabaseClient.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        router.replace("/account");
-      } else {
+    supabaseClient.auth.getSession().then(async ({ data }) => {
+      if (!data.session) {
         router.replace("/auth/login");
+        return;
       }
+
+      const { data: customer } = await supabaseClient
+        .from("customers")
+        .select("is_blocked")
+        .eq("id", data.session.user.id)
+        .single();
+
+      if (customer?.is_blocked) {
+        await supabaseClient.auth.signOut();
+        router.replace("/auth/login?blocked=1");
+        return;
+      }
+
+      router.replace("/account");
     });
   }, [router]);
 

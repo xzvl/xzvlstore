@@ -145,7 +145,7 @@ function ProductDropdown({
 // ─── Product Row Component ────────────────────────────────────────────────────
 
 function ProductRowInput({
-  row, index, onProductChange, onQtyChange, onRemove, canRemove, products, excludeIds,
+  row, index, onProductChange, onQtyChange, onRemove, canRemove, products, excludeIds, purchasedMap,
 }: {
   row: ProductRow;
   index: number;
@@ -155,10 +155,15 @@ function ProductRowInput({
   canRemove: boolean;
   products: Product[];
   excludeIds: string[];
+  purchasedMap: Record<string, number>;
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const selectedProduct = products.find((p) => p.id === row.productId);
-  const maxQty = selectedProduct?.stock ?? undefined;
+  const purchaseAllowance = selectedProduct?.max_purchase_enabled
+    ? Math.max(0, (selectedProduct.max_purchase_limit ?? Infinity) - (purchasedMap[selectedProduct.id] ?? 0))
+    : undefined;
+  const capCandidates = [selectedProduct?.stock, purchaseAllowance].filter((n): n is number => n != null);
+  const maxQty = capCandidates.length ? Math.min(...capCandidates) : undefined;
 
   function handleQtyChange(raw: string) {
     const v = raw.replace(/[^0-9]/g, "");
@@ -401,8 +406,10 @@ type ProfileAddresses = {
 export default function PreOrderPage() {
   const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [autoFilled, setAutoFilled] = useState(false);
   const [profileAddresses, setProfileAddresses] = useState<ProfileAddresses | null>(null);
+  const [purchasedMap, setPurchasedMap] = useState<Record<string, number>>({});
 
   const [contact, setContact] = useState<ContactForm>({ name: "", location: "", phone: "", email: "" });
   const [rows, setRows] = useState<ProductRow[]>([{ id: uid(), productId: "", qty: 1 }]);
@@ -436,6 +443,7 @@ export default function PreOrderPage() {
       if (!data.session) return;
       const { user, access_token } = data.session;
       setUserEmail(user.email ?? null);
+      setUserId(user.id);
 
       const res = await fetch("/api/account/profile", {
         headers: { Authorization: `Bearer ${access_token}` },
@@ -471,6 +479,31 @@ export default function PreOrderPage() {
       setAutoFilled(true);
     });
   }, []);
+
+  // Fold in what this customer has already purchased (rolling purchase-limit
+  // window) for any pre-order product that has a max purchase limit enabled.
+  useEffect(() => {
+    if (!userId) return;
+    const limitedIds = products.filter((p) => p.max_purchase_enabled).map((p) => p.id);
+    if (limitedIds.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) return;
+      try {
+        const res = await fetch(`/api/products/status?ids=${limitedIds.join(",")}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return;
+        const data: { id: string; purchased_in_window: number }[] = await res.json();
+        if (cancelled) return;
+        const map: Record<string, number> = {};
+        for (const p of data) map[p.id] = p.purchased_in_window ?? 0;
+        setPurchasedMap(map);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [userId, products]);
 
   // Only show products with pre_order flag active
   const preOrderProducts = products.filter((p) => p.pre_order === true);
@@ -523,7 +556,7 @@ export default function PreOrderPage() {
       const res = await fetch("/api/pre-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...contact, items: orderItems, estimatedTotal, billing, shipping }),
+        body: JSON.stringify({ ...contact, items: orderItems, estimatedTotal, billing, shipping, order_type: "pre-order", customer_id: userId }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -708,7 +741,8 @@ export default function PreOrderPage() {
                     <ProductRowInput key={row.id} row={row} index={i}
                       onProductChange={updateProductId} onQtyChange={updateQty} onRemove={removeRow}
                       canRemove={rows.length > 1} products={preOrderProducts}
-                      excludeIds={rows.filter((r) => r.id !== row.id && r.productId !== "").map((r) => r.productId)} />
+                      excludeIds={rows.filter((r) => r.id !== row.id && r.productId !== "").map((r) => r.productId)}
+                      purchasedMap={purchasedMap} />
                   ))}
                 </div>
                 <button type="button" onClick={addRow}
