@@ -249,7 +249,7 @@ function CustomerFilterCombobox({
 
 function OrderTotalInline({ order }: { order: Order }) {
   const downPayment = order.down_payment ?? 0;
-  if (order.status !== "pre-order" || downPayment <= 0) {
+  if (downPayment <= 0 || order.status === "completed") {
     return (
       <span className="font-mono text-[13px] text-primary font-bold">
         ₱{order.estimated_total.toLocaleString()}
@@ -735,7 +735,7 @@ function AdminOrdersPageInner() {
                         <span className="text-green-400">−₱{order.discount.toLocaleString()}</span>
                       </div>
                     )}
-                    {order.status === "pre-order" && (order.down_payment ?? 0) > 0 && (
+                    {(order.down_payment ?? 0) > 0 && order.status !== "completed" && (
                       <div className="flex justify-between font-mono text-[12px]">
                         <span className="text-[#ebbbb4]/50">Down Payment</span>
                         <span className="text-blue-400">₱{(order.down_payment ?? 0).toLocaleString()}</span>
@@ -743,14 +743,14 @@ function AdminOrdersPageInner() {
                     )}
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-[11px] text-[#ebbbb4]/40 uppercase tracking-widest">
-                        {order.status === "pre-order" && (order.down_payment ?? 0) > 0 ? "Remaining Balance" : "Total"}
+                        {(order.down_payment ?? 0) > 0 && order.status !== "completed" ? "Remaining Balance" : "Total"}
                       </span>
                       <div className="text-right">
-                        {order.status === "pre-order" && (order.down_payment ?? 0) > 0 && (
+                        {(order.down_payment ?? 0) > 0 && order.status !== "completed" && (
                           <p className="font-mono text-[12px] text-[#ebbbb4]/40 line-through">₱{order.estimated_total.toLocaleString()}</p>
                         )}
                         <span className="font-inter font-black text-[20px] text-primary">
-                          ₱{(order.status === "pre-order" && (order.down_payment ?? 0) > 0
+                          ₱{((order.down_payment ?? 0) > 0 && order.status !== "completed"
                             ? Math.max(0, order.estimated_total - (order.down_payment ?? 0))
                             : order.estimated_total
                           ).toLocaleString()}

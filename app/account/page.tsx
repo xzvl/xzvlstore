@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase-client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import type { Order } from "@/lib/supabase";
 
 type Tab = "info" | "billing" | "shipping" | "orders";
+const TABS_LIST: Tab[] = ["orders", "info", "billing", "shipping"];
 
 type Profile = {
   first_name: string; last_name: string; email: string;
@@ -38,6 +39,27 @@ const STATUS_COLORS: Record<string, string> = {
 const INPUT = "w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
 const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
 
+function OrderTotalInline({ order }: { order: Order }) {
+  const downPayment = order.down_payment ?? 0;
+  if (downPayment <= 0 || order.status === "completed") {
+    return (
+      <span className="font-mono text-[13px] text-primary font-bold">
+        ₱{order.estimated_total.toLocaleString()}
+      </span>
+    );
+  }
+  const remaining = Math.max(0, order.estimated_total - downPayment);
+  return (
+    <div className="leading-tight text-right">
+      <div className="flex items-center gap-1.5">
+        <span className="font-mono text-[10px] text-[#ebbbb4]/40 line-through">₱{order.estimated_total.toLocaleString()}</span>
+        <span className="font-mono text-[13px] text-primary font-bold">₱{remaining.toLocaleString()}</span>
+      </div>
+      <p className="font-mono text-[9px] text-[#ebbbb4]/30">DP ₱{downPayment.toLocaleString()} paid</p>
+    </div>
+  );
+}
+
 function getTrackingUrl(deliveryMethod: string, trackingNumber: string): string {
   const tn = encodeURIComponent(trackingNumber);
   switch (deliveryMethod) {
@@ -50,9 +72,19 @@ function getTrackingUrl(deliveryMethod: string, trackingNumber: string): string 
   }
 }
 
-export default function AccountPage() {
+function AccountPageInner() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("orders");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") as Tab | null;
+  const [tab, setTabState] = useState<Tab>(
+    tabParam && TABS_LIST.includes(tabParam) ? tabParam : "orders"
+  );
+
+  const setTab = (value: Tab) => {
+    setTabState(value);
+    router.replace(`/account?tab=${value}`, { scroll: false });
+  };
+
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -327,9 +359,7 @@ export default function AccountPage() {
                         </p>
                       )}
                     </div>
-                    <div className="font-mono text-[13px] text-primary font-bold">
-                      ₱{order.estimated_total.toLocaleString()}
-                    </div>
+                    <OrderTotalInline order={order} />
                     <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-[#ebbbb4]/40"}`}>
                       {order.status}
                     </span>
@@ -369,9 +399,22 @@ export default function AccountPage() {
                           <span className="text-green-400">−₱{order.discount.toLocaleString()}</span>
                         </div>
                       )}
+                      {(order.down_payment ?? 0) > 0 && order.status !== "completed" && (
+                        <div className="flex justify-between font-mono text-[11px]">
+                          <span className="text-[#ebbbb4]/50">Down Payment</span>
+                          <span className="text-blue-400">₱{(order.down_payment ?? 0).toLocaleString()}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between font-mono text-[12px] pt-1 border-t border-[#603e39]/20">
-                        <span className="text-[#ebbbb4]/50">Total</span>
-                        <span className="text-primary font-bold">₱{order.estimated_total.toLocaleString()}</span>
+                        <span className="text-[#ebbbb4]/50">
+                          {(order.down_payment ?? 0) > 0 && order.status !== "completed" ? "Remaining Balance" : "Total"}
+                        </span>
+                        <span className="text-primary font-bold">
+                          ₱{((order.down_payment ?? 0) > 0 && order.status !== "completed"
+                            ? Math.max(0, order.estimated_total - (order.down_payment ?? 0))
+                            : order.estimated_total
+                          ).toLocaleString()}
+                        </span>
                       </div>
                       {order.notes?.length > 0 && (
                         <div className="pt-2 border-t border-[#603e39]/20 space-y-1.5">
@@ -408,6 +451,14 @@ export default function AccountPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={null}>
+      <AccountPageInner />
+    </Suspense>
   );
 }
 
