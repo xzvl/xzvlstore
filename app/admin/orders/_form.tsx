@@ -384,6 +384,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
   const [loading, setLoading] = useState(!!orderId);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [shippingCopied, setShippingCopied] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/products").then((r) => r.json()).then(setProducts);
@@ -475,10 +476,16 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       shipping_address_2: f.billing_address_2,
       shipping_city: f.billing_city,
       shipping_state: f.billing_state,
-      shipping_postcode: f.billing_postcode,
-      shipping_region: f.billing_region,
-      shipping_phone: f.billing_phone,
     }));
+  };
+
+  const copyShippingAddress = () => {
+    const text = [form.shipping_address_1, form.shipping_address_2, form.shipping_city, form.shipping_state]
+      .filter(Boolean)
+      .join(", ");
+    navigator.clipboard.writeText(text);
+    setShippingCopied(true);
+    setTimeout(() => setShippingCopied(false), 1500);
   };
 
   const setItem = (i: number, key: keyof ItemRow, value: string) =>
@@ -655,14 +662,29 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
           form={form}
           set$={set$}
           extra={
-            <button
-              type="button"
-              onClick={copyBillingToShipping}
-              className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors"
-            >
-              <span className="material-symbols-outlined text-[12px]">content_copy</span>
-              Same as billing
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={copyShippingAddress}
+                title="Copy shipping address"
+                className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors"
+              >
+                <span className="material-symbols-outlined text-[12px]">
+                  {shippingCopied ? "check" : "content_copy"}
+                </span>
+                {shippingCopied ? "Copied!" : "Copy"}
+              </button>
+              <span className="w-px h-3 bg-[#603e39]/40" />
+              <button
+                type="button"
+                onClick={copyBillingToShipping}
+                title="Fill with billing address"
+                className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors"
+              >
+                <span className="material-symbols-outlined text-[12px]">content_paste</span>
+                Same as billing
+              </button>
+            </div>
           }
         />
       </div>
