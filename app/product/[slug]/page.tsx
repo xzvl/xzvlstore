@@ -29,8 +29,18 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     brand_id: (p.brand_id as string | null) ?? null,
     brand_name: (p.brands as string | null) ?? null,
     category_ids: (p.category_ids as string[] | null) ?? [],
+    tag_ids: (p.tag_ids as string[] | null) ?? [],
     description: (p.description as string | null) ?? null,
   };
+}
+
+async function getTaxonomyTerms(ids: string[]): Promise<{ id: string; type: string; name: string; slug: string }[]> {
+  if (ids.length === 0) return [];
+  const { data } = await supabase
+    .from("taxonomy")
+    .select("id, type, name, slug")
+    .in("id", ids);
+  return data ?? [];
 }
 
 async function getRecommended(brandId: string | null, excludeId: string): Promise<StoreProduct[]> {
@@ -52,7 +62,7 @@ async function getRecommended(brandId: string | null, excludeId: string): Promis
 }
 
 const PRODUCT_SELECT =
-  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids, tag_ids, max_purchase_enabled, max_purchase_limit";
 
 const nameToSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -89,6 +99,13 @@ export default async function ProductPage({
   const product = mapProduct(data as Record<string, unknown>);
   const allImages = [product.image, ...product.gallery_images];
   const recommended = await getRecommended(product.brand_id, product.id);
+
+  const taxonomyTerms = await getTaxonomyTerms([
+    ...product.category_ids,
+    ...(product.tag_ids ?? []),
+  ]);
+  const categories = taxonomyTerms.filter((t) => t.type === "category");
+  const tags = taxonomyTerms.filter((t) => t.type === "tag");
 
   const displayPrice = product.sale_price ?? product.price;
 
@@ -185,11 +202,46 @@ export default async function ProductPage({
 
               <div className="h-px bg-[#603e39]/30" />
 
-              {/* SKU */}
-              {(data as { sku?: string }).sku && (
-                <p className="font-mono text-[10px] text-[#ebbbb4]/30 tracking-widest">
-                  SKU: {(data as { sku?: string }).sku}
-                </p>
+              {/* SKU, brand, categories */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {(data as { sku?: string }).sku && (
+                  <p className="font-mono text-[10px] text-[#ebbbb4]/30 tracking-widest">
+                    SKU: {(data as { sku?: string }).sku}
+                  </p>
+                )}
+                {product.brand_name && (
+                  <p className="font-mono text-[10px] text-[#ebbbb4]/30 tracking-widest">
+                    Brand: {product.brand_name}
+                  </p>
+                )}
+                {categories.length > 0 && (
+                  <p className="font-mono text-[10px] text-[#ebbbb4]/30 tracking-widest">
+                    Categories:{" "}
+                    {categories.map((c, i) => (
+                      <span key={c.id}>
+                        <Link href={`/collection/${c.slug}`} className="hover:text-primary transition-colors">
+                          {c.name}
+                        </Link>
+                        {i < categories.length - 1 ? ", " : ""}
+                      </span>
+                    ))}
+                  </p>
+                )}
+              </div>
+
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((t) => (
+                    <Link
+                      key={t.id}
+                      href={`/collection/${t.slug}`}
+                      className="px-2 py-1 border border-[#603e39]/40 font-mono text-[9px] tracking-widest uppercase text-[#e2e2e2]/50 hover:border-primary hover:text-primary transition-colors"
+                    >
+                      {t.name}
+                    </Link>
+                  ))}
+                </div>
               )}
 
               {/* Description */}

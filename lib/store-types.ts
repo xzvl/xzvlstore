@@ -15,5 +15,6 @@ export type StoreProduct = {
   brand_id: string | null;
   brand_name: string | null;
   category_ids: string[];
+  tag_ids?: string[];
   description?: string | null;
 };

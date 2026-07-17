@@ -131,25 +131,27 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
   return (
     <div className="flex flex-col gap-3">
       {/* Qty selector */}
-      <div className="flex items-center gap-0">
-        <span className="font-mono text-[10px] tracking-widest uppercase text-[#ebbbb4]/40 w-16">Qty</span>
-        <div className="flex items-center border border-[#603e39]/50">
-          <button
-            onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="w-10 h-10 flex items-center justify-center text-[#e2e2e2]/50 hover:text-primary transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px]">remove</span>
-          </button>
-          <span className="w-10 text-center font-mono text-[14px] text-[#e2e2e2]">{qty}</span>
-          <button
-            onClick={handleIncrement}
-            disabled={remaining != null && qty >= remaining}
-            className="w-10 h-10 flex items-center justify-center text-[#e2e2e2]/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-          </button>
+      {!isPreOrder && (
+        <div className="flex items-center gap-0">
+          <span className="font-mono text-[10px] tracking-widest uppercase text-[#ebbbb4]/40 w-16">Qty</span>
+          <div className="flex items-center border border-[#603e39]/50">
+            <button
+              onClick={() => setQty((q) => Math.max(1, q - 1))}
+              className="w-10 h-10 flex items-center justify-center text-[#e2e2e2]/50 hover:text-primary transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">remove</span>
+            </button>
+            <span className="w-10 text-center font-mono text-[14px] text-[#e2e2e2]">{qty}</span>
+            <button
+              onClick={handleIncrement}
+              disabled={remaining != null && qty >= remaining}
+              className="w-10 h-10 flex items-center justify-center text-[#e2e2e2]/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Purchase history note */}
       {purchasedInWindow > 0 && (
