@@ -70,6 +70,13 @@ body {
   display: none;
 }
 
+.scrollbar-x-12::-webkit-scrollbar {
+  height: 12px;
+}
+.scrollbar-x-5::-webkit-scrollbar {
+  height: 5px;
+}
+
 ::-webkit-scrollbar {
   width: 2px;
 }

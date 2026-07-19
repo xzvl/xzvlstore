@@ -497,7 +497,7 @@ function AdminOrdersPageInner() {
       )}
 
       {/* Filter tabs */}
-      <div className="flex items-center gap-1 border-b border-[#603e39]/30 pb-0">
+      <div className="flex items-center gap-1 border-b border-[#603e39]/30 pb-0 overflow-x-auto overflow-y-hidden scrollbar-x-5">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -618,7 +618,7 @@ function AdminOrdersPageInner() {
                 </div>
 
                 {/* Row 2: total · status badge · select · edit · delete */}
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-[0.4rem] flex-wrap">
                   <OrderTotalInline order={order} />
                   <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-[#ebbbb4]/40"}`}>
                     {order.status}
@@ -633,27 +633,29 @@ function AdminOrdersPageInner() {
                       <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                     ))}
                   </select>
-                  <CopyIconButton
-                    text={orderSummaryText(order)}
-                    title="Copy name, phone & address"
-                    size={18}
-                    className="text-[#ebbbb4]/40"
-                  />
-                  <Link href={`/admin/orders/${order.id}`} className="text-[#ebbbb4]/40 hover:text-primary transition-colors" title="Edit order">
-                    <span className="material-symbols-outlined text-[16px]">edit</span>
-                  </Link>
-                  {confirmDelete === order.id ? (
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50">
-                        {deleting === order.id ? "…" : "Yes"}
+                  <div className="flex items-center gap-[0.2rem] flex-wrap">
+                    <CopyIconButton
+                      text={orderSummaryText(order)}
+                      title="Copy name, phone & address"
+                      size={18}
+                      className="text-[#ebbbb4]/40"
+                    />
+                    <Link href={`/admin/orders/${order.id}`} className="text-[#ebbbb4]/40 hover:text-primary transition-colors" title="Edit order">
+                      <span className="material-symbols-outlined !text-[20px]">edit</span>
+                    </Link>
+                    {confirmDelete === order.id ? (
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50">
+                          {deleting === order.id ? "…" : "Yes"}
+                        </button>
+                        <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-[#ebbbb4]/40 border border-[#603e39]/40 px-2 py-1 hover:text-[#e2e2e2] transition-colors">No</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setConfirmDelete(order.id)} className="text-[#ebbbb4]/30 hover:text-primary transition-colors" title="Delete order">
+                        <span className="material-symbols-outlined !text-[20px]">delete</span>
                       </button>
-                      <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-[#ebbbb4]/40 border border-[#603e39]/40 px-2 py-1 hover:text-[#e2e2e2] transition-colors">No</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => setConfirmDelete(order.id)} className="text-[#ebbbb4]/30 hover:text-primary transition-colors" title="Delete order">
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 

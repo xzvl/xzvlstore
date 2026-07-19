@@ -126,10 +126,24 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_customer();
 
--- Disable RLS (admin uses service role key which bypasses it anyway)
-ALTER TABLE orders DISABLE ROW LEVEL SECURITY;
-ALTER TABLE products DISABLE ROW LEVEL SECURITY;
-ALTER TABLE taxonomy DISABLE ROW LEVEL SECURITY;
+-- Ledger table (income/expense entries, e.g. BIR books)
+CREATE TABLE IF NOT EXISTS ledger (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title text NOT NULL,
+  source text NOT NULL DEFAULT '',
+  type text NOT NULL CHECK (type IN ('incoming', 'outgoing')),
+  amount numeric NOT NULL DEFAULT 0,
+  entry_date timestamptz NOT NULL DEFAULT now()
+);
+
+-- Enable RLS with no policies (default-deny for the anon/authenticated Data API).
+-- All reads/writes in this app go through server-side API routes using the
+-- service-role key (lib/supabase.ts), which always bypasses RLS — so this only
+-- blocks direct public access via the anon key, without breaking the app.
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE taxonomy ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 
 -- ─── If you already ran the old schema, run these ALTER statements instead ───
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS sku text;
