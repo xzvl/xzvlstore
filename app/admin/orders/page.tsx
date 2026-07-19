@@ -268,6 +268,59 @@ function OrderTotalInline({ order }: { order: Order }) {
   );
 }
 
+function stripPhonePrefix(phone: string): string {
+  const p = phone.trim();
+  if (p.startsWith("+63")) return p.slice(3);
+  if (p.startsWith("0")) return p.slice(1);
+  if (p.startsWith("63")) return p.slice(2);
+  return p;
+}
+
+function fullAddress(order: Order): string {
+  return [order.billing_address_1, order.billing_address_2, order.billing_city, order.billing_state]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function orderSummaryText(order: Order): string {
+  return `Name: ${order.name}\nPhone: ${order.phone}\nAddress: ${fullAddress(order)}`;
+}
+
+function CopyIconButton({
+  text,
+  className = "",
+  title = "Copy",
+  size = 14,
+}: {
+  text: string;
+  className?: string;
+  title?: string;
+  size?: number;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {}
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      title={title}
+      className={`text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0 ${className}`}
+    >
+      <span className="material-symbols-outlined" style={{ fontSize: size }}>{copied ? "check" : "content_copy"}</span>
+    </button>
+  );
+}
+
 function CustomerNameLink({ order, facebookUrl }: { order: Order; facebookUrl?: string }) {
   if (facebookUrl) {
     return (
@@ -542,11 +595,12 @@ function AdminOrdersPageInner() {
                   className="cursor-pointer hover:opacity-80 transition-opacity mb-2"
                   onClick={() => setExpanded(expanded === order.id ? null : order.id)}
                 >
-                  <p className="font-inter font-bold text-[14px] text-[#e2e2e2] truncate">
+                  <p className="font-inter font-bold text-[14px] text-[#e2e2e2] truncate flex items-center gap-1">
                     {order.order_number != null && (
                       <span className="text-[#ebbbb4]/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
                     )}
-                    <CustomerNameLink order={order} facebookUrl={facebookUrl} />
+                    <span className="truncate"><CustomerNameLink order={order} facebookUrl={facebookUrl} /></span>
+                    <CopyIconButton text={order.name} />
                   </p>
                   <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-0.5">{formatDate(order.created_at)}</p>
                   {order.location && (
@@ -579,6 +633,12 @@ function AdminOrdersPageInner() {
                       <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                     ))}
                   </select>
+                  <CopyIconButton
+                    text={orderSummaryText(order)}
+                    title="Copy name, phone & address"
+                    size={18}
+                    className="text-[#ebbbb4]/40"
+                  />
                   <Link href={`/admin/orders/${order.id}`} className="text-[#ebbbb4]/40 hover:text-primary transition-colors" title="Edit order">
                     <span className="material-symbols-outlined text-[16px]">edit</span>
                   </Link>
@@ -608,11 +668,12 @@ function AdminOrdersPageInner() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2 truncate">
-                    <p className="font-inter font-bold text-[14px] text-[#e2e2e2] truncate">
+                    <p className="font-inter font-bold text-[14px] text-[#e2e2e2] truncate flex items-center gap-1">
                       {order.order_number != null && (
                         <span className="text-[#ebbbb4]/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
                       )}
-                      <CustomerNameLink order={order} facebookUrl={facebookUrl} />
+                      <span className="truncate"><CustomerNameLink order={order} facebookUrl={facebookUrl} /></span>
+                      <CopyIconButton text={order.name} />
                     </p>
                     {order.location && (
                       <p className="font-mono text-[11px] text-[#ebbbb4]/40 flex-shrink-0">{order.location}</p>
@@ -649,6 +710,13 @@ function AdminOrdersPageInner() {
                   ))}
                 </select>
 
+                <CopyIconButton
+                  text={orderSummaryText(order)}
+                  title="Copy name, phone & address"
+                  size={18}
+                  className="text-[#ebbbb4]/40"
+                />
+
                 <Link
                   href={`/admin/orders/${order.id}`}
                   onClick={e => e.stopPropagation()}
@@ -676,13 +744,16 @@ function AdminOrdersPageInner() {
                 <div className="border-t border-[#603e39]/30 px-4 py-4 space-y-4 bg-[#161616]">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[12px]">
                     {[
-                      { label: "Email", value: order.email },
-                      { label: "Phone", value: order.phone },
-                      { label: "Location", value: order.location },
-                      { label: "Date", value: formatDate(order.created_at) },
+                      { label: "Email", value: order.email, copy: order.email },
+                      { label: "Phone", value: order.phone, copy: stripPhonePrefix(order.phone) },
+                      { label: "Location", value: order.location, copy: fullAddress(order) },
+                      { label: "Date", value: formatDate(order.created_at), copy: undefined },
                     ].map((f) => (
                       <div key={f.label}>
-                        <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">{f.label}</p>
+                        <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5 flex items-center gap-1">
+                          {f.label}
+                          {f.copy && <CopyIconButton text={f.copy} />}
+                        </p>
                         <p className="font-mono text-[12px] text-[#e2e2e2]">{f.value}</p>
                       </div>
                     ))}
