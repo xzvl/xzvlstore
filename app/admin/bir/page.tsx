@@ -23,6 +23,7 @@ const CHART_OF_ACCOUNTS: Account[] = [
   { no: 400, title: "Sales Revenue" },
   { no: 401, title: "Sales Discount" },
   { no: 500, title: "Stocks Expense" },
+  { no: 501, title: "Materials Expense" },
 ];
 
 const ACCOUNT_NO: Record<string, number> = Object.fromEntries(CHART_OF_ACCOUNTS.map((a) => [a.title, a.no]));
@@ -75,6 +76,9 @@ function monthOptions(): { value: string; label: string }[] {
 
 function defaultDateRange(): { from: Date; to: Date } {
   const year = new Date().getFullYear();
+  if (year === 2026) {
+    return { from: new Date(2026, 6, 20), to: eod(new Date(2026, 11, 31)) };
+  }
   return { from: new Date(year, 0, 1), to: eod(new Date(year, 11, 31)) };
 }
 
@@ -355,34 +359,40 @@ function AdminBirPageInner() {
   const dateRange = useMemo(() => resolveDateRange(dateFilter, dateFrom, dateTo), [dateFilter, dateFrom, dateTo]);
 
   const allTxns = useMemo<Txn[]>(() => {
-    const orderTxns: Txn[] = orders.flatMap((o) =>
-      o.items
-        .filter((it) => it.product_id && taxableIds.has(it.product_id))
-        .map((it, idx) => ({
-          id: `order-${o.id}-${idx}`,
-          kind: "order" as const,
-          date: new Date(o.created_at),
-          debitAccount: "Cash",
-          creditAccount: "Sales Revenue",
-          amount: it.subtotal,
-          particulars: `Sales on ${pcs(it.qty)} of ${it.product}`,
-          qty: it.qty,
-          productName: it.product,
-          customerName: o.name,
-        }))
+    const orderTxns: Txn[] = orders
+      .filter((o) => !!o.official_receipt?.trim())
+      .flatMap((o) =>
+        o.items
+          .filter((it) => it.product_id && taxableIds.has(it.product_id))
+          .map((it, idx) => ({
+            id: `order-${o.id}-${idx}`,
+            kind: "order" as const,
+            date: new Date(o.created_at),
+            debitAccount: "Cash",
+            creditAccount: "Sales Revenue",
+            amount: it.subtotal,
+            particulars: `Sales on ${pcs(it.qty)} of ${it.product}`,
+            qty: it.qty,
+            productName: it.product,
+            customerName: o.name,
+          }))
     );
 
     const ledgerTxns: Txn[] = ledgerEntries
-      .filter((e) => e.type === "outgoing" && e.source.trim().toLowerCase() === "bankee")
-      .map((e) => ({
-        id: `ledger-${e.id}`,
-        kind: "ledger" as const,
-        date: new Date(e.entry_date),
-        debitAccount: "Stocks Expense",
-        creditAccount: "Cash",
-        amount: e.amount,
-        particulars: e.title,
-      }));
+      .filter((e) => e.type === "outgoing" && (e.source.trim().toLowerCase() === "bankee" || e.source.trim().toLowerCase() === "bir" || e.source.trim().toLowerCase() === "business" ))
+      .map((e) => {
+        const source = e.source.trim().toLowerCase();
+        const debitAccount = source === "bankee" ? "Stocks Expense" : "Materials Expense";
+        return {
+          id: `ledger-${e.id}`,
+          kind: "ledger" as const,
+          date: new Date(e.entry_date),
+          debitAccount,
+          creditAccount: "Cash",
+          amount: e.amount,
+          particulars: e.title,
+        };
+      });
 
     return [...orderTxns, ...ledgerTxns]
       .filter((t) => !dateRange || (t.date >= dateRange.from && t.date <= dateRange.to))
@@ -503,8 +513,8 @@ function AdminBirPageInner() {
           describe={(t) => t.particulars}
           columns={[
             { label: "Credit Cash", value: (t) => t.amount },
-            { label: "Debit Stocks", value: (t) => t.amount },
-            { label: "Debit Marketing", value: () => 0 },
+            { label: "Debit Stocks Expense", value: (t) => (t.debitAccount === "Stocks Expense" ? t.amount : 0) },
+            { label: "Debit Materials Expense", value: (t) => (t.debitAccount === "Materials Expense" ? t.amount : 0) },
           ]}
         />
       ) : (
