@@ -8,14 +8,12 @@ import { useCart } from "@/lib/cart-context";
 import type { StoreProduct } from "@/lib/store-types";
 
 export default function ProductCard({ product }: { product: StoreProduct }) {
-  const [hoverImg, setHoverImg] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [stockLimited, setStockLimited] = useState(false);
   const { addItem, items } = useCart();
   const router = useRouter();
 
-  const displayImage = hoverImg ?? product.image;
-  const hasGallery = product.gallery_images.length > 0;
+  const hoverImage = product.gallery_images[0];
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
@@ -47,13 +45,23 @@ export default function ProductCard({ product }: { product: StoreProduct }) {
       {/* Image area */}
       <Link href={`/product/${product.slug}`} className="block relative aspect-square bg-[#131313] overflow-hidden">
         <Image
-          src={displayImage}
+          src={product.image}
           alt={product.name}
           fill
-          className="object-contain p-3 transition-opacity duration-300"
+          className="object-contain bg-[#ffffff]"
           unoptimized
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
         />
+        {hoverImage && (
+          <Image
+            src={hoverImage}
+            alt=""
+            fill
+            className="object-contain bg-[#ffffff] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            unoptimized
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          />
+        )}
         {product.pre_order && (
           <span className="absolute top-2 left-2 bg-primary px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
             Pre-Order
@@ -65,30 +73,6 @@ export default function ProductCard({ product }: { product: StoreProduct }) {
           </span>
         )}
       </Link>
-
-      {/* Gallery thumbnails */}
-      {hasGallery && (
-        <div className="flex gap-1 px-2 pt-1.5 h-0 group-hover:h-10 overflow-hidden transition-all duration-200">
-          {/* Main image thumb */}
-          <button
-            className={`w-8 h-8 border shrink-0 overflow-hidden ${!hoverImg ? "border-primary" : "border-[#603e39]/40"}`}
-            onMouseEnter={() => setHoverImg(null)}
-            type="button"
-          >
-            <img src={product.image} alt="" className="w-full h-full object-cover" />
-          </button>
-          {product.gallery_images.slice(0, 4).map((img, i) => (
-            <button
-              key={i}
-              className={`w-8 h-8 border shrink-0 overflow-hidden ${hoverImg === img ? "border-primary" : "border-[#603e39]/40"}`}
-              onMouseEnter={() => setHoverImg(img)}
-              type="button"
-            >
-              <img src={img} alt="" className="w-full h-full object-cover" />
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Info */}
       <div className="flex flex-col gap-2 p-3 flex-1">

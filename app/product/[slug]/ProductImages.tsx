@@ -15,16 +15,18 @@ export default function ProductImages({ images, name }: { images: string[]; name
   return (
     <div className="flex flex-col gap-3">
       {/* Main image */}
-      <div className="relative aspect-square bg-[#1a1a1a] border border-[#603e39]/30 overflow-hidden">
-        <Image
-          src={main}
-          alt={name}
-          fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-contain p-6"
-          unoptimized
-          priority
-        />
+      <div className="relative aspect-square bg-[#1a1a1a] border border-[#603e39]/30 p-6 overflow-hidden">
+        <div className="relative aspect-square">
+          <Image
+            src={main}
+            alt={name}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-contain bg-white"
+            unoptimized
+            priority
+          />
+      </div>
       </div>
       {/* Thumbnails */}
       {images.length > 1 && (

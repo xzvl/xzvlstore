@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
+import SearchBar from "@/components/SearchBar";
 
 const navLinks = [
   { href: "/collection/all", label: "All Products" },
@@ -15,6 +16,7 @@ const navLinks = [
 export default function Header() {
   const { count } = useCart();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-[#131313]/95 backdrop-blur-md border-b border-[#603e39]/40">
@@ -53,6 +55,16 @@ export default function Header() {
               person
             </span>
           </Link>
+          <button
+            onClick={() => setSearchOpen((v) => !v)}
+            className="text-[#e2e2e2]/55 hover:text-primary transition-colors"
+            aria-label="Search"
+            type="button"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 22 }}>
+              {searchOpen ? "close" : "search"}
+            </span>
+          </button>
           <Link
             href="/cart"
             className="relative text-[#e2e2e2]/55 hover:text-primary transition-colors"
@@ -78,6 +90,15 @@ export default function Header() {
           </button>
         </div>
       </div>
+
+      {/* Search bar */}
+      {searchOpen && (
+        <div className="border-b border-[#603e39]/40 bg-[#131313]">
+          <div className="max-w-[1440px] mx-auto px-4 md:px-16 py-3">
+            <SearchBar autoFocus onSubmit={() => setSearchOpen(false)} />
+          </div>
+        </div>
+      )}
 
       {/* Mobile menu */}
       {open && (
