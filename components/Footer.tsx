@@ -40,7 +40,7 @@ const socials = [
 ];
 
 const footerLinks = [
-  { href: "/collection/new-releases", label: "New Releases" },
+  { href: "/collection/new-releases", label: "New Arrivals" },
   { href: "/collection/takara-tomy", label: "Takara Tomy" },
   { href: "/collection/hasbro", label: "Hasbro" },
   { href: "/pre-order", label: "Pre-Order" },

@@ -1,4 +1,6 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { StoreProduct } from "@/lib/store-types";
 import Header from "@/components/Header";
@@ -29,7 +31,7 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
   };
 }
 
-async function getTaxonomyAndProducts(slug: string): Promise<{
+const getTaxonomyAndProducts = cache(async function getTaxonomyAndProducts(slug: string): Promise<{
   name: string;
   type: string;
   products: StoreProduct[];
@@ -54,7 +56,7 @@ async function getTaxonomyAndProducts(slug: string): Promise<{
       .or("stock.gt.0,pre_order.eq.true")
       .gte("created_at", since.toISOString())
       .order("created_at", { ascending: false });
-    return { name: "New Releases", type: "new-releases", products: (data ?? []).map(mapProduct) };
+    return { name: "New Arrivals", type: "new-releases", products: (data ?? []).map(mapProduct) };
   }
 
   const { data: taxonomy } = await supabase
@@ -87,6 +89,17 @@ async function getTaxonomyAndProducts(slug: string): Promise<{
     type: taxonomy.type,
     products: (data ?? []).map(mapProduct),
   };
+});
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ taxonomy: string }>;
+}): Promise<Metadata> {
+  const { taxonomy: slug } = await params;
+  const result = await getTaxonomyAndProducts(slug);
+  if (!result) return {};
+  return { title: result.name };
 }
 
 export default async function CollectionPage({

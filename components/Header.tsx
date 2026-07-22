@@ -7,7 +7,7 @@ import SearchBar from "@/components/SearchBar";
 
 const navLinks = [
   { href: "/collection/all", label: "All Products" },
-  { href: "/collection/new-releases", label: "New Releases" },
+  { href: "/collection/new-releases", label: "New Arrivals" },
   { href: "/collection/takara-tomy", label: "Takara Tomy" },
   { href: "/collection/hasbro", label: "Hasbro" },
   { href: "/pre-order", label: "Pre-Order" },

@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { Taxonomy } from "@/lib/supabase";
 import type { StoreProduct } from "@/lib/store-types";
@@ -31,7 +33,7 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
   };
 }
 
-async function getFilteredProducts(params: {
+const getFilteredProducts = cache(async function getFilteredProducts(params: {
   q: string;
   category?: string;
   brand?: string;
@@ -69,6 +71,31 @@ async function getFilteredProducts(params: {
 
   const { data } = await query;
   return (data ?? []).map(mapProduct);
+});
+
+function parseSearchParams(sp: Record<string, string | string[] | undefined>) {
+  return {
+    q: typeof sp.q === "string" ? sp.q : "",
+    category: typeof sp.category === "string" ? sp.category : undefined,
+    brand: typeof sp.brand === "string" ? sp.brand : undefined,
+    minPrice: typeof sp.minPrice === "string" ? sp.minPrice : undefined,
+    maxPrice: typeof sp.maxPrice === "string" ? sp.maxPrice : undefined,
+  };
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = parseSearchParams(await searchParams);
+  if (!params.q) return { title: "Search" };
+
+  const products = await getFilteredProducts(params);
+  const count = products.length;
+  return {
+    title: `Search: ${count} ${count === 1 ? "result" : "results"} found for "${params.q}"`,
+  };
 }
 
 export default async function SearchPage({
@@ -76,12 +103,7 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const sp = await searchParams;
-  const q = typeof sp.q === "string" ? sp.q : "";
-  const category = typeof sp.category === "string" ? sp.category : undefined;
-  const brand = typeof sp.brand === "string" ? sp.brand : undefined;
-  const minPrice = typeof sp.minPrice === "string" ? sp.minPrice : undefined;
-  const maxPrice = typeof sp.maxPrice === "string" ? sp.maxPrice : undefined;
+  const { q, category, brand, minPrice, maxPrice } = parseSearchParams(await searchParams);
 
   const [{ data: taxonomyRows }, products] = await Promise.all([
     supabase

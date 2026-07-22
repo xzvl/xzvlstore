@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | xzvl.store",
+    template: "%s - xzvl.store",
     default: "xzvl.store",
   },
   description: "xzvl.store",
@@ -41,7 +41,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         />
       </head>
-      <body className="overflow-x-hidden">
+      <body className="overflow-x-clip">
         <div className="fixed inset-0 scanline z-[100] pointer-events-none" />
         <CartProvider>{children}</CartProvider>
       </body>

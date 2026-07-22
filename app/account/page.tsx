@@ -229,7 +229,7 @@ function AccountPageInner() {
         )}
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 border-b border-[#603e39]/30 overflow-x-auto">
+        <div className="flex items-center gap-1 border-b border-[#603e39]/30 overflow-x-auto overflow-y-hidden scrollbar-x-5">
           {TABS.map(t => (
             <button
               key={t.value}

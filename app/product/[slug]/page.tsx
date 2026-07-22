@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { StoreProduct } from "@/lib/store-types";
 import Header from "@/components/Header";
@@ -67,13 +68,7 @@ const PRODUCT_SELECT =
 const nameToSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-export default async function ProductPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-
+async function getProductBySlug(slug: string): Promise<Record<string, unknown> | null> {
   // Primary lookup: stored slug column
   let { data } = await supabase
     .from("products")
@@ -94,6 +89,28 @@ export default async function ProductPage({
       ) ?? null;
   }
 
+  return data as Record<string, unknown> | null;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const data = await getProductBySlug(slug);
+  if (!data) return {};
+  return { title: data.name as string };
+}
+
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+
+  const data = await getProductBySlug(slug);
   if (!data) notFound();
 
   const product = mapProduct(data as Record<string, unknown>);
