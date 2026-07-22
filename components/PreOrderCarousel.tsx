@@ -82,6 +82,24 @@ export default function PreOrderCarousel({ products }: { products: StoreProduct[
 
   if (n === 0) return null;
 
+  // Sliding carousel math (clone-based looping) assumes at least VISIBLE real
+  // items to build a full clone zone on each side. With fewer items than that,
+  // the clone slices come up short and the loop math breaks. Just show a
+  // static row instead — nothing to carousel through anyway.
+  if (n <= 2) {
+    return (
+      <div
+        className={`grid gap-3 ${
+          n === 1 ? "grid-cols-1 max-w-xs sm:max-w-sm" : "grid-cols-2 max-w-2xl"
+        }`}
+      >
+        {products.map((product) => (
+          <CarouselCard key={product.id} product={product} />
+        ))}
+      </div>
+    );
+  }
+
   // ── CSS maths ────────────────────────────────────────────────────────────────
   // Container = 100%. Each card = 100%/VISIBLE = 33.33% of container.
   // Track width = E cards * 33.33% container = (E/VISIBLE)*100% of container.
