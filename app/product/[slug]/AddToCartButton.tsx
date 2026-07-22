@@ -27,7 +27,7 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [purchasedInWindow, setPurchasedInWindow] = useState(0);
-  const { addItem, items } = useCart();
+  const { addItem, items, isBlocked } = useCart();
   const router = useRouter();
 
   const stock = product.stock;
@@ -113,6 +113,20 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
   }
 
   const atStockLimit = remaining != null && currentInCart >= (binding?.cap ?? 0);
+
+  if (isBlocked) {
+    return (
+      <div className="flex flex-col gap-3">
+        <button
+          disabled
+          className="w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase bg-[#1a1a1a] border border-red-500/40 text-red-400/70 cursor-not-allowed flex items-center justify-center gap-3"
+        >
+          <span className="material-symbols-outlined text-[18px]">gpp_bad</span>
+          Account Blocked
+        </button>
+      </div>
+    );
+  }
 
   if (product.status !== "active") {
     return (

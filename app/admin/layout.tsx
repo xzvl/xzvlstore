@@ -4,7 +4,7 @@ import AdminShell from "./AdminShell";
 export const metadata: Metadata = {
   title: {
     template: "%s - Backend - xzvl.store",
-    default: "Dashboard - Backend - xzvl.store",
+    default: "Dashboard - Backend",
   },
 };
 

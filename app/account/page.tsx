@@ -16,6 +16,7 @@ type Profile = {
   billing_postcode: string; billing_region: string; billing_state: string; billing_phone: string;
   shipping_address_1: string; shipping_address_2: string; shipping_city: string;
   shipping_postcode: string; shipping_region: string; shipping_state: string; shipping_phone: string;
+  is_blocked: boolean; block_reason: string;
 };
 
 const EMPTY_PROFILE: Profile = {
@@ -24,6 +25,7 @@ const EMPTY_PROFILE: Profile = {
   billing_postcode: "", billing_region: "Philippines", billing_state: "", billing_phone: "",
   shipping_address_1: "", shipping_address_2: "", shipping_city: "",
   shipping_postcode: "", shipping_region: "Philippines", shipping_state: "", shipping_phone: "",
+  is_blocked: false, block_reason: "",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -214,6 +216,34 @@ function AccountPageInner() {
             Sign Out
           </button>
         </div>
+
+        {/* Account blocked notice */}
+        {profile.is_blocked && (
+          <div className="border border-red-500/40 bg-red-500/5">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-red-500/20 bg-red-500/10">
+              <span className="material-symbols-outlined text-red-400 text-[24px] flex-shrink-0">gpp_bad</span>
+              <div>
+                <p className="font-inter font-bold text-[15px] text-red-400 uppercase tracking-wide">Account Blocked</p>
+                <p className="font-mono text-[11px] text-[#ebbbb4]/60 mt-0.5 leading-relaxed">
+                  You cannot add items to cart or place pre-orders while your account is blocked.
+                </p>
+              </div>
+            </div>
+            <div className="px-5 py-4">
+              <p className="font-mono text-[10px] text-red-400/80 tracking-widest uppercase mb-2">Reason Block</p>
+              {profile.block_reason ? (
+                <div
+                  className="font-mono text-[13px] text-[#e2e2e2] leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-[#e2e2e2] [&_p]:mb-2"
+                  dangerouslySetInnerHTML={{ __html: profile.block_reason }}
+                />
+              ) : (
+                <p className="font-mono text-[12px] text-[#ebbbb4]/40 italic">
+                  No reason was provided. Please contact support for more information.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Email verification banner */}
         {!emailVerified && (
@@ -462,6 +492,8 @@ export default function AccountPage() {
   );
 }
 
+type StringProfileKey = { [K in keyof Profile]: Profile[K] extends string ? K : never }[keyof Profile];
+
 function AddressFields({
   prefix,
   profile,
@@ -471,7 +503,7 @@ function AddressFields({
   profile: Profile;
   set$: (key: keyof Profile, value: string) => void;
 }) {
-  const f = (field: string) => `${prefix}_${field}` as keyof Profile;
+  const f = (field: string) => `${prefix}_${field}` as StringProfileKey;
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div className="sm:col-span-2">

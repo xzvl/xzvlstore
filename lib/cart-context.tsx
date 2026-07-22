@@ -54,6 +54,11 @@ type CartContextType = {
   revalidateCart: () => Promise<{ changed: boolean; messages: string[] }>;
   notice: string[] | null;
   dismissNotice: () => void;
+  // Whether the signed-in customer's account is blocked by an admin. Guests
+  // (no session) are never blocked. Checked once on mount and re-checked on
+  // any auth state change (sign in/out) so it stays accurate without reload.
+  isBlocked: boolean;
+  blockReason: string | null;
 };
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -88,6 +93,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [notice, setNotice] = useState<string[] | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockReason, setBlockReason] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkBlockedStatus() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        if (!cancelled) { setIsBlocked(false); setBlockReason(null); }
+        return;
+      }
+      try {
+        const res = await fetch("/api/account/profile", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        setIsBlocked(!!data.is_blocked);
+        setBlockReason(data.block_reason || null);
+      } catch {}
+    }
+
+    checkBlockedStatus();
+    const { data: sub } = supabaseClient.auth.onAuthStateChange(checkBlockedStatus);
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -112,6 +147,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated]);
 
   const addItem = useCallback((item: Omit<CartItem, "qty">, qty = 1): boolean => {
+    if (isBlocked) return false;
     let accepted = true;
     setItems((prev) => {
       const existing = prev.find((i) => i.id === item.id);
@@ -136,7 +172,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [...prev, { ...item, qty }];
     });
     return accepted;
-  }, []);
+  }, [isBlocked]);
 
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
@@ -235,7 +271,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQty, clearCart, total, count, revalidateCart, notice, dismissNotice }}
+      value={{ items, addItem, removeItem, updateQty, clearCart, total, count, revalidateCart, notice, dismissNotice, isBlocked, blockReason }}
     >
       {children}
       {notice && notice.length > 0 && <CartNotice messages={notice} onDismiss={dismissNotice} />}

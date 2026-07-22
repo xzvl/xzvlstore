@@ -10,13 +10,14 @@ import type { StoreProduct } from "@/lib/store-types";
 export default function ProductCard({ product }: { product: StoreProduct }) {
   const [adding, setAdding] = useState(false);
   const [stockLimited, setStockLimited] = useState(false);
-  const { addItem, items } = useCart();
+  const { addItem, items, isBlocked } = useCart();
   const router = useRouter();
 
   const hoverImage = product.gallery_images[0];
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
+    if (isBlocked) return;
     if (product.pre_order) {
       router.push(`/pre-order?product=${product.slug}`);
       return;
@@ -101,7 +102,8 @@ export default function ProductCard({ product }: { product: StoreProduct }) {
 
         <button
           onClick={handleAddToCart}
-          className={`w-full py-2 font-mono text-[10px] tracking-widest uppercase transition-all ${
+          disabled={isBlocked}
+          className={`w-full py-2 font-mono text-[10px] tracking-widest uppercase transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
             stockLimited
               ? "bg-transparent border border-red-500/60 text-red-400"
               : adding
@@ -109,7 +111,7 @@ export default function ProductCard({ product }: { product: StoreProduct }) {
               : "bg-transparent border border-[#603e39]/50 text-[#e2e2e2]/60 hover:border-primary hover:text-primary"
           }`}
         >
-          {stockLimited ? "Limit Reached" : adding ? "Added!" : product.pre_order ? "Pre-Order" : "Add to Cart"}
+          {isBlocked ? "Account Blocked" : stockLimited ? "Limit Reached" : adding ? "Added!" : product.pre_order ? "Pre-Order" : "Add to Cart"}
         </button>
       </div>
     </div>

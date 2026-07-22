@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useCart } from "@/lib/cart-context";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import BlockedBanner from "@/components/BlockedBanner";
 
 export default function CartPage() {
   const { items, removeItem, updateQty, total, count, revalidateCart } = useCart();
@@ -34,6 +35,8 @@ export default function CartPage() {
               )}
             </h1>
           </div>
+
+          <BlockedBanner />
 
           {items.length === 0 ? (
             <EmptyCart />
@@ -196,6 +199,7 @@ function CartItem({
 }
 
 function OrderSummary({ total, count }: { total: number; count: number }) {
+  const { isBlocked } = useCart();
   return (
     <div className="sticky top-20 bg-[#1a1a1a] border border-[#603e39]/25 p-6 space-y-5">
       <h2 className="font-inter font-bold text-[16px] uppercase text-[#e2e2e2]">
@@ -222,13 +226,23 @@ function OrderSummary({ total, count }: { total: number; count: number }) {
         </span>
       </div>
 
-      <Link
-        href="/checkout"
-        className="flex items-center justify-center gap-3 w-full py-4 bg-primary text-white font-mono text-[11px] tracking-[0.2em] uppercase hover:brightness-110 active:scale-[0.98] transition-all"
-      >
-        <span className="material-symbols-outlined text-[16px]">lock</span>
-        Proceed to Checkout
-      </Link>
+      {isBlocked ? (
+        <button
+          disabled
+          className="flex items-center justify-center gap-3 w-full py-4 bg-[#1a1a1a] border border-red-500/40 text-red-400/70 font-mono text-[11px] tracking-[0.2em] uppercase cursor-not-allowed"
+        >
+          <span className="material-symbols-outlined text-[16px]">gpp_bad</span>
+          Account Blocked
+        </button>
+      ) : (
+        <Link
+          href="/checkout"
+          className="flex items-center justify-center gap-3 w-full py-4 bg-primary text-white font-mono text-[11px] tracking-[0.2em] uppercase hover:brightness-110 active:scale-[0.98] transition-all"
+        >
+          <span className="material-symbols-outlined text-[16px]">lock</span>
+          Proceed to Checkout
+        </Link>
+      )}
 
       <Link
         href="/collection/new-releases"

@@ -6,6 +6,7 @@ import type { StoreProduct } from "@/lib/store-types";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import BlockedBanner from "@/components/BlockedBanner";
 
 const FIELDS =
   "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
@@ -118,6 +119,9 @@ export default async function CollectionPage({
     <>
       <Header />
       <main className="bg-[#131313] min-h-screen">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-16">
+          <BlockedBanner className="mt-6 mb-0" />
+        </div>
         {/* Hero */}
         <section className="relative bg-[#0e0e0e] cyber-grid overflow-hidden border-b border-[#603e39]/20">
           <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary" />

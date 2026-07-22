@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart-context";
 import { supabaseClient } from "@/lib/supabase-client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import BlockedBanner from "@/components/BlockedBanner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -190,7 +191,7 @@ function AddressFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
-  const { items, total, clearCart, revalidateCart } = useCart();
+  const { items, total, clearCart, revalidateCart, isBlocked } = useCart();
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -268,6 +269,7 @@ export default function CheckoutPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isBlocked) return;
 
     const newErrors: FormErrors = {};
     if (!form.name) newErrors.name = "Name is required.";
@@ -446,6 +448,8 @@ export default function CheckoutPage() {
               Complete Your Order
             </h1>
           </div>
+
+          <BlockedBanner />
 
           {/* Auth banner */}
           {!userEmail ? (
@@ -713,7 +717,7 @@ export default function CheckoutPage() {
 
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || isBlocked}
                     className="flex items-center justify-center gap-2 w-full py-4 bg-primary text-white font-mono text-[11px] tracking-[0.2em] uppercase hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {submitting ? (

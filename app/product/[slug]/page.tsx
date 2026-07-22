@@ -6,6 +6,7 @@ import type { StoreProduct } from "@/lib/store-types";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import BlockedBanner from "@/components/BlockedBanner";
 import AddToCartButton from "./AddToCartButton";
 import ProductImages from "./ProductImages";
 
@@ -132,6 +133,7 @@ export default async function ProductPage({
       <main className="bg-[#131313] min-h-screen">
         {/* Breadcrumb */}
         <div className="max-w-[1440px] mx-auto px-4 md:px-16 pt-6">
+          <BlockedBanner className="mb-6" />
           <div className="flex items-center gap-2 font-mono text-[10px] text-[#e2e2e2]/30 tracking-widest uppercase">
             <Link href="/" className="hover:text-primary transition-colors">Home</Link>
             <span>/</span>
