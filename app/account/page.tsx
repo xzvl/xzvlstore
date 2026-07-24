@@ -407,6 +407,11 @@ function AccountPageInner() {
                           })()}
                         </p>
                       )}
+                      {order.delivery_method && order.delivery_method !== "Pickup" && (
+                        <p className="font-mono text-[11px] text-[#ebbbb4]/50">
+                          Shipping Fee: <span className="text-[#e2e2e2]">{order.shipping_fee != null ? `₱${order.shipping_fee.toLocaleString()}` : "TBA"}</span>
+                        </p>
+                      )}
                       {order.payment_method && (
                         <p className="font-mono text-[11px] text-[#ebbbb4]/50">
                           Payment: <span className="text-[#e2e2e2]">{order.payment_method}</span>

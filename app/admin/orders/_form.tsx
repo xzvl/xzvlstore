@@ -50,6 +50,7 @@ type FormState = {
   order_date: string;
   delivery_method: string;
   payment_method: string;
+  shipping_fee: string;
   tracking_number: string;
   official_receipt: string;
   discount: string;
@@ -87,7 +88,7 @@ function toPHLocal(iso: string): string {
 const EMPTY_FORM: FormState = {
   customer_id: "", name: "", email: "", phone: "", location: "",
   status: "pending", order_date: nowPH(),
-  delivery_method: "", payment_method: "", tracking_number: "",
+  delivery_method: "", payment_method: "", shipping_fee: "", tracking_number: "",
   official_receipt: "", discount: "", down_payment: "",
   billing_address_1: "", billing_address_2: "", billing_city: "", billing_state: "",
   billing_postcode: "", billing_region: "Philippines", billing_phone: "",
@@ -404,6 +405,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             order_date: order.created_at ? toPHLocal(order.created_at) : nowPH(),
             delivery_method: order.delivery_method ?? "",
             payment_method: order.payment_method ?? "",
+            shipping_fee: order.shipping_fee != null ? String(order.shipping_fee) : "",
             tracking_number: order.tracking_number ?? "",
             official_receipt: order.official_receipt ?? "",
             discount: order.discount ? String(order.discount) : "",
@@ -537,6 +539,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         created_at: form.order_date ? new Date(form.order_date + ":00+08:00").toISOString() : undefined,
         delivery_method: form.delivery_method || null,
         payment_method: form.payment_method || null,
+        shipping_fee: form.delivery_method === "Pickup" || !form.shipping_fee ? null : Number(form.shipping_fee),
         tracking_number: form.tracking_number || null,
         official_receipt: form.official_receipt || null,
         discount: discountAmt,
@@ -731,11 +734,31 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
           </div>
           <div>
             <label className={LABEL}>Delivery Method</label>
-            <select value={form.delivery_method} onChange={(e) => set$("delivery_method", e.target.value)} className={SELECT}>
+            <select
+              value={form.delivery_method}
+              onChange={(e) => {
+                const value = e.target.value;
+                setForm((f) => ({ ...f, delivery_method: value, ...(value === "Pickup" ? { shipping_fee: "" } : {}) }));
+              }}
+              className={SELECT}
+            >
               <option value="">— Select —</option>
               {DELIVERY_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
+          {form.delivery_method !== "Pickup" && (
+            <div>
+              <label className={LABEL}>Shipping Fee (₱)</label>
+              <input
+                value={form.shipping_fee}
+                onChange={(e) => set$("shipping_fee", e.target.value)}
+                placeholder="TBA"
+                type="number"
+                min="0"
+                className={INPUT}
+              />
+            </div>
+          )}
           <div>
             <label className={LABEL}>Tracking Number</label>
             <input value={form.tracking_number} onChange={(e) => set$("tracking_number", e.target.value)} placeholder="Waybill / tracking no." className={INPUT} />

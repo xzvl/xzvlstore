@@ -185,6 +185,9 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS max_purchase_enabled boolean NOT NULL DEFAULT false;
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS max_purchase_limit integer;
 
+-- ─── Order shipping fee (null = not yet set / TBA) ─────────────────────────────
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_fee numeric;
+
 -- ─── Supabase Storage ─────────────────────────────────────────────────────────
 -- 1. Go to Storage → New bucket
 -- 2. Name: product-images

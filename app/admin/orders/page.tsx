@@ -771,6 +771,14 @@ function AdminOrdersPageInner() {
                         <p className="font-mono text-[12px] text-[#e2e2e2]">{order.delivery_method}</p>
                       </div>
                     )}
+                    {order.delivery_method && order.delivery_method !== "Pickup" && (
+                      <div>
+                        <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Shipping Fee</p>
+                        <p className="font-mono text-[12px] text-[#e2e2e2]">
+                          {order.shipping_fee != null ? `₱${order.shipping_fee.toLocaleString()}` : "TBA"}
+                        </p>
+                      </div>
+                    )}
                     {order.payment_method && (
                       <div>
                         <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Payment</p>

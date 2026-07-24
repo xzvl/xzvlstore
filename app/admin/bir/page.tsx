@@ -22,11 +22,27 @@ const CHART_OF_ACCOUNTS: Account[] = [
   { no: 300, title: "Owner's Capital" },
   { no: 400, title: "Sales Revenue" },
   { no: 401, title: "Sales Discount" },
-  { no: 500, title: "Stocks Expense" },
+  { no: 402, title: "Delivery Revenue" },
+  { no: 500, title: "Stocks Inventory" },
   { no: 501, title: "Materials Expense" },
+  { no: 502, title: "Delivery Expense" },
 ];
 
 const ACCOUNT_NO: Record<string, number> = Object.fromEntries(CHART_OF_ACCOUNTS.map((a) => [a.title, a.no]));
+
+const normalizeAccountTitle = (raw: string) => raw.trim().toLowerCase().replace(/[’‘]/g, "'");
+
+const ACCOUNT_BY_TITLE: Record<string, Account> = Object.fromEntries(
+  CHART_OF_ACCOUNTS.map((a) => [normalizeAccountTitle(a.title), a])
+);
+
+// Matches ledger `source` values like "BIR - Materials Expense" or "BIR - Owner's Capital"
+// and resolves the account title against the chart of accounts.
+function resolveBirAccount(source: string): Account | null {
+  const m = /^bir\s*(?:-|:|—)\s*(.+)$/i.exec(source.trim());
+  if (!m) return null;
+  return ACCOUNT_BY_TITLE[normalizeAccountTitle(m[1])] ?? null;
+}
 
 const BIR_TABS: { value: string; label: string }[] = [
   { value: "gj", label: "General Journal" },
@@ -35,20 +51,28 @@ const BIR_TABS: { value: string; label: string }[] = [
   { value: "cdj", label: "Cash Disbursement" },
 ];
 
-const TXNS_PER_PAGE = 9; // 4 rows/txn × 9 = 36 rows, capped under the 37-row page limit
+type JournalLine = { account: string; amount: number };
 
 type Txn = {
   id: string;
   kind: "order" | "ledger";
+  cashFlow: "in" | "out";
   date: Date;
-  debitAccount: string;
-  creditAccount: string;
-  amount: number;
+  amount: number; // total on the Cash side of the entry
+  otherLines: JournalLine[]; // non-cash side of the entry; amounts sum to `amount`
   particulars: string;
-  qty?: number;
-  productName?: string;
-  customerName?: string;
 };
+
+// Debit/credit lines in journal order: debit side first, then credit side.
+function journalLines(t: Txn): { account: string; debit: number; credit: number }[] {
+  const isIncoming = t.cashFlow === "in";
+  const debitLines = isIncoming ? [{ account: "Cash", amount: t.amount }] : t.otherLines;
+  const creditLines = isIncoming ? t.otherLines : [{ account: "Cash", amount: t.amount }];
+  return [
+    ...debitLines.map((l) => ({ account: l.account, debit: l.amount, credit: 0 })),
+    ...creditLines.map((l) => ({ account: l.account, debit: 0, credit: l.amount })),
+  ];
+}
 
 type JournalRow = {
   n: number;
@@ -114,11 +138,33 @@ function customerLabel(fullName: string): string {
   return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
 }
 
-function paginateTxns(txns: Txn[], pageSize: number = TXNS_PER_PAGE): Txn[][] {
+function paginateTxns(txns: Txn[], pageSize: number): Txn[][] {
   const pages: Txn[][] = [];
   for (let i = 0; i < txns.length; i += pageSize) {
     pages.push(txns.slice(i, i + pageSize));
   }
+  return pages;
+}
+
+const GJ_ROWS_PER_PAGE = 37; // BIR loose-leaf journal pages are ruled to 37 lines
+
+// A simple 2-line entry takes 4 rows (debit, credit, particulars, blank spacer);
+// a compound entry with N extra credit/debit lines takes N-1 more.
+function paginateJournalRows(txns: Txn[], maxRows: number = GJ_ROWS_PER_PAGE): Txn[][] {
+  const pages: Txn[][] = [];
+  let current: Txn[] = [];
+  let rowCount = 0;
+  for (const t of txns) {
+    const rows = t.otherLines.length + 3; // +1 cash line, +1 particulars, +1 blank
+    if (current.length > 0 && rowCount + rows > maxRows) {
+      pages.push(current);
+      current = [];
+      rowCount = 0;
+    }
+    current.push(t);
+    rowCount += rows;
+  }
+  if (current.length > 0) pages.push(current);
   return pages;
 }
 
@@ -128,15 +174,17 @@ function buildJournalRows(pageTxns: Txn[]): JournalRow[] {
   const rows: JournalRow[] = [];
   let n = 1;
   for (const t of pageTxns) {
-    rows.push({
-      n: n++,
-      date: mmdd(t.date),
-      account: t.debitAccount,
-      pr: String(ACCOUNT_NO[t.debitAccount] ?? ""),
-      debit: t.amount.toLocaleString(),
-      credit: "",
+    const lines = journalLines(t);
+    lines.forEach((line, i) => {
+      rows.push({
+        n: n++,
+        date: i === 0 ? mmdd(t.date) : "",
+        account: line.account,
+        pr: String(ACCOUNT_NO[line.account] ?? ""),
+        debit: line.debit ? line.debit.toLocaleString("en-US") : "",
+        credit: line.credit ? line.credit.toLocaleString("en-US") : "",
+      });
     });
-    rows.push({ n: n++, date: "", account: t.creditAccount, pr: "", debit: "", credit: t.amount.toLocaleString() });
     rows.push({ n: n++, date: "", account: t.particulars, pr: "", debit: "", credit: "" });
     rows.push({ n: n++, date: "", account: "", pr: "", debit: "", credit: "" });
   }
@@ -220,7 +268,7 @@ function LedgerColumn({ title, lines }: { title: string; lines: LedgerLine[] }) 
                 <td className="px-2 py-1.5 font-mono text-[#e2e2e2]">{l.date}</td>
                 <td className="px-2 py-1.5 font-mono text-[#e2e2e2] truncate max-w-[220px]">{l.particulars}</td>
                 <td className="px-2 py-1.5 font-mono text-[#ebbbb4]/50">{l.pr}</td>
-                <td className="px-2 py-1.5 font-mono text-primary text-right">{l.amount.toLocaleString()}</td>
+                <td className="px-2 py-1.5 font-mono text-primary text-right">{l.amount.toLocaleString("en-US")}</td>
               </tr>
             ))
           )}
@@ -284,7 +332,7 @@ function CashJournalTable({
                           const v = c.value(t);
                           return (
                             <td key={ci} className="px-3 py-1.5 font-mono text-primary text-right whitespace-nowrap">
-                              {v ? v.toLocaleString() : ""}
+                              {v ? v.toLocaleString("en-US") : ""}
                             </td>
                           );
                         })}
@@ -300,7 +348,7 @@ function CashJournalTable({
                     </td>
                     {totals.map((tot, i) => (
                       <td key={i} className="px-3 py-2 font-mono text-[13px] text-primary font-bold text-right whitespace-nowrap">
-                        {tot.toLocaleString()}
+                        {tot.toLocaleString("en-US")}
                       </td>
                     ))}
                     <td />
@@ -359,53 +407,94 @@ function AdminBirPageInner() {
   const dateRange = useMemo(() => resolveDateRange(dateFilter, dateFrom, dateTo), [dateFilter, dateFrom, dateTo]);
 
   const allTxns = useMemo<Txn[]>(() => {
-    const orderTxns: Txn[] = orders
-      .filter((o) => !!o.official_receipt?.trim())
-      .flatMap((o) =>
-        o.items
-          .filter((it) => it.product_id && taxableIds.has(it.product_id))
-          .map((it, idx) => ({
-            id: `order-${o.id}-${idx}`,
-            kind: "order" as const,
-            date: new Date(o.created_at),
-            debitAccount: "Cash",
-            creditAccount: "Sales Revenue",
-            amount: it.subtotal,
-            particulars: `Sales on ${pcs(it.qty)} of ${it.product}`,
-            qty: it.qty,
-            productName: it.product,
-            customerName: o.name,
-          }))
-    );
+    const birOrders = orders.filter((o) => !!o.official_receipt?.trim());
+
+    const orderTxns: Txn[] = birOrders.map((o) => {
+      const taxableItems = o.items.filter((it) => it.product_id && taxableIds.has(it.product_id));
+      const salesTotal = taxableItems.reduce((s, it) => s + it.subtotal, 0);
+      const shippingFee = o.shipping_fee || 0;
+
+      // Sales Revenue and Delivery Revenue land on the same cash receipt:
+      // one Debit Cash for (order total + shipping fee), split across two credit lines.
+      const otherLines: JournalLine[] = [];
+      if (salesTotal > 0) otherLines.push({ account: "Sales Revenue", amount: salesTotal });
+      if (shippingFee > 0) otherLines.push({ account: "Delivery Revenue", amount: shippingFee });
+
+      const itemsSummary = taxableItems.map((it) => `${pcs(it.qty)} of ${it.product}`).join(", ");
+      const salesParticulars = itemsSummary
+        ? `Sale to ${customerLabel(o.name)} (${itemsSummary}) via Receipt #${o.official_receipt}`
+        : `Delivery fee from ${customerLabel(o.name)} via Receipt #${o.official_receipt}`;
+
+      return {
+        id: `order-${o.id}-cash-in`,
+        kind: "order" as const,
+        cashFlow: "in" as const,
+        date: new Date(o.created_at),
+        amount: salesTotal + shippingFee,
+        otherLines,
+        particulars: salesParticulars,
+      };
+    }).filter((t) => t.otherLines.length > 0);
+
+    // Courier fees aren't paid out per order — they're settled once at month-end,
+    // so all shipping fees for the month are totaled into a single Delivery Expense entry.
+    const shippingByMonth = new Map<string, number>();
+    for (const o of birOrders) {
+      const fee = o.shipping_fee || 0;
+      if (fee <= 0) continue;
+      const d = new Date(o.created_at);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      shippingByMonth.set(key, (shippingByMonth.get(key) ?? 0) + fee);
+    }
+
+    const deliveryExpenseTxns: Txn[] = Array.from(shippingByMonth.entries()).map(([key, total]) => {
+      const [year, month] = key.split("-").map(Number);
+      const monthLabel = new Date(year, month, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      return {
+        id: `delivery-expense-${key}`,
+        kind: "ledger" as const,
+        cashFlow: "out" as const,
+        date: new Date(year, month + 1, 0), // last day of the month
+        amount: total,
+        otherLines: [{ account: "Delivery Expense", amount: total }],
+        particulars: `${monthLabel} Summary: Total monthly courier fees and packaging materials per attached receipts.`,
+      };
+    });
 
     const ledgerTxns: Txn[] = ledgerEntries
-      .filter((e) => e.type === "outgoing" && (e.source.trim().toLowerCase() === "bankee" || e.source.trim().toLowerCase() === "bir" || e.source.trim().toLowerCase() === "business" ))
+      .filter((e) => {
+        const source = e.source.trim().toLowerCase();
+        return source === "bankee" || source === "bir" || source === "business" || /^bir\s*(?:-|:|—)/i.test(e.source.trim());
+      })
       .map((e) => {
         const source = e.source.trim().toLowerCase();
-        const debitAccount = source === "bankee" ? "Stocks Expense" : "Materials Expense";
+        const birAccount = resolveBirAccount(e.source);
+        // Legacy sources (no "BIR - Account Title" suffix) fall back to their old default account.
+        const otherAccount = birAccount?.title ?? (source === "bankee" ? "Stocks Inventory" : "Materials Expense");
+        const isIncoming = e.type === "incoming";
         return {
           id: `ledger-${e.id}`,
           kind: "ledger" as const,
+          cashFlow: isIncoming ? ("in" as const) : ("out" as const),
           date: new Date(e.entry_date),
-          debitAccount,
-          creditAccount: "Cash",
           amount: e.amount,
+          otherLines: [{ account: otherAccount, amount: e.amount }],
           particulars: e.title,
         };
       });
 
-    return [...orderTxns, ...ledgerTxns]
+    return [...orderTxns, ...deliveryExpenseTxns, ...ledgerTxns]
       .filter((t) => !dateRange || (t.date >= dateRange.from && t.date <= dateRange.to))
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [orders, ledgerEntries, taxableIds, dateRange]);
 
-  const gjPages = useMemo(() => paginateTxns(allTxns), [allTxns]);
+  const gjPages = useMemo(() => paginateJournalRows(allTxns), [allTxns]);
   const crjPages = useMemo(
-    () => paginateTxns(allTxns.filter((t) => t.kind === "order"), CASH_ROWS_PER_PAGE),
+    () => paginateTxns(allTxns.filter((t) => t.cashFlow === "in"), CASH_ROWS_PER_PAGE),
     [allTxns]
   );
   const cdjPages = useMemo(
-    () => paginateTxns(allTxns.filter((t) => t.kind === "ledger"), CASH_ROWS_PER_PAGE),
+    () => paginateTxns(allTxns.filter((t) => t.cashFlow === "out"), CASH_ROWS_PER_PAGE),
     [allTxns]
   );
 
@@ -416,14 +505,17 @@ function AdminBirPageInner() {
   }, [gjPages]);
 
   const ledgerByAccount = useMemo(() => {
+    const flatLines = allTxns.flatMap((t) =>
+      journalLines(t).map((line) => ({ ...line, txnId: t.id, date: t.date, particulars: t.particulars }))
+    );
     return CHART_OF_ACCOUNTS.map((acc) => ({
       account: acc,
-      debit: allTxns
-        .filter((t) => t.debitAccount === acc.title)
-        .map((t) => ({ date: mmdd(t.date), particulars: t.particulars, pr: `GJ${gjPageOf[t.id]}`, amount: t.amount })),
-      credit: allTxns
-        .filter((t) => t.creditAccount === acc.title)
-        .map((t) => ({ date: mmdd(t.date), particulars: t.particulars, pr: `GJ${gjPageOf[t.id]}`, amount: t.amount })),
+      debit: flatLines
+        .filter((l) => l.debit > 0 && l.account === acc.title)
+        .map((l) => ({ date: mmdd(l.date), particulars: l.particulars, pr: `GJ${gjPageOf[l.txnId]}`, amount: l.debit })),
+      credit: flatLines
+        .filter((l) => l.credit > 0 && l.account === acc.title)
+        .map((l) => ({ date: mmdd(l.date), particulars: l.particulars, pr: `GJ${gjPageOf[l.txnId]}`, amount: l.credit })),
     }));
   }, [allTxns, gjPageOf]);
 
@@ -497,12 +589,20 @@ function AdminBirPageInner() {
           title="Cash Receipt Journal"
           pages={crjPages}
           gjPageOf={gjPageOf}
-          describe={(t) => `${customerLabel(t.customerName ?? "")} Bought ${pcs(t.qty ?? 0)} of ${t.productName ?? ""}`}
+          describe={(t) => t.particulars}
           columns={[
             { label: "Debit Cash", value: (t) => t.amount },
             { label: "Debit Discount", value: () => 0 },
             { label: "Debit Accounts Receivable", value: () => 0 },
-            { label: "Credit Sales", value: (t) => t.amount },
+            { label: "Credit Sales", value: (t) => t.otherLines.find((l) => l.account === "Sales Revenue")?.amount ?? 0 },
+            { label: "Credit Delivery", value: (t) => t.otherLines.find((l) => l.account === "Delivery Revenue")?.amount ?? 0 },
+            {
+              label: "Credit Other Accounts",
+              value: (t) =>
+                t.otherLines
+                  .filter((l) => l.account !== "Sales Revenue" && l.account !== "Delivery Revenue")
+                  .reduce((s, l) => s + l.amount, 0),
+            },
           ]}
         />
       ) : tab === "cdj" ? (
@@ -513,8 +613,16 @@ function AdminBirPageInner() {
           describe={(t) => t.particulars}
           columns={[
             { label: "Credit Cash", value: (t) => t.amount },
-            { label: "Debit Stocks Expense", value: (t) => (t.debitAccount === "Stocks Expense" ? t.amount : 0) },
-            { label: "Debit Materials Expense", value: (t) => (t.debitAccount === "Materials Expense" ? t.amount : 0) },
+            { label: "Debit Stocks Inventory", value: (t) => t.otherLines.find((l) => l.account === "Stocks Inventory")?.amount ?? 0 },
+            { label: "Debit Materials Expense", value: (t) => t.otherLines.find((l) => l.account === "Materials Expense")?.amount ?? 0 },
+            { label: "Debit Delivery Expense", value: (t) => t.otherLines.find((l) => l.account === "Delivery Expense")?.amount ?? 0 },
+            {
+              label: "Debit Other Accounts",
+              value: (t) =>
+                t.otherLines
+                  .filter((l) => !["Stocks Inventory", "Materials Expense", "Delivery Expense"].includes(l.account))
+                  .reduce((s, l) => s + l.amount, 0),
+            },
           ]}
         />
       ) : (

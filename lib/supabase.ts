@@ -30,6 +30,7 @@ export type Order = {
   delivery_method: string | null;
   payment_method: string | null;
   tracking_number: string | null;
+  shipping_fee: number | null;
   official_receipt: string | null;
   down_payment: number;
   items: OrderItem[];

@@ -186,14 +186,14 @@ export default function LedgerPage() {
             <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
             Total Incoming
           </div>
-          <p className="font-inter font-black text-[26px] text-green-400">₱{totalIncoming.toLocaleString()}</p>
+          <p className="font-inter font-black text-[26px] text-green-400">₱{totalIncoming.toLocaleString("en-US")}</p>
         </div>
         <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5">
           <div className="flex items-center gap-1.5 font-mono text-[10px] text-red-400/70 uppercase tracking-widest mb-2">
             <span className="material-symbols-outlined text-[13px]">arrow_upward</span>
             Total Outgoing
           </div>
-          <p className="font-inter font-black text-[26px] text-red-400">₱{totalOutgoing.toLocaleString()}</p>
+          <p className="font-inter font-black text-[26px] text-red-400">₱{totalOutgoing.toLocaleString("en-US")}</p>
         </div>
         <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5">
           <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-2">
@@ -201,7 +201,7 @@ export default function LedgerPage() {
             Balance
           </div>
           <p className={`font-inter font-black text-[26px] ${balance >= 0 ? "text-green-400" : "text-red-400"}`}>
-            {balance < 0 ? "−" : ""}₱{Math.abs(balance).toLocaleString()}
+            {balance < 0 ? "−" : ""}₱{Math.abs(balance).toLocaleString("en-US")}
           </p>
         </div>
       </div>
@@ -292,7 +292,7 @@ export default function LedgerPage() {
                     </span>
                     <span className="text-[#603e39]/60 font-mono text-[11px]">|</span>
                     <span className={`font-mono font-bold text-[13px] ${entry.type === "incoming" ? "text-green-400" : "text-red-400"}`}>
-                      {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString()}
+                      {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString("en-US")}
                     </span>
                     <span className="flex-1" />
                     <button onClick={() => openEdit(entry)} className="text-[#ebbbb4]/30 hover:text-primary transition-colors" title="Edit">
@@ -360,7 +360,7 @@ export default function LedgerPage() {
                     <td className={`px-3 py-3 font-mono font-bold text-[13px] text-right whitespace-nowrap ${
                       entry.type === "incoming" ? "text-green-400" : "text-red-400"
                     }`}>
-                      {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString()}
+                      {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString("en-US")}
                     </td>
                     <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/40 text-right whitespace-nowrap">
                       {formatDate(entry.entry_date)}

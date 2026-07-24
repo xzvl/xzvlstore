@@ -51,6 +51,7 @@ export default function AdminLoginPage() {
               autoFocus
               className="w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors"
               placeholder="••••••••"
+              suppressHydrationWarning
             />
           </div>
 
