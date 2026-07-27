@@ -286,6 +286,70 @@ function orderSummaryText(order: Order): string {
   return `Name: ${order.name}\nPhone: ${order.phone}\nAddress: ${fullAddress(order)}`;
 }
 
+function notifyMessageText(order: Order): string {
+  const products = order.items.map((it) => it.product).join(", ");
+  return `Good day,
+
+We're happy to let you know that your ${products} is expected to arrive this week or next week. Please prepare your remaining balance so we can process your order as soon as it arrives.
+
+Please note that once we notify you that your order has arrived, the remaining balance must be settled within 24 hours. Failure to complete the payment within 24 hours will result in your order being automatically canceled.
+
+We'd also like to confirm that your shipping information is correct:
+
+Name: ${order.name}
+Phone: ${order.phone}
+Address: ${fullAddress(order)}
+
+Please let us know if any of the information above needs to be updated. Thank you!`;
+}
+
+function toPayMessageText(order: Order): string {
+  const shippingFee = order.delivery_method && order.delivery_method !== "Pickup" ? (order.shipping_fee ?? 0) : 0;
+  const discount = order.discount ?? 0;
+  const downPayment = order.down_payment ?? 0;
+  const grandTotal = order.estimated_total + discount + shippingFee;
+  const amountDue = Math.max(0, grandTotal - discount - downPayment);
+  const hasAdjustment = discount > 0 || downPayment > 0;
+
+  const productLines = order.items
+    .map((it) => `• ${it.product} — ₱${it.subtotal.toLocaleString()}`)
+    .join("\n");
+  const shippingLine = shippingFee > 0 ? `\n• Shipping Fee — ₱${shippingFee.toLocaleString()}` : "";
+  const discountLine = discount > 0 ? `\n• Discount — −₱${discount.toLocaleString()}` : "";
+  const downPaymentLine = downPayment > 0 ? `\n• Down Payment Received — ₱${downPayment.toLocaleString()}` : "";
+  const amountDueLine = hasAdjustment ? `\n• Total Amount Due — ₱${amountDue.toLocaleString()}` : "";
+
+  return `Good day,
+
+Your order has arrived and is now ready for shipment.
+
+Order Summary
+${productLines}${shippingLine}
+
+Payment Summary
+• Total Order Amount — ₱${grandTotal.toLocaleString()}${discountLine}${downPaymentLine}${amountDueLine}
+
+Please send your payment to:
+
+GCash
+Ed Paulo Pedro
+09957118740
+
+Please complete your payment within 24 hours of receiving this notice. Orders that remain unpaid after 24 hours will be automatically canceled. If a down payment was made, it may be forfeited in accordance with our reservation policy.
+
+Before we ship your order, please confirm that your shipping information is correct:
+
+Name: ${order.name}
+Phone: ${order.phone}
+Address: ${fullAddress(order)}
+
+If any of the information above needs to be updated, please let us know as soon as possible.
+
+Once your payment has been confirmed, we'll pack and ship your order right away.
+
+Thank you for your support!`;
+}
+
 function CopyIconButton({
   text,
   className = "",
@@ -317,6 +381,31 @@ function CopyIconButton({
       className={`text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0 ${className}`}
     >
       <span className="material-symbols-outlined" style={{ fontSize: size }}>{copied ? "check" : "content_copy"}</span>
+    </button>
+  );
+}
+
+function CopyTextButton({ text, label }: { text: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {}
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/40 text-primary font-mono text-[10px] tracking-widest uppercase hover:bg-primary/20 transition-colors"
+    >
+      <span className="material-symbols-outlined text-[13px]">{copied ? "check" : "content_copy"}</span>
+      {copied ? "Copied" : label}
     </button>
   );
 }
@@ -837,6 +926,10 @@ function AdminOrdersPageInner() {
                           ).toLocaleString()}
                         </span>
                       </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+                      <CopyTextButton text={notifyMessageText(order)} label="Notify" />
+                      <CopyTextButton text={toPayMessageText(order)} label="To Pay" />
                     </div>
                   </div>
                 </div>
