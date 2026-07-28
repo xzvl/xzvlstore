@@ -277,7 +277,7 @@ function stripPhonePrefix(phone: string): string {
 }
 
 function fullAddress(order: Order): string {
-  return [order.billing_address_1, order.billing_address_2, order.billing_city, order.billing_state]
+  return [order.shipping_address_1, order.shipping_address_2, order.shipping_city, order.shipping_state]
     .filter(Boolean)
     .join(", ");
 }
