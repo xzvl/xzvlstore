@@ -45,6 +45,7 @@ function buildPreOrderEmailHtml(
   location: string,
   phone: string,
   email: string,
+  facebook: string,
   items: OrderItem[],
   estimatedTotal: number,
   date: string
@@ -69,6 +70,7 @@ function buildPreOrderEmailHtml(
         <tr><td style="padding:5px 0;color:#ebbbb4;">Location</td><td style="padding:5px 0;">${location}</td></tr>
         <tr><td style="padding:5px 0;color:#ebbbb4;">Phone</td><td style="padding:5px 0;">${phone || "—"}</td></tr>
         <tr><td style="padding:5px 0;color:#ebbbb4;">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:#ebbbb4;">Facebook</td><td style="padding:5px 0;">${facebook ? `<a href="${facebook}" style="color:#ed0d11;">${facebook}</a>` : "—"}</td></tr>
       </table>
     </div>
 
@@ -180,6 +182,7 @@ function buildCheckoutEmailHtml(
   location: string,
   phone: string,
   email: string,
+  facebook: string,
   paymentMethod: string | null,
   items: OrderItem[],
   estimatedTotal: number,
@@ -205,6 +208,7 @@ function buildCheckoutEmailHtml(
         <tr><td style="padding:5px 0;color:#ebbbb4;">Location</td><td style="padding:5px 0;">${location}</td></tr>
         <tr><td style="padding:5px 0;color:#ebbbb4;">Phone</td><td style="padding:5px 0;">${phone || "—"}</td></tr>
         <tr><td style="padding:5px 0;color:#ebbbb4;">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:#ebbbb4;">Facebook</td><td style="padding:5px 0;">${facebook ? `<a href="${facebook}" style="color:#ed0d11;">${facebook}</a>` : "—"}</td></tr>
         <tr><td style="padding:5px 0;color:#ebbbb4;">Payment Method</td><td style="padding:5px 0;">${paymentMethod || "—"}</td></tr>
       </table>
     </div>
@@ -249,11 +253,12 @@ function buildCheckoutEmailHtml(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, location, phone, email, items, estimatedTotal, payment_method, status, customer_id, billing, shipping, order_type } = body as {
+    const { name, location, phone, email, facebook, items, estimatedTotal, payment_method, status, customer_id, billing, shipping, order_type } = body as {
       name: string;
       location: string;
       phone: string;
       email: string;
+      facebook?: string;
       items: OrderItem[];
       estimatedTotal: number;
       payment_method?: string;
@@ -268,6 +273,9 @@ export async function POST(req: NextRequest) {
 
     if (!name || !location || !phone || !email || !items?.length) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+    if (!facebook?.trim()) {
+      return NextResponse.json({ error: "Facebook link is required." }, { status: 400 });
     }
 
     const phoneDigits = phone.replace(/[\s\-().+]/g, "");
@@ -332,8 +340,8 @@ export async function POST(req: NextRequest) {
         to: "xzviel@gmail.com",
         subject: isCheckout ? `New Order from ${name}` : `New Pre-Order from ${name}`,
         html: isCheckout
-          ? buildCheckoutEmailHtml(name, location, phone, email, payment_method || null, items, estimatedTotal, date)
-          : buildPreOrderEmailHtml(name, location, phone, email, items, estimatedTotal, date),
+          ? buildCheckoutEmailHtml(name, location, phone, email, facebook?.trim() || "", payment_method || null, items, estimatedTotal, date)
+          : buildPreOrderEmailHtml(name, location, phone, email, facebook?.trim() || "", items, estimatedTotal, date),
       }),
       getResend().emails.send({
         from: process.env.RESEND_FROM ?? "xzvl.store <onboarding@resend.dev>",
@@ -343,6 +351,7 @@ export async function POST(req: NextRequest) {
       }),
       supabase.from("orders").insert({
         name, email, phone, location,
+        facebook: facebook?.trim() || null,
         status: status || "pre-order",
         estimated_total: estimatedTotal,
         items,
@@ -395,6 +404,15 @@ export async function POST(req: NextRequest) {
         items.map((it) => ({ product_id: it.product_id ?? null, qty: it.qty })),
         -1
       );
+    }
+
+    // Keep the customer's saved Facebook link in sync with what they submitted.
+    if (customer_id && facebook?.trim()) {
+      const { error: syncError } = await supabase
+        .from("customers")
+        .update({ facebook_url: facebook.trim() })
+        .eq("id", customer_id);
+      if (syncError) console.error("[pre-order] Customer facebook sync error:", syncError);
     }
 
     return NextResponse.json({ success: true, errors }, { status: 200 });

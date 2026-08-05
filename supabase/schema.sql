@@ -188,6 +188,10 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- ─── Order shipping fee (null = not yet set / TBA) ─────────────────────────────
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_fee numeric;
 
+-- ─── Facebook link (required on pre-order, checkout & account info forms) ──────
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS facebook text;
+-- ALTER TABLE customers ADD COLUMN IF NOT EXISTS facebook_url text;
+
 -- ─── Supabase Storage ─────────────────────────────────────────────────────────
 -- 1. Go to Storage → New bucket
 -- 2. Name: product-images

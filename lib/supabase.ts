@@ -24,6 +24,7 @@ export type Order = {
   email: string;
   phone: string;
   location: string;
+  facebook: string | null;
   status: OrderStatus;
   estimated_total: number;
   discount: number;

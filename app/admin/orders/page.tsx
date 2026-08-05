@@ -673,7 +673,7 @@ function AdminOrdersPageInner() {
       ) : (
         <div className="space-y-2">
           {visibleOrders.map((order) => {
-            const facebookUrl = order.customer_id ? customerMap[order.customer_id]?.facebook_url ?? undefined : undefined;
+            const facebookUrl = order.facebook || (order.customer_id ? customerMap[order.customer_id]?.facebook_url ?? undefined : undefined);
             return (
             <div key={order.id} className="bg-[#1a1a1a] border border-[#603e39]/30 overflow-hidden">
 

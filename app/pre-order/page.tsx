@@ -23,6 +23,7 @@ type ContactForm = {
   location: string;
   phone: string;
   email: string;
+  facebook: string;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -47,6 +48,12 @@ const validatePhone = (v: string) => {
   if (!v) return "Phone is required.";
   const digits = v.replace(/[\s\-().+]/g, "");
   if (!/^(09\d{9}|639\d{9})$/.test(digits)) return "Enter a valid PH mobile number (e.g. 09XX XXX XXXX).";
+  return "";
+};
+
+const validateFacebook = (v: string) => {
+  if (!v.trim()) return "Facebook link is required.";
+  if (!/^(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/i.test(v.trim())) return "Enter a valid Facebook profile link.";
   return "";
 };
 
@@ -414,10 +421,10 @@ export default function PreOrderPage() {
   const [profileAddresses, setProfileAddresses] = useState<ProfileAddresses | null>(null);
   const [purchasedMap, setPurchasedMap] = useState<Record<string, number>>({});
 
-  const [contact, setContact] = useState<ContactForm>({ name: "", location: "", phone: "", email: "" });
+  const [contact, setContact] = useState<ContactForm>({ name: "", location: "", phone: "", email: "", facebook: "" });
   const [rows, setRows] = useState<ProductRow[]>([{ id: uid(), productId: "", qty: 1 }]);
   const [selectedProductDetail, setSelectedProductDetail] = useState<{ product: Product; qty: number } | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string; facebook?: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submittedProducts, setSubmittedProducts] = useState<Product[]>([]);
@@ -464,6 +471,7 @@ export default function PreOrderPage() {
         email: user.email ?? "",
         phone: profile.billing_phone || "",
         location: location || "",
+        facebook: profile.facebook_url || "",
       });
       setProfileAddresses({
         billing_address_1: profile.billing_address_1 || "",
@@ -516,6 +524,7 @@ export default function PreOrderPage() {
 
   const blurPhone = () => setFieldErrors((p) => ({ ...p, phone: validatePhone(contact.phone) }));
   const blurEmail = () => setFieldErrors((p) => ({ ...p, email: validateEmail(contact.email) }));
+  const blurFacebook = () => setFieldErrors((p) => ({ ...p, facebook: validateFacebook(contact.facebook) }));
 
   const addRow = () => setRows((prev) => [...prev, { id: uid(), productId: "", qty: 1 }]);
   const updateProductId = (id: string, productId: string) => setRows((prev) => prev.map((r) => r.id === id ? { ...r, productId } : r));
@@ -527,7 +536,8 @@ export default function PreOrderPage() {
     if (isBlocked) return;
     const phoneErr = validatePhone(contact.phone);
     const emailErr = validateEmail(contact.email);
-    if (phoneErr || emailErr) { setFieldErrors({ phone: phoneErr, email: emailErr }); return; }
+    const facebookErr = validateFacebook(contact.facebook);
+    if (phoneErr || emailErr || facebookErr) { setFieldErrors({ phone: phoneErr, email: emailErr, facebook: facebookErr }); return; }
 
     const filledRows = rows.filter((r) => r.productId);
     if (filledRows.length === 0) { setError("Please select at least one product."); return; }
@@ -728,6 +738,17 @@ export default function PreOrderPage() {
                     </p>
                   )}
                 </div>
+              </div>
+              <div>
+                <label className={labelClass}>Facebook Link <span className="text-primary">*</span></label>
+                <input type="url" required placeholder="https://facebook.com/username" value={contact.facebook}
+                  onChange={(e) => { setContact$("facebook", e.target.value); if (fieldErrors.facebook) setFieldErrors((p) => ({ ...p, facebook: "" })); }}
+                  onBlur={blurFacebook} className={inputClass(!!fieldErrors.facebook)} />
+                {fieldErrors.facebook && (
+                  <p className="mt-1.5 font-mono text-[11px] text-primary flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[13px]">error</span>{fieldErrors.facebook}
+                  </p>
+                )}
               </div>
             </div>
           </section>

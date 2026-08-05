@@ -11,7 +11,7 @@ type Tab = "info" | "billing" | "shipping" | "orders";
 const TABS_LIST: Tab[] = ["orders", "info", "billing", "shipping"];
 
 type Profile = {
-  first_name: string; last_name: string; email: string;
+  first_name: string; last_name: string; email: string; facebook_url: string;
   billing_address_1: string; billing_address_2: string; billing_city: string;
   billing_postcode: string; billing_region: string; billing_state: string; billing_phone: string;
   shipping_address_1: string; shipping_address_2: string; shipping_city: string;
@@ -20,12 +20,18 @@ type Profile = {
 };
 
 const EMPTY_PROFILE: Profile = {
-  first_name: "", last_name: "", email: "",
+  first_name: "", last_name: "", email: "", facebook_url: "",
   billing_address_1: "", billing_address_2: "", billing_city: "",
   billing_postcode: "", billing_region: "Philippines", billing_state: "", billing_phone: "",
   shipping_address_1: "", shipping_address_2: "", shipping_city: "",
   shipping_postcode: "", shipping_region: "Philippines", shipping_state: "", shipping_phone: "",
   is_blocked: false, block_reason: "",
+};
+
+const validateFacebook = (v: string) => {
+  if (!v.trim()) return "Facebook link is required.";
+  if (!/^(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/i.test(v.trim())) return "Enter a valid Facebook profile link.";
+  return "";
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -101,6 +107,7 @@ function AccountPageInner() {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState("");
   const [pwError, setPwError] = useState("");
+  const [facebookError, setFacebookError] = useState("");
 
   useEffect(() => {
     supabaseClient.auth.getSession().then(async ({ data }) => {
@@ -137,6 +144,13 @@ function AccountPageInner() {
     }));
 
   const save = async () => {
+    const facebookErr = validateFacebook(profile.facebook_url);
+    if (facebookErr) {
+      setFacebookError(facebookErr);
+      setTab("info");
+      return;
+    }
+    setFacebookError("");
     setSaving(true);
     setSaveMsg(""); setSaveError("");
     const res = await fetch("/api/account/profile", {
@@ -296,6 +310,17 @@ function AccountPageInner() {
                   <label className={LABEL}>Email</label>
                   <input value={profile.email} disabled placeholder="—" className={`${INPUT} opacity-50 cursor-not-allowed`} />
                   <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-1">Email cannot be changed here.</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className={LABEL}>Facebook Link <span className="text-primary">*</span></label>
+                  <input
+                    value={profile.facebook_url}
+                    onChange={e => { set$("facebook_url", e.target.value); if (facebookError) setFacebookError(""); }}
+                    onBlur={() => setFacebookError(validateFacebook(profile.facebook_url))}
+                    placeholder="https://facebook.com/username"
+                    className={INPUT}
+                  />
+                  {facebookError && <p className="font-mono text-[10px] text-primary mt-1">{facebookError}</p>}
                 </div>
               </div>
             </div>

@@ -46,6 +46,7 @@ type FormState = {
   email: string;
   phone: string;
   location: string;
+  facebook: string;
   status: OrderStatus;
   order_date: string;
   delivery_method: string;
@@ -86,7 +87,7 @@ function toPHLocal(iso: string): string {
 }
 
 const EMPTY_FORM: FormState = {
-  customer_id: "", name: "", email: "", phone: "", location: "",
+  customer_id: "", name: "", email: "", phone: "", location: "", facebook: "",
   status: "pending", order_date: nowPH(),
   delivery_method: "", payment_method: "", shipping_fee: "", tracking_number: "",
   official_receipt: "", discount: "", down_payment: "",
@@ -401,6 +402,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             email: order.email ?? "",
             phone: order.phone ?? "",
             location: order.location ?? "",
+            facebook: order.facebook ?? "",
             status: order.status ?? "pending",
             order_date: order.created_at ? toPHLocal(order.created_at) : nowPH(),
             delivery_method: order.delivery_method ?? "",
@@ -535,6 +537,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       const payload = {
         customer_id: form.customer_id || null,
         name: form.name, email: form.email, phone: form.phone, location: form.location,
+        facebook: form.facebook || null,
         status: form.status,
         created_at: form.order_date ? new Date(form.order_date + ":00+08:00").toISOString() : undefined,
         delivery_method: form.delivery_method || null,
@@ -652,6 +655,10 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
           <div>
             <label className={LABEL}>Location</label>
             <input value={form.location} onChange={(e) => set$("location", e.target.value)} placeholder="City, Province" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Facebook Link</label>
+            <input value={form.facebook} onChange={(e) => set$("facebook", e.target.value)} placeholder="https://facebook.com/username" className={INPUT} />
           </div>
         </div>
       </div>

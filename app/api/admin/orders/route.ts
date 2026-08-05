@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
-    name, email, phone, location,
+    name, email, phone, location, facebook = null,
     status = "pending", items = [],
     discount = 0, delivery_method = null, payment_method = null, tracking_number = null,
     shipping_fee = null,
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabase
     .from("orders")
     .insert({
-      name, email: email || "", phone: phone || "", location: location || "",
+      name, email: email || "", phone: phone || "", location: location || "", facebook: facebook || null,
       status, estimated_total: Math.max(0, total), items,
       discount: Number(discount) || 0, delivery_method, payment_method, tracking_number,
       shipping_fee: delivery_method === "Pickup" ? null : (shipping_fee === null || shipping_fee === "" ? null : Number(shipping_fee)),

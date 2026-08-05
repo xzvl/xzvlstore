@@ -24,6 +24,7 @@ type CheckoutForm = {
   name: string;
   email: string;
   phone: string;
+  facebook: string;
   payment_method: string;
   billing: AddressForm;
   ship_to_different: boolean;
@@ -36,6 +37,7 @@ type FormErrors = {
   name?: string;
   email?: string;
   phone?: string;
+  facebook?: string;
   billing?: AddressErrors;
   shipping?: AddressErrors;
 };
@@ -72,6 +74,13 @@ const validateEmail = (v: string) => {
   if (!v) return "Email is required.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v))
     return "Enter a valid email address.";
+  return "";
+};
+
+const validateFacebook = (v: string) => {
+  if (!v) return "Facebook link is required.";
+  if (!/^(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/i.test(v.trim()))
+    return "Enter a valid Facebook profile link.";
   return "";
 };
 
@@ -206,6 +215,7 @@ export default function CheckoutPage() {
     name: "",
     email: "",
     phone: "",
+    facebook: "",
     payment_method: "gcash",
     billing: { ...EMPTY_ADDRESS },
     ship_to_different: false,
@@ -238,6 +248,7 @@ export default function CheckoutPage() {
         name: name || f.name,
         email: user.email ?? f.email,
         phone: profile.billing_phone || f.phone,
+        facebook: profile.facebook_url || f.facebook,
         billing: {
           address_1: profile.billing_address_1 || f.billing.address_1,
           address_2: profile.billing_address_2 || f.billing.address_2,
@@ -277,6 +288,8 @@ export default function CheckoutPage() {
     if (phoneErr) newErrors.phone = phoneErr;
     const emailErr = validateEmail(form.email);
     if (emailErr) newErrors.email = emailErr;
+    const facebookErr = validateFacebook(form.facebook);
+    if (facebookErr) newErrors.facebook = facebookErr;
 
     const billingErr = validateAddress(form.billing);
     if (billingErr) newErrors.billing = billingErr;
@@ -330,6 +343,7 @@ export default function CheckoutPage() {
           name: form.name,
           email: form.email,
           phone: form.phone,
+          facebook: form.facebook,
           location: [form.billing.city, form.billing.state].filter(Boolean).join(", "),
           payment_method: form.payment_method,
           status: "pending",
@@ -560,6 +574,21 @@ export default function CheckoutPage() {
                       />
                       {errors.phone && (
                         <p className="font-mono text-[10px] text-primary mt-1">{errors.phone}</p>
+                      )}
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className={labelClass}>
+                        Facebook Link <span className="text-primary">*</span>
+                      </label>
+                      <input
+                        type="url"
+                        value={form.facebook}
+                        onChange={(e) => setField("facebook", e.target.value)}
+                        placeholder="https://facebook.com/username"
+                        className={inputClass(!!errors.facebook)}
+                      />
+                      {errors.facebook && (
+                        <p className="font-mono text-[10px] text-primary mt-1">{errors.facebook}</p>
                       )}
                     </div>
                   </div>

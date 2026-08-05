@@ -23,12 +23,20 @@ export async function PUT(req: NextRequest) {
 
   const body = await req.json();
   const allowed = [
-    "first_name", "last_name",
+    "first_name", "last_name", "facebook_url",
     "billing_address_1", "billing_address_2", "billing_city",
     "billing_postcode", "billing_region", "billing_state", "billing_phone",
     "shipping_address_1", "shipping_address_2", "shipping_city",
     "shipping_postcode", "shipping_region", "shipping_state", "shipping_phone",
   ];
+
+  if (body.facebook_url !== undefined) {
+    const fb = String(body.facebook_url).trim();
+    if (!fb) return NextResponse.json({ error: "Facebook link is required." }, { status: 400 });
+    if (!/^(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/i.test(fb)) {
+      return NextResponse.json({ error: "Enter a valid Facebook profile link." }, { status: 400 });
+    }
+  }
 
   const updates: Record<string, string> = { updated_at: new Date().toISOString() };
   for (const key of allowed) {
