@@ -37,6 +37,7 @@ export default function PreOrderCarousel({ products }: { products: StoreProduct[
   // pos=VISIBLE → first real item (ext[VISIBLE] = real[0]).
   const [pos, setPos] = useState(VISIBLE);
   const [sliding, setSliding] = useState(false);
+  const [paused, setPaused] = useState(false);
   const posRef = useRef(VISIBLE);
   const busyRef = useRef(false);
 
@@ -75,10 +76,10 @@ export default function PreOrderCarousel({ products }: { products: StoreProduct[
 
   // Auto-advance
   useEffect(() => {
-    if (n <= VISIBLE) return;
+    if (n <= VISIBLE || paused) return;
     const id = setInterval(goNext, AUTO_MS);
     return () => clearInterval(id);
-  }, [goNext, n]);
+  }, [goNext, n, paused]);
 
   if (n === 0) return null;
 
@@ -113,7 +114,11 @@ export default function PreOrderCarousel({ products }: { products: StoreProduct[
   const dotIdx = ((pos - VISIBLE) % n + n) % n;
 
   return (
-    <div className="relative px-1">
+    <div
+      className="relative px-1"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       {/* Prev arrow */}
       <button
         onClick={goPrev}

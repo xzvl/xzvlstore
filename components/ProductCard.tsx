@@ -7,13 +7,20 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import type { StoreProduct } from "@/lib/store-types";
 
-export default function ProductCard({ product }: { product: StoreProduct }) {
+export default function ProductCard({
+  product,
+  useSocialImage = false,
+}: {
+  product: StoreProduct;
+  useSocialImage?: boolean;
+}) {
   const [adding, setAdding] = useState(false);
   const [stockLimited, setStockLimited] = useState(false);
   const { addItem, items, isBlocked } = useCart();
   const router = useRouter();
 
-  const hoverImage = product.gallery_images[0];
+  const mainImage = useSocialImage ? product.social_image ?? product.image : product.image;
+  const hoverImage = useSocialImage ? null : product.gallery_images[0];
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
@@ -45,14 +52,20 @@ export default function ProductCard({ product }: { product: StoreProduct }) {
     <div className="group flex flex-col bg-[#1a1a1a] border border-[#603e39]/25 hover:border-primary/40 transition-all duration-200">
       {/* Image area */}
       <Link href={`/product/${product.slug}`} className="block relative aspect-square bg-[#131313] overflow-hidden">
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          className="object-contain bg-[#ffffff]"
-          unoptimized
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-        />
+        {mainImage ? (
+          <Image
+            src={mainImage}
+            alt={product.name}
+            fill
+            className="object-contain bg-[#ffffff]"
+            unoptimized
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a]">
+            <span className="material-symbols-outlined text-[48px] text-[#603e39]/30">sports_esports</span>
+          </div>
+        )}
         {hoverImage && (
           <Image
             src={hoverImage}
