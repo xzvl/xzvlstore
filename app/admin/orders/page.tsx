@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Order, OrderStatus } from "@/lib/supabase";
+import { ExportOrdersModal } from "./_export";
 
 const STATUS_TABS: { value: string; label: string }[] = [
   { value: "all", label: "All" },
@@ -276,7 +277,7 @@ function stripPhonePrefix(phone: string): string {
   return p;
 }
 
-function fullAddress(order: Order): string {
+export function fullAddress(order: Order): string {
   return [order.shipping_address_1, order.shipping_address_2, order.shipping_city, order.shipping_state]
     .filter(Boolean)
     .join(", ");
@@ -458,6 +459,7 @@ function AdminOrdersPageInner() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const fetchOrders = async (s = status) => {
     setLoading(true);
@@ -556,13 +558,23 @@ function AdminOrdersPageInner() {
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">ADMIN // ORDERS</p>
           <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Orders</h1>
         </div>
-        <Link
-          href="/admin/orders/new"
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 border border-primary text-primary font-mono text-[11px] tracking-widest uppercase hover:bg-primary/20 transition-colors"
-        >
-          <span className="material-symbols-outlined text-[14px]">add</span>
-          New Order
-        </Link>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setExportOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] border border-[#603e39] text-[#e2e2e2] font-mono text-[11px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
+          >
+            <span className="material-symbols-outlined text-[14px]">download</span>
+            Export
+          </button>
+          <Link
+            href="/admin/orders/new"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 border border-primary text-primary font-mono text-[11px] tracking-widest uppercase hover:bg-primary/20 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[14px]">add</span>
+            New Order
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -939,6 +951,13 @@ function AdminOrdersPageInner() {
           })}
         </div>
       )}
+
+      <ExportOrdersModal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        orders={visibleOrders}
+        productFilter={productFilter}
+      />
     </div>
   );
 }
