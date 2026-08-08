@@ -21,6 +21,7 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     price: p.price as number,
     sale_price: (p.sale_price as number | null) ?? null,
     pre_order: (p.pre_order as boolean) ?? false,
+    pre_order_note: (p.pre_order_note as string | null) ?? null,
     stock: (p.stock as number) ?? 0,
     max_purchase_enabled: (p.max_purchase_enabled as boolean) ?? false,
     max_purchase_limit: (p.max_purchase_limit as number | null) ?? null,
@@ -64,7 +65,7 @@ async function getRecommended(brandId: string | null, excludeId: string): Promis
 }
 
 const PRODUCT_SELECT =
-  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids, tag_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, pre_order_note, status, brand_id, brands, category_ids, tag_ids, max_purchase_enabled, max_purchase_limit";
 
 const nameToSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -208,15 +209,15 @@ export default async function ProductPage({
               {/* Add to cart */}
               <AddToCartButton product={product} />
 
-              {/* Pre-order shortcut */}
-              {product.pre_order && (
-                <Link
-                  href={`/pre-order?product=${product.slug ?? product.id}`}
-                  className="flex items-center justify-center gap-2 w-full py-3 border border-[#603e39]/50 font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2]/50 hover:border-primary hover:text-primary transition-all"
-                >
-                  <span className="material-symbols-outlined text-[16px]">schedule</span>
-                  Use Pre-Order Form
-                </Link>
+              {/* Pre-order note */}
+              {product.pre_order && product.pre_order_note && (
+                <div className="border border-orange-400/30 bg-orange-400/5 px-4 py-3">
+                  <p className="font-mono text-[10px] tracking-widest uppercase text-orange-400/70 mb-1.5">Pre-Order Note</p>
+                  <div
+                    className="font-mono text-[12px] text-[#ebbbb4]/70 leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-[#e2e2e2] [&_p]:mb-1"
+                    dangerouslySetInnerHTML={{ __html: product.pre_order_note }}
+                  />
+                </div>
               )}
 
               <div className="h-px bg-[#603e39]/30" />

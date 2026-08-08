@@ -806,6 +806,28 @@ export default function PreOrderPage() {
             </div>
           </div>
 
+          {/* Confirmation screenshot notice */}
+          <div className="border border-orange-400/30 bg-orange-400/5 px-4 py-4 flex gap-3">
+            <span className="material-symbols-outlined text-[18px] text-orange-400/70 flex-shrink-0 mt-0.5">photo_camera</span>
+            <div className="space-y-1">
+              <p className="font-mono text-[11px] tracking-widest uppercase text-orange-400/70">Important</p>
+              <p className="font-mono text-[12px] text-[#ebbbb4]/50 leading-relaxed">
+                After submitting, please take a{" "}
+                <span className="text-[#e2e2e2]/80">screenshot of the confirmation/thank you message</span>{" "}
+                and send it to our official Facebook page{" "}
+                <a
+                  href="https://www.facebook.com/xzviel"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  facebook.com/xzviel
+                </a>{" "}
+                to confirm your pre-order.
+              </p>
+            </div>
+          </div>
+
           <div className="pt-2">
             <button type="submit" disabled={submitting || preOrderProducts.length === 0 || isBlocked}
               className="w-full sm:w-auto px-12 py-4 bg-primary text-white font-mono text-[12px] tracking-[0.15em] uppercase hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3">
