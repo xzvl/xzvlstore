@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS orders (
   email text NOT NULL,
   phone text NOT NULL,
   location text NOT NULL,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'pre-order', 'confirmed', 'shipped', 'completed', 'cancelled')),
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'pre-order', 'hold pre-order', 'processing', 'confirmed', 'shipped', 'completed', 'cancelled')),
   estimated_total numeric NOT NULL DEFAULT 0,
   discount numeric NOT NULL DEFAULT 0,
   delivery_method text,
@@ -169,6 +169,11 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method text;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number text;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes text[] NOT NULL DEFAULT '{}';
+
+-- ─── Adds the "hold pre-order" order status (run this against the live DB —
+--     it currently rejects it via orders_status_check) ────────────────────────
+-- ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;
+-- ALTER TABLE orders ADD CONSTRAINT orders_status_check CHECK (status IN ('pending', 'pre-order', 'hold pre-order', 'processing', 'confirmed', 'shipped', 'completed', 'cancelled'));
 
 -- ─── If taxonomy table is new, just run the CREATE TABLE above ───────────────
 

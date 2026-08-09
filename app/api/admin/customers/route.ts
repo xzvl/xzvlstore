@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+// This GET reads no request-bound data (no params/cookies/headers), so Next.js
+// would otherwise treat it as static and let Vercel cache the response at the
+// edge — serving a stale customer list forever. Force it dynamic.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const { data, error } = await supabase
     .from("customers")
@@ -8,7 +13,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(data ?? [], { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: NextRequest) {

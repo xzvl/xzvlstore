@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 
 export const DEDUCTING_STATUSES = new Set([
-  "pre-order", "processing", "confirmed", "shipped", "completed",
+  "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed",
 ]);
 
 type StockItem = { product_id?: string | null; qty: number };

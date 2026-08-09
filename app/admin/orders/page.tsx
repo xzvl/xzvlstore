@@ -10,6 +10,7 @@ const STATUS_TABS: { value: string; label: string }[] = [
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
   { value: "pre-order", label: "Pre-Order" },
+  { value: "hold pre-order", label: "Hold Pre-Order" },
   { value: "processing", label: "Processing" },
   { value: "confirmed", label: "Confirmed" },
   { value: "shipped", label: "Shipped" },
@@ -20,6 +21,7 @@ const STATUS_TABS: { value: string; label: string }[] = [
 const STATUS_COLORS: Record<string, string> = {
   pending: "text-yellow-400 border-yellow-400/30 bg-yellow-400/10",
   "pre-order": "text-purple-400 border-purple-400/30 bg-purple-400/10",
+  "hold pre-order": "text-fuchsia-400 border-fuchsia-400/30 bg-fuchsia-400/10",
   processing: "text-orange-400 border-orange-400/30 bg-orange-400/10",
   confirmed: "text-blue-400 border-blue-400/30 bg-blue-400/10",
   shipped: "text-green-400 border-green-400/30 bg-green-400/10",
@@ -27,13 +29,14 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
 };
 
-const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "processing", "confirmed", "shipped", "completed", "cancelled"];
+const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed", "cancelled"];
 
 type Stats = {
   totalOrders: number;
   totalRevenue: number;
   pendingOrders: number;
   preOrderOrders: number;
+  holdPreOrderOrders: number;
   confirmedOrders: number;
   shippedOrders: number;
   completedOrders: number;
@@ -464,7 +467,7 @@ function AdminOrdersPageInner() {
   const fetchOrders = async (s = status) => {
     setLoading(true);
     const qs = s !== "all" ? `?status=${s}` : "";
-    const res = await fetch(`/api/admin/orders${qs}`);
+    const res = await fetch(`/api/admin/orders${qs}`, { cache: "no-store" });
     if (res.ok) {
       const data: Order[] = await res.json();
       setOrders(data);
@@ -477,12 +480,12 @@ function AdminOrdersPageInner() {
   };
 
   const fetchStats = async () => {
-    const res = await fetch("/api/admin/stats");
+    const res = await fetch("/api/admin/stats", { cache: "no-store" });
     if (res.ok) setStats(await res.json());
   };
 
   const fetchCustomers = async () => {
-    const res = await fetch("/api/admin/customers");
+    const res = await fetch("/api/admin/customers", { cache: "no-store" });
     if (res.ok) setCustomers(await res.json());
   };
 

@@ -9,6 +9,7 @@ type Stats = {
   totalRevenue: number;
   pendingOrders: number;
   preOrderOrders: number;
+  holdPreOrderOrders: number;
   confirmedOrders: number;
   shippedOrders: number;
   completedOrders: number;
@@ -26,6 +27,7 @@ type LedgerEntry = {
 const STATUS_COLORS: Record<string, string> = {
   pending: "text-yellow-400 border-yellow-400/30 bg-yellow-400/10",
   "pre-order": "text-purple-400 border-purple-400/30 bg-purple-400/10",
+  "hold pre-order": "text-fuchsia-400 border-fuchsia-400/30 bg-fuchsia-400/10",
   processing: "text-orange-400 border-orange-400/30 bg-orange-400/10",
   confirmed: "text-blue-400 border-blue-400/30 bg-blue-400/10",
   shipped: "text-green-400 border-green-400/30 bg-green-400/10",

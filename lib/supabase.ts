@@ -5,7 +5,7 @@ const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export const supabase = createClient(url, key);
 
-export type OrderStatus = "pending" | "pre-order" | "processing" | "confirmed" | "shipped" | "completed" | "cancelled";
+export type OrderStatus = "pending" | "pre-order" | "hold pre-order" | "processing" | "confirmed" | "shipped" | "completed" | "cancelled";
 
 export type OrderItem = {
   product_id?: string | null;
