@@ -712,7 +712,6 @@ export default function CheckoutPage() {
                             fill
                             sizes="48px"
                             className="object-contain p-1"
-                            unoptimized
                           />
                         </div>
                         <div className="flex-1 min-w-0">

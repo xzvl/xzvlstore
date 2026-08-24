@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div suppressHydrationWarning>
             <label className="block font-mono text-[11px] tracking-[0.15em] uppercase text-[#ebbbb4]/70 mb-2">
               Password
             </label>
@@ -51,7 +51,6 @@ export default function AdminLoginPage() {
               autoFocus
               className="w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors"
               placeholder="••••••••"
-              suppressHydrationWarning
             />
           </div>
 

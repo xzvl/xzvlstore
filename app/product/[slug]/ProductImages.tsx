@@ -26,7 +26,6 @@ export default function ProductImages({ images, name }: { images: string[]; name
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-contain bg-white"
-            unoptimized
             priority
           />
       </div>

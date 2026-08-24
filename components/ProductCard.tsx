@@ -58,7 +58,6 @@ export default function ProductCard({
             alt={product.name}
             fill
             className="object-contain bg-[#ffffff]"
-            unoptimized
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           />
         ) : (
@@ -72,7 +71,6 @@ export default function ProductCard({
             alt=""
             fill
             className="object-contain bg-[#ffffff] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            unoptimized
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           />
         )}

@@ -61,7 +61,7 @@ function ImageUploader({
       >
         {value ? (
           <>
-            <Image src={value} alt={label} fill sizes="200px" className="object-cover" unoptimized />
+            <Image src={value} alt={label} fill sizes="200px" className="object-cover" />
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <span className="material-symbols-outlined text-white text-[20px]">upload</span>
               <span className="font-mono text-white text-[11px] uppercase tracking-wider">
@@ -184,7 +184,7 @@ function GalleryUploader({
               overIndex === i && dragIndex !== null && dragIndex !== i ? "border-primary" : "border-[#603e39]/40"
             } ${dragIndex === i ? "opacity-40" : ""}`}
           >
-            <Image src={url} alt="" fill sizes="64px" className="object-cover pointer-events-none" unoptimized draggable={false} />
+            <Image src={url} alt="" fill sizes="64px" className="object-cover pointer-events-none" draggable={false} />
             <button
               type="button"
               onClick={() => remove(i)}

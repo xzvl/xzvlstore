@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import sharp from "sharp";
 import { supabase } from "@/lib/supabase";
 
 const BUCKET = "product-images";
+const CONVERT_TO_WEBP = new Set(["png", "jpg", "jpeg"]);
+const CONVERT_MIME_TO_WEBP = new Set(["image/png", "image/jpeg"]);
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -11,13 +14,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No file provided." }, { status: 400 });
   }
 
-  const ext = file.name.split(".").pop() ?? "bin";
+  let ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
+  let contentType = file.type;
+  let buffer = Buffer.from(await file.arrayBuffer());
+
+  if (CONVERT_TO_WEBP.has(ext) || CONVERT_MIME_TO_WEBP.has(file.type)) {
+    try {
+      buffer = await sharp(buffer).webp({ quality: 82 }).toBuffer();
+      ext = "webp";
+      contentType = "image/webp";
+    } catch {
+      // Conversion failed (e.g. corrupt file) — fall back to uploading the original.
+    }
+  }
+
   const filename = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
 
   const { data, error } = await supabase.storage
     .from(BUCKET)
-    .upload(filename, buffer, { contentType: file.type, upsert: false });
+    .upload(filename, buffer, { contentType, upsert: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
