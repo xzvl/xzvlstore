@@ -44,6 +44,12 @@ function resolveBirAccount(source: string): Account | null {
   return ACCOUNT_BY_TITLE[normalizeAccountTitle(m[1])] ?? null;
 }
 
+// A ledger income recorded against an official BIR receipt carries the receipt
+// number in its title, e.g. "Sale to Juan D. via Receipt #12345" or just
+// "Receipt #12345". Those are revenue from a receipted sale, so the BIR books
+// treat them as Sales Revenue — the same account as a receipted order.
+const RECEIPT_REF_RE = /receipt\s*#\s*[\w-]+/i;
+
 const BIR_TABS: { value: string; label: string }[] = [
   { value: "gj", label: "General Journal" },
   { value: "gl", label: "General Ledger" },
@@ -464,14 +470,25 @@ function AdminBirPageInner() {
     const ledgerTxns: Txn[] = ledgerEntries
       .filter((e) => {
         const source = e.source.trim().toLowerCase();
-        return source === "bankee" || source === "bir" || source === "business" || /^bir\s*(?:-|:|—)/i.test(e.source.trim());
+        const hasReceiptRef = e.type === "incoming" && RECEIPT_REF_RE.test(e.title);
+        return source === "bankee" || source === "bir" || source === "business"
+          || /^bir\s*(?:-|:|—)/i.test(e.source.trim())
+          || hasReceiptRef;
       })
       .map((e) => {
         const source = e.source.trim().toLowerCase();
-        const birAccount = resolveBirAccount(e.source);
-        // Legacy sources (no "BIR - Account Title" suffix) fall back to their old default account.
-        const otherAccount = birAccount?.title ?? (source === "bankee" ? "Stocks Inventory" : "Materials Expense");
         const isIncoming = e.type === "incoming";
+        const birAccount = resolveBirAccount(e.source);
+        // Explicit "BIR - Account Title" source wins; otherwise an income tagged
+        // with a receipt number books to Sales Revenue, and legacy sources fall
+        // back to their old default account.
+        const otherAccount =
+          birAccount?.title ??
+          (isIncoming && RECEIPT_REF_RE.test(e.title)
+            ? "Sales Revenue"
+            : source === "bankee"
+            ? "Stocks Inventory"
+            : "Materials Expense");
         return {
           id: `ledger-${e.id}`,
           kind: "ledger" as const,

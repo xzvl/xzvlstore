@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { Order, OrderStatus } from "@/lib/supabase";
 import { ExportOrdersModal } from "./_export";
 
@@ -434,23 +434,40 @@ function CustomerNameLink({ order, facebookUrl }: { order: Order; facebookUrl?: 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 function AdminOrdersPageInner() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const status = searchParams.get("status") ?? "all";
-  const productFilter = searchParams.get("product") ?? "all";
-  const customerFilter = searchParams.get("customer") ?? "all";
-  const dateFilter = searchParams.get("dateFilter") ?? "default";
-  const dateFrom = searchParams.get("dateFrom") ?? "";
-  const dateTo = searchParams.get("dateTo") ?? "";
+  // Local mirror of the query string, seeded from the URL on mount.
+  //
+  // On Vercel `/admin/orders` is a statically-prerendered route (it reads
+  // `useSearchParams()` under a Suspense boundary). There, a query-only
+  // `router.replace()` goes through an RSC request the CDN can serve stale,
+  // so `useSearchParams()` never reflected the new filter and the tabs
+  // looked dead after a refresh. Locally every render is dynamic so it
+  // worked. Driving the filters from local state + the History API keeps
+  // filter changes purely client-side and instant.
+  const [params, setParams] = useState(() => new URLSearchParams(searchParams.toString()));
+
+  useEffect(() => {
+    const syncFromUrl = () => setParams(new URLSearchParams(window.location.search));
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, []);
+
+  const status = params.get("status") ?? "all";
+  const productFilter = params.get("product") ?? "all";
+  const customerFilter = params.get("customer") ?? "all";
+  const dateFilter = params.get("dateFilter") ?? "default";
+  const dateFrom = params.get("dateFrom") ?? "";
+  const dateTo = params.get("dateTo") ?? "";
 
   const setParam = (key: string, value: string, def: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value === def) params.delete(key);
-    else params.set(key, value);
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    const next = new URLSearchParams(params.toString());
+    if (value === def) next.delete(key);
+    else next.set(key, value);
+    setParams(next);
+    const qs = next.toString();
+    window.history.replaceState(null, "", qs ? `${pathname}?${qs}` : pathname);
   };
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -466,7 +483,7 @@ function AdminOrdersPageInner() {
 
   const fetchOrders = async (s = status) => {
     setLoading(true);
-    const qs = s !== "all" ? `?status=${s}` : "";
+    const qs = s !== "all" ? `?status=${encodeURIComponent(s)}` : "";
     const res = await fetch(`/api/admin/orders${qs}`, { cache: "no-store" });
     if (res.ok) {
       const data: Order[] = await res.json();
