@@ -27,6 +27,197 @@ function ProductTitleLink({ p, className }: { p: DbProduct; className: string })
   );
 }
 
+const peso = (n: number) => `₱${n.toLocaleString("en-PH", { maximumFractionDigits: 0 })}`;
+const thumbOf = (p: DbProduct) => p.main_image ?? (p.image || null);
+
+// ── Quick edit ────────────────────────────────────────────────────────────────
+function QuickEditModal({
+  product,
+  onClose,
+  onSaved,
+}: {
+  product: DbProduct;
+  onClose: () => void;
+  onSaved: (p: DbProduct) => void;
+}) {
+  const [name, setName] = useState(product.name);
+  const [stock, setStock] = useState(String(product.stock));
+  const [price, setPrice] = useState(String(product.price));
+  const [salePrice, setSalePrice] = useState(product.sale_price != null ? String(product.sale_price) : "");
+  const [cost, setCost] = useState(String(product.cost));
+  const [taxable, setTaxable] = useState(product.taxable);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const img = thumbOf(product);
+  const num = (s: string) => (s.trim() === "" ? 0 : Number(s));
+  const effectivePrice = salePrice.trim() !== "" ? num(salePrice) : num(price);
+  const unitProfit = effectivePrice - num(cost);
+
+  const invalid =
+    name.trim() === "" ||
+    [stock, price, cost].some((v) => v.trim() === "" || !Number.isFinite(Number(v))) ||
+    (salePrice.trim() !== "" && !Number.isFinite(Number(salePrice)));
+
+  const save = async () => {
+    if (invalid) return;
+    setSaving(true);
+    setError(null);
+    const res = await fetch(`/api/admin/products/${product.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: name.trim(),
+        stock: num(stock),
+        price: num(price),
+        sale_price: salePrice.trim() === "" ? null : num(salePrice),
+        cost: num(cost),
+        taxable,
+      }),
+    });
+    if (res.ok) {
+      onSaved(await res.json());
+      return;
+    }
+    const body = await res.json().catch(() => ({}));
+    setError(body.error ?? "Failed to save changes.");
+    setSaving(false);
+  };
+
+  const label = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 mb-1";
+  const field =
+    "w-full bg-[#0e0e0e] border border-[#603e39]/40 text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#1a1a1a] border border-[#603e39]/40"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[#603e39]/30 px-5 py-3">
+          <div>
+            <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Quick Edit</p>
+            <p className="font-mono text-[11px] text-[#ebbbb4]/40">{product.sku ?? "No SKU"}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center text-[#ebbbb4]/40 hover:text-primary transition-colors"
+            title="Close"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* Image + name */}
+          <div className="flex gap-4">
+            <div className="relative w-24 h-24 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
+              {img ? (
+                <Image src={img} alt={product.name} fill sizes="96px" className="object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[24px] text-[#ebbbb4]/20">image</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <label className={label} htmlFor="qe-name">Product Name</label>
+              <input
+                id="qe-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={field}
+                autoFocus
+              />
+              <div className="mt-3">
+                <label className={label} htmlFor="qe-stock">Stocks</label>
+                <input
+                  id="qe-stock"
+                  type="number"
+                  min={0}
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  className={field}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Prices */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={label} htmlFor="qe-price">Regular Price</label>
+              <input id="qe-price" type="number" min={0} step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className={field} />
+            </div>
+            <div>
+              <label className={label} htmlFor="qe-sale">Sale Price</label>
+              <input id="qe-sale" type="number" min={0} step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="—" className={field} />
+            </div>
+            <div>
+              <label className={label} htmlFor="qe-cost">Cost</label>
+              <input id="qe-cost" type="number" min={0} step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} className={field} />
+            </div>
+            <div>
+              <span className={label}>Profit / unit</span>
+              <p className={`font-mono text-[12px] font-bold px-3 py-2 border border-[#603e39]/20 bg-[#0e0e0e] ${unitProfit >= 0 ? "text-green-400" : "text-primary"}`}>
+                {num(cost) > 0 ? peso(unitProfit) : "—"}
+              </p>
+            </div>
+          </div>
+
+          {/* Taxable */}
+          <button
+            onClick={() => setTaxable((v) => !v)}
+            className={`flex items-center gap-2 px-3 py-2 border font-mono text-[10px] tracking-widest uppercase transition-colors ${
+              taxable
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[14px]">
+              {taxable ? "check_box" : "check_box_outline_blank"}
+            </span>
+            Taxable
+          </button>
+
+          {error && <p className="font-mono text-[11px] text-red-500">{error}</p>}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 border-t border-[#603e39]/30 px-5 py-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 font-mono text-[11px] tracking-widest uppercase text-[#ebbbb4]/40 hover:text-[#e2e2e2] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            disabled={saving || invalid}
+            className="flex items-center gap-2 px-5 py-2 bg-primary text-white font-mono text-[11px] tracking-widest uppercase hover:brightness-110 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+          >
+            {saving && <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>}
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminProductsPageInner() {
   const router = useRouter();
   const pathname = usePathname();
@@ -54,6 +245,7 @@ function AdminProductsPageInner() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState<string | null>(null);
   const [reordering, setReordering] = useState<string | null>(null);
+  const [quickEdit, setQuickEdit] = useState<DbProduct | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
 
   const fetch$ = async () => {
@@ -112,6 +304,20 @@ function AdminProductsPageInner() {
     }
     return list;
   })();
+
+  // Inventory value / profit for the products currently listed (respects filters & search).
+  // Profit only counts products that have a cost recorded — the table shows "—" for the rest.
+  const totals = displayed.reduce(
+    (acc, p) => {
+      const unit = p.sale_price ?? p.price;
+      const qty = Math.max(0, p.stock);
+      acc.value += unit * qty;
+      if (p.cost > 0) acc.profit += (unit - p.cost) * qty;
+      else acc.noCost += 1;
+      return acc;
+    },
+    { value: 0, profit: 0, noCost: 0 }
+  );
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this product? This cannot be undone.")) return;
@@ -201,7 +407,7 @@ function AdminProductsPageInner() {
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
   const profit = (p: DbProduct) => (p.sale_price ?? p.price) - p.cost;
-  const thumb = (p: DbProduct) => p.main_image ?? (p.image || null);
+  const thumb = thumbOf;
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric", timeZone: "Asia/Manila" });
@@ -248,21 +454,55 @@ function AdminProductsPageInner() {
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#603e39]/40 focus-within:border-primary px-4 py-2.5 transition-colors flex-1 max-w-xs">
-        <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[16px]">search</span>
-        <input
-          type="text"
-          placeholder="Search by name or SKU…"
-          value={q}
-          onChange={(e) => setParam("q", e.target.value, "")}
-          className="flex-1 bg-transparent text-[#e2e2e2] font-mono text-[12px] focus:outline-none placeholder:text-[#ebbbb4]/20"
-        />
-        {q && (
-          <button onClick={() => setParam("q", "", "")} className="text-[#ebbbb4]/30 hover:text-primary transition-colors">
-            <span className="material-symbols-outlined text-[14px]">close</span>
-          </button>
-        )}
+      {/* Search + totals */}
+      <div className="flex flex-col sm:flex-row sm:items-stretch gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#603e39]/40 focus-within:border-primary px-4 py-2.5 transition-colors w-full sm:flex-1 sm:max-w-xs">
+          <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[16px]">search</span>
+          <input
+            type="text"
+            placeholder="Search by name or SKU…"
+            value={q}
+            onChange={(e) => setParam("q", e.target.value, "")}
+            className="flex-1 bg-transparent text-[#e2e2e2] font-mono text-[12px] focus:outline-none placeholder:text-[#ebbbb4]/20"
+          />
+          {q && (
+            <button onClick={() => setParam("q", "", "")} className="text-[#ebbbb4]/30 hover:text-primary transition-colors">
+              <span className="material-symbols-outlined text-[14px]">close</span>
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
+          <div
+            className="flex items-center gap-2.5 bg-[#1a1a1a] border border-[#603e39]/40 px-4 py-2"
+            title={`Retail value of stock on hand across the ${displayed.length} listed product${displayed.length === 1 ? "" : "s"}`}
+          >
+            <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[18px]">inventory_2</span>
+            <div className="leading-tight">
+              <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 whitespace-nowrap">Est. Total</p>
+              <p className="font-mono text-[14px] font-bold text-[#e2e2e2] whitespace-nowrap">{peso(totals.value)}</p>
+            </div>
+          </div>
+
+          <div
+            className="flex items-center gap-2.5 bg-[#1a1a1a] border border-[#603e39]/40 px-4 py-2"
+            title={
+              totals.noCost > 0
+                ? `${totals.noCost} listed product${totals.noCost === 1 ? " has" : "s have"} no cost recorded and ${totals.noCost === 1 ? "is" : "are"} excluded`
+                : "Profit on stock on hand across the listed products"
+            }
+          >
+            <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[18px]">trending_up</span>
+            <div className="leading-tight">
+              <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 whitespace-nowrap">
+                Total Profit{totals.noCost > 0 && <span className="text-[#ebbbb4]/25">*</span>}
+              </p>
+              <p className={`font-mono text-[14px] font-bold whitespace-nowrap ${totals.profit >= 0 ? "text-green-400" : "text-primary"}`}>
+                {peso(totals.profit)}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
@@ -437,6 +677,9 @@ function AdminProductsPageInner() {
                       <button onClick={() => moveProduct(p.id, "down")} disabled={isFiltered || posInFull === products.length - 1 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title="Move down">
                         <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
                       </button>
+                      <button onClick={() => setQuickEdit(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Quick edit">
+                        <span className="material-symbols-outlined text-[13px]">bolt</span>
+                      </button>
                       <Link href={`/admin/products/${p.id}`} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Edit">
                         <span className="material-symbols-outlined text-[13px]">edit</span>
                       </Link>
@@ -528,6 +771,9 @@ function AdminProductsPageInner() {
                           <button onClick={() => moveProduct(p.id, "down")} disabled={isFiltered || posInFull === products.length - 1 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title={isFiltered ? "Clear filters to reorder" : "Move down"}>
                             <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
                           </button>
+                          <button onClick={() => setQuickEdit(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Quick edit">
+                            <span className="material-symbols-outlined text-[13px]">bolt</span>
+                          </button>
                           <Link href={`/admin/products/${p.id}`} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Edit">
                             <span className="material-symbols-outlined text-[13px]">edit</span>
                           </Link>
@@ -549,6 +795,18 @@ function AdminProductsPageInner() {
             </table>
           </div>
         </>
+      )}
+
+      {quickEdit && (
+        <QuickEditModal
+          key={quickEdit.id}
+          product={quickEdit}
+          onClose={() => setQuickEdit(null)}
+          onSaved={(updated) => {
+            setProducts((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+            setQuickEdit(null);
+          }}
+        />
       )}
     </div>
   );

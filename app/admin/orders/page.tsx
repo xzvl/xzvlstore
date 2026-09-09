@@ -31,6 +31,9 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed", "cancelled"];
 
+/** Statuses where the Notify / To Pay message buttons are not applicable. */
+const NO_MESSAGE_STATUSES: OrderStatus[] = ["completed", "shipped", "processing", "cancelled"];
+
 type Stats = {
   totalOrders: number;
   totalRevenue: number;
@@ -291,7 +294,7 @@ function orderSummaryText(order: Order): string {
 }
 
 function notifyMessageText(order: Order): string {
-  const products = order.items.map((it) => it.product).join(", ");
+  const products = order.items.map((it) => `${it.product} (x${it.qty})`).join(", ");
   return `Good day,
 
 We're happy to let you know that your ${products} is expected to arrive this week or next week. Please prepare your remaining balance so we can process your order as soon as it arrives.
@@ -316,16 +319,20 @@ function toPayMessageText(order: Order): string {
   const hasAdjustment = discount > 0 || downPayment > 0;
 
   const productLines = order.items
-    .map((it) => `• ${it.product} — ₱${it.subtotal.toLocaleString()}`)
+    .map((it) => `• ${it.product} (x${it.qty}) — ₱${it.subtotal.toLocaleString()}`)
     .join("\n");
   const shippingLine = shippingFee > 0 ? `\n• Shipping Fee — ₱${shippingFee.toLocaleString()}` : "";
   const discountLine = discount > 0 ? `\n• Discount — −₱${discount.toLocaleString()}` : "";
   const downPaymentLine = downPayment > 0 ? `\n• Down Payment Received — ₱${downPayment.toLocaleString()}` : "";
   const amountDueLine = hasAdjustment ? `\n• Total Amount Due — ₱${amountDue.toLocaleString()}` : "";
+  const intro =
+    order.status === "pending"
+      ? "Thank you for your order!"
+      : "Your order has arrived and is now ready for shipment.";
 
   return `Good day,
 
-Your order has arrived and is now ready for shipment.
+${intro}
 
 Order Summary
 ${productLines}${shippingLine}
@@ -959,10 +966,12 @@ function AdminOrdersPageInner() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
-                      <CopyTextButton text={notifyMessageText(order)} label="Notify" />
-                      <CopyTextButton text={toPayMessageText(order)} label="To Pay" />
-                    </div>
+                    {!NO_MESSAGE_STATUSES.includes(order.status) && (
+                      <div className="flex items-center gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+                        <CopyTextButton text={notifyMessageText(order)} label="Notify" />
+                        <CopyTextButton text={toPayMessageText(order)} label="To Pay" />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
