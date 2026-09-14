@@ -94,28 +94,39 @@ CREATE POLICY "customers_select_own" ON customers FOR SELECT USING (auth.uid() =
 CREATE POLICY "customers_insert_own" ON customers FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "customers_update_own" ON customers FOR UPDATE USING (auth.uid() = id);
 
--- Auto-create customer record on new auth user
+-- Auto-create customer record on new auth user.
+--
+-- For OAuth providers (Google) we only get a single display name
+-- ("full_name" / "name"), never separate first/last fields, so it has to be
+-- split. The last word is always treated as the last name and everything
+-- before it as the first name — e.g. "Paul Dominic Pedro" becomes first name
+-- "Paul Dominic", last name "Pedro" (NOT "Paul" / "Dominic", which drops the
+-- real surname whenever the name has 3+ words).
 CREATE OR REPLACE FUNCTION public.handle_new_customer()
 RETURNS trigger AS $$
+DECLARE
+  full_name text := trim(COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', ''));
+  fname text;
+  lname text;
 BEGIN
+  IF full_name = '' THEN
+    fname := COALESCE(new.raw_user_meta_data->>'given_name', '');
+    lname := COALESCE(new.raw_user_meta_data->>'family_name', '');
+  ELSIF position(' ' IN full_name) = 0 THEN
+    fname := full_name;
+    lname := '';
+  ELSE
+    fname := trim(regexp_replace(full_name, '\s+\S+$', ''));
+    lname := regexp_replace(full_name, '^.*\s', '');
+  END IF;
+
   INSERT INTO public.customers (id, email, auth_provider, first_name, last_name)
   VALUES (
     new.id,
     new.email,
     COALESCE(new.raw_app_meta_data->>'provider', 'email'),
-    COALESCE(
-      new.raw_user_meta_data->>'given_name',
-      split_part(COALESCE(new.raw_user_meta_data->>'full_name', ''), ' ', 1),
-      ''
-    ),
-    COALESCE(
-      new.raw_user_meta_data->>'family_name',
-      CASE WHEN position(' ' IN COALESCE(new.raw_user_meta_data->>'full_name', '')) > 0
-        THEN split_part(new.raw_user_meta_data->>'full_name', ' ', 2)
-        ELSE ''
-      END,
-      ''
-    )
+    fname,
+    lname
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN new;
@@ -196,6 +207,13 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- ─── Facebook link (required on pre-order, checkout & account info forms) ──────
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS facebook text;
 -- ALTER TABLE customers ADD COLUMN IF NOT EXISTS facebook_url text;
+
+-- ─── Fix Google sign-up name splitting (last word = last name) ────────────────
+-- The trigger function only needs replacing — re-run the updated
+-- `CREATE OR REPLACE FUNCTION public.handle_new_customer()` block above in
+-- the Supabase SQL editor. It only affects customer rows created from here
+-- on; existing customers who signed up while the bug was live keep whatever
+-- name they already have (fix manually in /admin/customers if needed).
 
 -- ─── Supabase Storage ─────────────────────────────────────────────────────────
 -- 1. Go to Storage → New bucket

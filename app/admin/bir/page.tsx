@@ -412,7 +412,10 @@ function AdminBirPageInner() {
   const taxableIds = useMemo(() => new Set(products.filter((p) => p.taxable).map((p) => p.id)), [products]);
   const dateRange = useMemo(() => resolveDateRange(dateFilter, dateFrom, dateTo), [dateFilter, dateFrom, dateTo]);
 
-  const allTxns = useMemo<Txn[]>(() => {
+  // Unfiltered by the page's date controls below — the quarterly BIR summary
+  // boxes always reflect the real calendar quarters, regardless of what the
+  // user has the journal/ledger tabs currently filtered to.
+  const allTxnsRaw = useMemo<Txn[]>(() => {
     const birOrders = orders.filter((o) => !!o.official_receipt?.trim());
 
     const orderTxns: Txn[] = birOrders.map((o) => {
@@ -501,9 +504,43 @@ function AdminBirPageInner() {
       });
 
     return [...orderTxns, ...deliveryExpenseTxns, ...ledgerTxns]
-      .filter((t) => !dateRange || (t.date >= dateRange.from && t.date <= dateRange.to))
       .sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [orders, ledgerEntries, taxableIds, dateRange]);
+  }, [orders, ledgerEntries, taxableIds]);
+
+  const allTxns = useMemo(
+    () => allTxnsRaw.filter((t) => !dateRange || (t.date >= dateRange.from && t.date <= dateRange.to)),
+    [allTxnsRaw, dateRange]
+  );
+
+  // ─── Quarterly BIR income-tax return summary boxes ────────────────────────
+  const birReturns = useMemo(() => {
+    const creditSales = (from: Date, to: Date) =>
+      allTxnsRaw
+        .filter((t) => t.cashFlow === "in" && t.date >= from && t.date <= to)
+        .reduce((sum, t) => sum + (t.otherLines.find((l) => l.account === "Sales Revenue")?.amount ?? 0), 0);
+
+    const year = new Date().getFullYear();
+    const periods = [
+      { title: "BIR Form 1701Q Q1", cover: "January 1 to March 31", deadline: "Deadline May 15", from: new Date(year, 0, 1), to: eod(new Date(year, 2, 31)) },
+      { title: "BIR Form 1701Q Q2", cover: "April 1 to June 30", deadline: "Deadline August 15", from: new Date(year, 3, 1), to: eod(new Date(year, 5, 30)) },
+      { title: "BIR Form 1701Q Q3", cover: "July 1 to September 30", deadline: "Deadline November 15", from: new Date(year, 6, 1), to: eod(new Date(year, 8, 30)) },
+      { title: "BIR Form 1701 MS", cover: "January 1 to December 31", deadline: `Deadline April 15, ${year + 1}`, from: new Date(year, 0, 1), to: eod(new Date(year, 11, 31)) },
+    ];
+
+    return periods.map((p) => ({ ...p, creditSales: creditSales(p.from, p.to) }));
+  }, [allTxnsRaw]);
+
+  const annualCreditSales = useMemo(
+    () => birReturns.find((r) => r.title === "BIR Form 1701 MS")?.creditSales ?? 0,
+    [birReturns]
+  );
+
+  // 8% flat income tax rate on gross sales/receipts in excess of ₱250,000
+  // (the graduated-rate exemption threshold), applied to the full year.
+  const annualTaxDue = useMemo(
+    () => Math.max(0, annualCreditSales - 250000) * 0.08,
+    [annualCreditSales]
+  );
 
   const gjPages = useMemo(() => paginateJournalRows(allTxns), [allTxns]);
   const crjPages = useMemo(
@@ -541,6 +578,28 @@ function AdminBirPageInner() {
       <div>
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">ADMIN // BIR TAX</p>
         <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">BIR - Books of Account</h1>
+      </div>
+
+      {/* Quarterly BIR income-tax return summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        {birReturns.map((r) => (
+          <div key={r.title} className="bg-[#1a1a1a] border border-[#603e39]/30 p-4 space-y-1.5">
+            <p className="font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2] font-bold">{r.title}</p>
+            <p className="font-mono text-[10px] text-[#ebbbb4]/40">{r.cover}</p>
+            <p className="font-mono text-[10px] text-red-400">{r.deadline}</p>
+            <p className="font-inter font-black text-[22px] text-primary pt-1">₱{r.creditSales.toLocaleString()}</p>
+          </div>
+        ))}
+        <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-4 space-y-1.5">
+          <p className="font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2] font-bold">Annual Income Tax Due</p>
+          <p className="font-mono text-[10px] text-[#ebbbb4]/40">(Gross Sales − ₱250,000) × 8%</p>
+          <p className="font-mono text-[10px] text-red-400">
+            (₱{annualCreditSales.toLocaleString()} − ₱250,000) × 8%
+          </p>
+          <p className="font-inter font-black text-[22px] text-primary pt-1">
+            ₱{annualTaxDue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          </p>
+        </div>
       </div>
 
       {/* Tabs */}
