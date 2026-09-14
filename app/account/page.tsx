@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase-client";
 import Header from "@/components/Header";
@@ -65,6 +66,20 @@ function OrderTotalInline({ order }: { order: Order }) {
         <span className="font-mono text-[13px] text-primary font-bold">₱{remaining.toLocaleString()}</span>
       </div>
       <p className="font-mono text-[9px] text-[#ebbbb4]/30">DP ₱{downPayment.toLocaleString()} paid</p>
+    </div>
+  );
+}
+
+function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
+  return (
+    <div className="w-[30px] h-[30px] relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
+      {src ? (
+        <Image src={src} alt={alt} fill sizes="30px" className="object-cover" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <span className="material-symbols-outlined text-[13px] text-[#ebbbb4]/20">image</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -410,9 +425,15 @@ function AccountPageInner() {
                     <div className="flex-1 min-w-0">
                       <p className="font-mono text-[11px] text-[#ebbbb4]/40">{formatDate(order.created_at)}</p>
                       {order.items.length > 0 && (
-                        <p className="font-mono text-[10px] text-[#ebbbb4]/30 truncate mt-0.5">
-                          {order.items.map(it => `${it.product} ×${it.qty}`).join(" · ")}
-                        </p>
+                        <div className="flex items-center gap-3 mt-0.5 overflow-hidden">
+                          {order.items.map((it, i) => (
+                            <div key={i} className="flex items-center gap-1.5 flex-shrink-0 min-w-0">
+                              <span className="font-mono text-[10px] text-[#ebbbb4]/30 truncate max-w-[160px]">
+                                {it.product} ×{it.qty}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                     <OrderTotalInline order={order} />
@@ -447,6 +468,7 @@ function AccountPageInner() {
                         <tbody>
                           {order.items.map((item, i) => (
                             <tr key={i} className="border-b border-[#603e39]/10">
+                              <td className="py-1.5 pr-2 w-[30px]"><ItemThumb src={item.image} alt={item.product} /></td>
                               <td className="py-1.5 font-mono text-[#e2e2e2]">{item.product}</td>
                               <td className="py-1.5 text-center font-mono text-[#ebbbb4]/50 w-10">×{item.qty}</td>
                               <td className="py-1.5 text-right font-mono text-primary">₱{item.subtotal.toLocaleString()}</td>

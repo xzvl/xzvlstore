@@ -13,6 +13,8 @@ export type OrderItem = {
   qty: number;
   unit_price: number;
   subtotal: number;
+  /** Current product thumbnail, attached at read time for display — not stored on the row. */
+  image?: string | null;
 };
 
 export type Order = {

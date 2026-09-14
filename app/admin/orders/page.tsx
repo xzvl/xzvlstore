@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { Order, OrderStatus } from "@/lib/supabase";
 import { ExportOrdersModal } from "./_export";
@@ -421,6 +422,20 @@ function CopyTextButton({ text, label }: { text: string; label: string }) {
   );
 }
 
+function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
+  return (
+    <div className="w-[30px] h-[30px] relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
+      {src ? (
+        <Image src={src} alt={alt} fill sizes="30px" className="object-cover" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <span className="material-symbols-outlined text-[13px] text-[#ebbbb4]/20">image</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CustomerNameLink({ order, facebookUrl }: { order: Order; facebookUrl?: string }) {
   if (facebookUrl) {
     return (
@@ -735,11 +750,13 @@ function AdminOrdersPageInner() {
                     <p className="font-mono text-[11px] text-[#ebbbb4]/40 mt-0.5">{order.location}</p>
                   )}
                   {order.items.length > 0 && (
-                    <div className="mt-0.5">
+                    <div className="mt-1 space-y-1">
                       {order.items.map((it, i) => (
-                        <p key={i} className="font-mono text-[10px] text-[#ebbbb4]/30 truncate">
-                          {it.product} ×{it.qty}
-                        </p>
+                        <div key={i} className="flex items-center gap-1.5">
+                          <p className="font-mono text-[10px] text-[#ebbbb4]/30 truncate">
+                            {it.product} ×{it.qty}
+                          </p>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -810,9 +827,15 @@ function AdminOrdersPageInner() {
                     )}
                   </div>
                   {order.items.length > 0 && (
-                    <p className="font-mono text-[10px] text-[#ebbbb4]/30 truncate mt-0.5">
-                      {order.items.map(it => `${it.product} ×${it.qty}`).join(" · ")}
-                    </p>
+                    <div className="flex items-center gap-3 mt-0.5 overflow-hidden">
+                      {order.items.map((it, i) => (
+                        <div key={i} className="flex items-center gap-1.5 flex-shrink-0 min-w-0">
+                          <span className="font-mono text-[10px] text-[#ebbbb4]/30 truncate max-w-[160px]">
+                            {it.product} ×{it.qty}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
@@ -920,6 +943,7 @@ function AdminOrdersPageInner() {
                     <table className="w-full text-[12px]">
                       <thead>
                         <tr className="border-b border-[#603e39]/20">
+                          <th className="pb-2 w-[30px]"></th>
                           <th className="text-left font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest pb-2">Product</th>
                           <th className="text-center font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest pb-2">Qty</th>
                           <th className="text-right font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest pb-2">Subtotal</th>
@@ -928,6 +952,7 @@ function AdminOrdersPageInner() {
                       <tbody>
                         {order.items.map((item, i) => (
                           <tr key={i} className="border-b border-[#603e39]/10">
+                            <td className="py-2 pr-2"><ItemThumb src={item.image} alt={item.product} /></td>
                             <td className="py-2 font-mono text-[#e2e2e2]">{item.product}</td>
                             <td className="py-2 text-center font-mono text-[#ebbbb4]/60">{item.qty}</td>
                             <td className="py-2 text-right font-mono text-primary">₱{item.subtotal.toLocaleString()}</td>

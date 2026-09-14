@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { attachItemImages } from "@/lib/orders";
 
 export async function GET(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
@@ -15,5 +16,6 @@ export async function GET(req: NextRequest) {
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  const enriched = await attachItemImages(data ?? []);
+  return NextResponse.json(enriched);
 }

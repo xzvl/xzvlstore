@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { adjustStock, DEDUCTING_STATUSES } from "@/lib/stock";
+import { attachItemImages } from "@/lib/orders";
 
 // Explicit, in addition to reading req.url below, so this never gets cached
 // at the edge regardless of how Next.js's automatic static analysis reads it.
@@ -21,7 +22,8 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
+  const enriched = await attachItemImages(data ?? []);
+  return NextResponse.json(enriched, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: NextRequest) {
