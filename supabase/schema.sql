@@ -4,11 +4,12 @@
 CREATE TABLE IF NOT EXISTS orders (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at timestamptz DEFAULT now() NOT NULL,
+  payment_date timestamptz,
   name text NOT NULL,
   email text NOT NULL,
   phone text NOT NULL,
   location text NOT NULL,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'pre-order', 'hold pre-order', 'processing', 'confirmed', 'shipped', 'completed', 'cancelled')),
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'pre-order', 'hold pre-order', 'processing', 'confirmed', 'shipped', 'completed', 'cancelled', 'refunded')),
   estimated_total numeric NOT NULL DEFAULT 0,
   discount numeric NOT NULL DEFAULT 0,
   delivery_method text,
@@ -214,6 +215,13 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- the Supabase SQL editor. It only affects customer rows created from here
 -- on; existing customers who signed up while the bug was live keep whatever
 -- name they already have (fix manually in /admin/customers if needed).
+
+-- ─── Order payment date & "refunded" status (run this against the live DB) ────
+-- payment_date is nullable: null means "same as the order date" (created_at).
+-- BIR and analytics use COALESCE(payment_date, created_at).
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_date timestamptz;
+-- ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;
+-- ALTER TABLE orders ADD CONSTRAINT orders_status_check CHECK (status IN ('pending', 'pre-order', 'hold pre-order', 'processing', 'confirmed', 'shipped', 'completed', 'cancelled', 'refunded'));
 
 -- ─── Supabase Storage ─────────────────────────────────────────────────────────
 -- 1. Go to Storage → New bucket

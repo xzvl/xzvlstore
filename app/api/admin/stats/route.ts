@@ -24,10 +24,12 @@ export async function GET() {
     pendingOrders: orders.filter((o) => o.status === "pending").length,
     preOrderOrders: orders.filter((o) => o.status === "pre-order").length,
     holdPreOrderOrders: orders.filter((o) => o.status === "hold pre-order").length,
+    processingOrders: orders.filter((o) => o.status === "processing").length,
     confirmedOrders: orders.filter((o) => o.status === "confirmed").length,
     shippedOrders: orders.filter((o) => o.status === "shipped").length,
     completedOrders: orders.filter((o) => o.status === "completed").length,
     cancelledOrders: orders.filter((o) => o.status === "cancelled").length,
+    refundedOrders: orders.filter((o) => o.status === "refunded").length,
     activeProducts: products.filter((p) => p.status === "active").length,
   }, { headers: { "Cache-Control": "no-store" } });
 }

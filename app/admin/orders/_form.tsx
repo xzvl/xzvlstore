@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { DbProduct, OrderStatus } from "@/lib/supabase";
 
-const DELIVERY_METHODS = ["J&T Express", "LBC", "Shopee Express", "Grab Express", "Lalamove", "Pickup", "Other"];
-const PAYMENT_METHODS = ["GCash", "Maya", "Bank Transfer", "Cash on Delivery", "Cash", "PayPal", "Other"];
-const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed", "cancelled"];
+export const DELIVERY_METHODS = ["J&T Express", "LBC", "Shopee Express", "Grab Express", "Lalamove", "Pickup", "Other"];
+export const PAYMENT_METHODS = ["GCash", "Maya", "Bank Transfer", "Cash on Delivery", "Cash", "PayPal", "Other"];
+export const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed", "cancelled", "refunded"];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,6 +49,7 @@ type FormState = {
   facebook: string;
   status: OrderStatus;
   order_date: string;
+  payment_date: string;
   delivery_method: string;
   payment_method: string;
   shipping_fee: string;
@@ -77,18 +78,25 @@ type FormState = {
 const EMPTY_ITEM: ItemRow = { product_id: "", product: "", qty: "1", unit_price: "", subtotal: "" };
 
 // Returns current time in Asia/Manila as a datetime-local string (YYYY-MM-DDTHH:mm)
-function nowPH(): string {
+export function nowPH(): string {
   return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 16);
 }
 
 // Converts a UTC ISO string to a datetime-local string in PH time
-function toPHLocal(iso: string): string {
+export function toPHLocal(iso: string): string {
   return new Date(new Date(iso).getTime() + 8 * 3600 * 1000).toISOString().slice(0, 16);
 }
 
+// Converts a datetime-local string (PH time) to a UTC ISO string
+export function fromPHLocal(local: string): string {
+  return new Date(local + ":00+08:00").toISOString();
+}
+
+const INITIAL_DATE = nowPH();
+
 const EMPTY_FORM: FormState = {
   customer_id: "", name: "", email: "", phone: "", location: "", facebook: "",
-  status: "pending", order_date: nowPH(),
+  status: "pending", order_date: INITIAL_DATE, payment_date: INITIAL_DATE,
   delivery_method: "", payment_method: "", shipping_fee: "", tracking_number: "",
   official_receipt: "", discount: "", down_payment: "",
   billing_address_1: "", billing_address_2: "", billing_city: "", billing_state: "",
@@ -99,9 +107,9 @@ const EMPTY_FORM: FormState = {
   notes: [],
 };
 
-const INPUT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
-const SELECT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors";
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
+export const INPUT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
+export const SELECT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors";
+export const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
 
 // ─── Customer Search Combobox ─────────────────────────────────────────────────
 
@@ -312,14 +320,17 @@ function AddressSection({
 
 // ─── Product Combobox ────────────────────────────────────────────────────────
 
-function ProductCombobox({
+export function ProductCombobox({
   value,
   onChange,
   products,
+  fallbackLabel = "",
 }: {
   value: string;
   onChange: (id: string) => void;
   products: DbProduct[];
+  /** Shown when `value` isn't in `products` (e.g. legacy items without a product_id). */
+  fallbackLabel?: string;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -342,7 +353,7 @@ function ProductCombobox({
     <div ref={ref} className="relative">
       <input
         type="text"
-        value={open ? query : (selected?.name ?? "")}
+        value={open ? query : (selected?.name ?? fallbackLabel)}
         placeholder="Search product…"
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => { setQuery(""); setOpen(true); }}
@@ -387,6 +398,10 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [shippingCopied, setShippingCopied] = useState(false);
+  // While linked, the payment date follows the order date and is saved as null
+  // ("not set"), which BIR/analytics resolve to the order date. Editing the
+  // payment date unlinks it and saves the chosen value.
+  const [paymentLinked, setPaymentLinked] = useState(true);
 
   useEffect(() => {
     fetch("/api/admin/products").then((r) => r.json()).then(setProducts);
@@ -396,6 +411,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       fetch(`/api/admin/orders/${orderId}`)
         .then((r) => r.json())
         .then((order) => {
+          setPaymentLinked(!order.payment_date);
           setForm({
             customer_id: order.customer_id ?? "",
             name: order.name ?? "",
@@ -405,6 +421,9 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             facebook: order.facebook ?? "",
             status: order.status ?? "pending",
             order_date: order.created_at ? toPHLocal(order.created_at) : nowPH(),
+            payment_date: order.payment_date
+              ? toPHLocal(order.payment_date)
+              : order.created_at ? toPHLocal(order.created_at) : nowPH(),
             delivery_method: order.delivery_method ?? "",
             payment_method: order.payment_method ?? "",
             shipping_fee: order.shipping_fee != null ? String(order.shipping_fee) : "",
@@ -442,6 +461,14 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
 
   const set$ = (key: keyof FormState, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  const setOrderDate = (value: string) =>
+    setForm((f) => ({ ...f, order_date: value, ...(paymentLinked ? { payment_date: value } : {}) }));
+
+  const setPaymentDate = (value: string) => {
+    setPaymentLinked(false);
+    set$("payment_date", value);
+  };
 
   const handleCustomerSelect = (c: Customer | null) => {
     if (!c) {
@@ -539,7 +566,8 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         name: form.name, email: form.email, phone: form.phone, location: form.location,
         facebook: form.facebook || null,
         status: form.status,
-        created_at: form.order_date ? new Date(form.order_date + ":00+08:00").toISOString() : undefined,
+        created_at: form.order_date ? fromPHLocal(form.order_date) : undefined,
+        payment_date: !paymentLinked && form.payment_date ? fromPHLocal(form.payment_date) : null,
         delivery_method: form.delivery_method || null,
         payment_method: form.payment_method || null,
         shipping_fee: form.delivery_method === "Pickup" || !form.shipping_fee ? null : Number(form.shipping_fee),
@@ -702,7 +730,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       {/* Order Details */}
       <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-4">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Order Details</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
             <label className={LABEL}>Official Receipt</label>
             <input value={form.official_receipt} onChange={(e) => set$("official_receipt", e.target.value)} placeholder="OR number" className={INPUT} />
@@ -720,10 +748,21 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             <input
               type="datetime-local"
               value={form.order_date ?? ""}
-              onChange={(e) => set$("order_date", e.target.value)}
+              onChange={(e) => setOrderDate(e.target.value)}
               className={INPUT}
             />
           </div>
+          <div>
+            <label className={LABEL}>Payment Date &amp; Time</label>
+            <input
+              type="datetime-local"
+              value={form.payment_date ?? ""}
+              onChange={(e) => setPaymentDate(e.target.value)}
+              className={INPUT}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <label className={LABEL}>Discount (₱)</label>
             <input value={form.discount} onChange={(e) => set$("discount", e.target.value)} placeholder="0" type="number" min="0" className={INPUT} />
@@ -794,7 +833,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             <div key={i} className="relative" style={{ zIndex: form.items.length - i }}>
               {/* Mobile layout */}
               <div className="md:hidden bg-[#0e0e0e] border border-[#603e39]/40 p-3 space-y-2">
-                <ProductCombobox value={item.product_id} onChange={(id) => selectProduct(i, id)} products={products} />
+                <ProductCombobox value={item.product_id} onChange={(id) => selectProduct(i, id)} products={products} fallbackLabel={item.product} />
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
                     <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Qty</p>
@@ -818,7 +857,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
               </div>
               {/* Desktop layout */}
               <div className="hidden md:grid grid-cols-[1fr_70px_110px_110px_32px] gap-3 items-center">
-                <ProductCombobox value={item.product_id} onChange={(id) => selectProduct(i, id)} products={products} />
+                <ProductCombobox value={item.product_id} onChange={(id) => selectProduct(i, id)} products={products} fallbackLabel={item.product} />
                 <input value={item.qty} onChange={(e) => setItem(i, "qty", e.target.value)} type="number" min="1"
                   className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors text-center" />
                 <input value={item.unit_price} onChange={(e) => setItem(i, "unit_price", e.target.value)} type="number" min="0" placeholder="0"

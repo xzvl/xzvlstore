@@ -33,6 +33,7 @@ const STATUS_COLORS: Record<string, string> = {
   shipped: "text-green-400 border-green-400/30 bg-green-400/10",
   completed: "text-primary border-primary/30 bg-primary/10",
   cancelled: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
+  refunded: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
 };
 
 const QUICK_LINKS = [

@@ -416,6 +416,7 @@ function AdminBirPageInner() {
   // boxes always reflect the real calendar quarters, regardless of what the
   // user has the journal/ledger tabs currently filtered to.
   const allTxnsRaw = useMemo<Txn[]>(() => {
+    // Each order books on its payment date; if none is set, the order date.
     const birOrders = orders.filter((o) => !!o.official_receipt?.trim());
 
     const orderTxns: Txn[] = birOrders.map((o) => {
@@ -438,7 +439,7 @@ function AdminBirPageInner() {
         id: `order-${o.id}-cash-in`,
         kind: "order" as const,
         cashFlow: "in" as const,
-        date: new Date(o.created_at),
+        date: new Date(o.payment_date ?? o.created_at),
         amount: salesTotal + shippingFee,
         otherLines,
         particulars: salesParticulars,
@@ -451,7 +452,7 @@ function AdminBirPageInner() {
     for (const o of birOrders) {
       const fee = o.shipping_fee || 0;
       if (fee <= 0) continue;
-      const d = new Date(o.created_at);
+      const d = new Date(o.payment_date ?? o.created_at);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       shippingByMonth.set(key, (shippingByMonth.get(key) ?? 0) + fee);
     }

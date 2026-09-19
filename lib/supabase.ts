@@ -5,7 +5,7 @@ const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export const supabase = createClient(url, key);
 
-export type OrderStatus = "pending" | "pre-order" | "hold pre-order" | "processing" | "confirmed" | "shipped" | "completed" | "cancelled";
+export type OrderStatus = "pending" | "pre-order" | "hold pre-order" | "processing" | "confirmed" | "shipped" | "completed" | "cancelled" | "refunded";
 
 export type OrderItem = {
   product_id?: string | null;
@@ -21,6 +21,8 @@ export type Order = {
   id: string;
   order_number: number | null;
   created_at: string;
+  /** When the order was paid. null = not set, falls back to `created_at`. */
+  payment_date: string | null;
   customer_id: string | null;
   name: string;
   email: string;

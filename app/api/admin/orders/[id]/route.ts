@@ -30,7 +30,7 @@ export async function PATCH(
   const updates: Record<string, unknown> = {};
   const fields = [
     "name", "email", "phone", "location", "facebook", "status", "estimated_total",
-    "discount", "delivery_method", "payment_method", "tracking_number", "shipping_fee", "items", "customer_id", "created_at",
+    "discount", "delivery_method", "payment_method", "tracking_number", "shipping_fee", "items", "customer_id", "created_at", "payment_date",
     "official_receipt", "down_payment",
     "billing_address_1", "billing_address_2", "billing_city", "billing_state",
     "billing_postcode", "billing_region", "billing_phone",

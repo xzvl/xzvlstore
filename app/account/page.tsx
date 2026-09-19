@@ -44,6 +44,7 @@ const STATUS_COLORS: Record<string, string> = {
   shipped: "text-green-400 border-green-400/30 bg-green-400/10",
   completed: "text-primary border-primary/30 bg-primary/10",
   cancelled: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
+  refunded: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
 };
 
 const INPUT = "w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";

@@ -6,18 +6,30 @@ import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { Order, OrderStatus } from "@/lib/supabase";
 import { ExportOrdersModal } from "./_export";
+import { OrderQuickEditModal } from "./_quick-edit";
 
 const STATUS_TABS: { value: string; label: string }[] = [
+  { value: "default", label: "Default" },
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
   { value: "pre-order", label: "Pre-Order" },
   { value: "hold pre-order", label: "Hold Pre-Order" },
-  { value: "processing", label: "Processing" },
   { value: "confirmed", label: "Confirmed" },
+  { value: "processing", label: "Processing" },
   { value: "shipped", label: "Shipped" },
   { value: "completed", label: "Completed" },
   { value: "cancelled", label: "Cancelled" },
+  { value: "refunded", label: "Refunded" },
 ];
+
+/** The "Default" tab: every order that's still in progress. */
+const DEFAULT_TAB_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped"];
+
+/** Tabs that show a count badge — the same in-progress statuses. */
+const BADGE_STATUSES = new Set<string>(DEFAULT_TAB_STATUSES);
+
+const matchesTab = (status: OrderStatus, tab: string) =>
+  tab === "all" ? true : tab === "default" ? DEFAULT_TAB_STATUSES.includes(status) : status === tab;
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "text-yellow-400 border-yellow-400/30 bg-yellow-400/10",
@@ -28,12 +40,13 @@ const STATUS_COLORS: Record<string, string> = {
   shipped: "text-green-400 border-green-400/30 bg-green-400/10",
   completed: "text-primary border-primary/30 bg-primary/10",
   cancelled: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
+  refunded: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
 };
 
-const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed", "cancelled"];
+const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed", "cancelled", "refunded"];
 
 /** Statuses where the Notify / To Pay message buttons are not applicable. */
-const NO_MESSAGE_STATUSES: OrderStatus[] = ["completed", "shipped", "processing", "cancelled"];
+const NO_MESSAGE_STATUSES: OrderStatus[] = ["completed", "shipped", "processing", "cancelled", "refunded"];
 
 type Stats = {
   totalOrders: number;
@@ -476,7 +489,7 @@ function AdminOrdersPageInner() {
     return () => window.removeEventListener("popstate", syncFromUrl);
   }, []);
 
-  const status = params.get("status") ?? "all";
+  const status = params.get("status") ?? "default";
   const productFilter = params.get("product") ?? "all";
   const customerFilter = params.get("customer") ?? "all";
   const dateFilter = params.get("dateFilter") ?? "default";
@@ -502,11 +515,13 @@ function AdminOrdersPageInner() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [quickEdit, setQuickEdit] = useState<Order | null>(null);
 
-  const fetchOrders = async (s = status) => {
+  // All orders are loaded once and the status tab filters client-side, so the
+  // tab count badges and the Default (multi-status) tab share one data set.
+  const fetchOrders = async () => {
     setLoading(true);
-    const qs = s !== "all" ? `?status=${encodeURIComponent(s)}` : "";
-    const res = await fetch(`/api/admin/orders${qs}`, { cache: "no-store" });
+    const res = await fetch("/api/admin/orders", { cache: "no-store" });
     if (res.ok) {
       const data: Order[] = await res.json();
       setOrders(data);
@@ -529,7 +544,7 @@ function AdminOrdersPageInner() {
   };
 
   useEffect(() => { fetchStats(); fetchCustomers(); }, []);
-  useEffect(() => { fetchOrders(status); }, [status]);
+  useEffect(() => { fetchOrders(); }, []);
 
   const customerMap = useMemo(() => {
     const m: Record<string, Customer> = {};
@@ -571,7 +586,9 @@ function AdminOrdersPageInner() {
 
   const dateRange = useMemo(() => resolveDateRange(dateFilter, dateFrom, dateTo), [dateFilter, dateFrom, dateTo]);
 
-  const visibleOrders = orders
+  // Orders after the date / customer / product filters, before the status tab —
+  // the tab badges count from this so they match what each tab will list.
+  const filteredOrders = orders
     .filter((o) => productFilter === "all" || o.items.some((it) => it.product === productFilter))
     .filter((o) => customerFilter === "all" || o.customer_id === customerFilter)
     .filter((o) => {
@@ -579,6 +596,13 @@ function AdminOrdersPageInner() {
       const d = new Date(o.created_at);
       return d >= dateRange.from && d <= dateRange.to;
     });
+
+  const statusCounts = filteredOrders.reduce<Record<string, number>>((acc, o) => {
+    acc[o.status] = (acc[o.status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const visibleOrders = filteredOrders.filter((o) => matchesTab(o.status, status));
 
   const filteredProductStats = productFilter !== "all"
     ? visibleOrders.reduce(
@@ -644,7 +668,7 @@ function AdminOrdersPageInner() {
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
-            onClick={() => setParam("status", tab.value, "all")}
+            onClick={() => setParam("status", tab.value, "default")}
             className={`px-4 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors border-b-2 -mb-px whitespace-nowrap ${
               status === tab.value
                 ? "text-primary border-primary"
@@ -652,6 +676,11 @@ function AdminOrdersPageInner() {
             }`}
           >
             {tab.label}
+            {BADGE_STATUSES.has(tab.value) && (statusCounts[tab.value] ?? 0) > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-primary text-white text-[9px] font-bold leading-none tracking-normal align-middle">
+                {statusCounts[tab.value]}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -785,6 +814,9 @@ function AdminOrdersPageInner() {
                       size={18}
                       className="text-[#ebbbb4]/40"
                     />
+                    <button onClick={() => setQuickEdit(order)} className="text-[#ebbbb4]/40 hover:text-primary transition-colors" title="Quick edit">
+                      <span className="material-symbols-outlined !text-[20px]">bolt</span>
+                    </button>
                     <Link href={`/admin/orders/${order.id}`} className="text-[#ebbbb4]/40 hover:text-primary transition-colors" title="Edit order">
                       <span className="material-symbols-outlined !text-[20px]">edit</span>
                     </Link>
@@ -830,7 +862,7 @@ function AdminOrdersPageInner() {
                     <div className="flex items-center gap-3 mt-0.5 overflow-hidden">
                       {order.items.map((it, i) => (
                         <div key={i} className="flex items-center gap-1.5 flex-shrink-0 min-w-0">
-                          <span className="font-mono text-[10px] text-[#ebbbb4]/30 truncate max-w-[160px]">
+                          <span className="font-mono text-[10px] text-[#ebbbb4]/30 truncate lg:max-w-[240px] max-w-[160px]">
                             {it.product} ×{it.qty}
                           </span>
                         </div>
@@ -870,6 +902,14 @@ function AdminOrdersPageInner() {
                   className="text-[#ebbbb4]/40"
                 />
 
+                <button
+                  onClick={e => { e.stopPropagation(); setQuickEdit(order); }}
+                  className="text-[#ebbbb4]/40 hover:text-primary transition-colors flex-shrink-0"
+                  title="Quick edit"
+                >
+                  <span className="material-symbols-outlined text-[16px]">bolt</span>
+                </button>
+
                 <Link
                   href={`/admin/orders/${order.id}`}
                   onClick={e => e.stopPropagation()}
@@ -900,7 +940,7 @@ function AdminOrdersPageInner() {
                       { label: "Email", value: order.email, copy: order.email },
                       { label: "Phone", value: order.phone, copy: stripPhonePrefix(order.phone) },
                       { label: "Location", value: order.location, copy: fullAddress(order) },
-                      { label: "Date", value: formatDate(order.created_at), copy: undefined },
+                      { label: "Order Date", value: formatDate(order.created_at), copy: undefined },
                     ].map((f) => (
                       <div key={f.label}>
                         <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5 flex items-center gap-1">
@@ -936,6 +976,10 @@ function AdminOrdersPageInner() {
                         <p className="font-mono text-[12px] text-[#e2e2e2]">{order.payment_method}</p>
                       </div>
                     )}
+                    <div>
+                      <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Payment Date</p>
+                      <p className="font-mono text-[12px] text-[#e2e2e2]">{formatDate(order.payment_date ?? order.created_at)}</p>
+                    </div>
                   </div>
 
                   <div>
@@ -1004,6 +1048,19 @@ function AdminOrdersPageInner() {
             );
           })}
         </div>
+      )}
+
+      {quickEdit && (
+        <OrderQuickEditModal
+          key={quickEdit.id}
+          order={quickEdit}
+          onClose={() => setQuickEdit(null)}
+          onSaved={(updated) => {
+            setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+            setQuickEdit(null);
+            fetchStats();
+          }}
+        />
       )}
 
       <ExportOrdersModal

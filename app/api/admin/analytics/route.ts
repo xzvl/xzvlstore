@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
 type RawItem = { product?: string; qty?: number; subtotal?: number; product_id?: string | null };
-type RawOrder = { created_at: string; estimated_total: number; discount: number; items: RawItem[] };
+type RawOrder = {
+  created_at: string;
+  payment_date: string | null;
+  estimated_total: number;
+  discount: number;
+  items: RawItem[];
+};
 
 function computePerformance(orders: RawOrder[]) {
   const totalSales = orders.reduce((s, o) => s + (o.estimated_total ?? 0) + (o.discount ?? 0), 0);
@@ -14,12 +20,15 @@ function computePerformance(orders: RawOrder[]) {
   return { totalSales, netSales, orders: orders.length, productsSold };
 }
 
+// An order counts on its payment date; if none is set, on its order date.
 async function fetchOrders(from: string, to: string) {
   return supabase
     .from("orders")
-    .select("created_at, estimated_total, discount, items")
-    .gte("created_at", from)
-    .lte("created_at", to)
+    .select("created_at, payment_date, estimated_total, discount, items")
+    .or(
+      `and(payment_date.gte.${from},payment_date.lte.${to}),` +
+      `and(payment_date.is.null,created_at.gte.${from},created_at.lte.${to})`
+    )
     .eq("status", "completed");
 }
 
@@ -92,7 +101,7 @@ export async function GET(req: NextRequest) {
     .slice(0, 10);
 
   const slim = (o: RawOrder) => ({
-    created_at: o.created_at,
+    date: o.payment_date ?? o.created_at,
     estimated_total: o.estimated_total,
     discount: o.discount,
     items: o.items,

@@ -7,8 +7,8 @@ export const PURCHASE_LIMIT_WINDOW_DAYS = 7;
 type OrderItem = { product_id?: string | null; qty?: number };
 
 // Sums quantities purchased per product by this customer within the rolling
-// window, across all non-cancelled orders (pending/pre-order/confirmed/etc.
-// all count as a real purchase commitment — only cancelled orders don't).
+// window, across all non-cancelled/refunded orders (pending/pre-order/confirmed/
+// etc. all count as a real purchase commitment — cancelled and refunded don't).
 export async function getPurchasedQtyMap(
   customerId: string,
   productIds: string[],
@@ -22,7 +22,7 @@ export async function getPurchasedQtyMap(
     .from("orders")
     .select("items")
     .eq("customer_id", customerId)
-    .neq("status", "cancelled")
+    .not("status", "in", "(cancelled,refunded)")
     .gte("created_at", since);
 
   for (const order of data ?? []) {

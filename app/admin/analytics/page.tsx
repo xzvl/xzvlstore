@@ -16,7 +16,8 @@ import {
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type RawOrder = {
-  created_at: string;
+  /** Payment date, or the order date when no payment date is set. */
+  date: string;
   estimated_total: number;
   discount: number;
   items: Array<{ product?: string; qty?: number; subtotal?: number }>;
@@ -103,7 +104,7 @@ type ChartPoint = { label: string; netSales: number; orders: number; compareNetS
 function groupOrders(orders: RawOrder[], groupBy: GroupBy): Bucket[] {
   const buckets = new Map<string, { netSales: number; orders: number }>();
   for (const order of orders) {
-    const d = new Date(order.created_at);
+    const d = new Date(order.date);
     let key: string;
     if (groupBy === "day") {
       key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
