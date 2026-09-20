@@ -70,6 +70,25 @@ const PRODUCT_SELECT =
 const nameToSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+const DEFAULT_DESCRIPTION = "Shop authentic Beyblade X products at xzvl.store. Shipping available nationwide (Philippines).";
+
+const HTML_ENTITIES: Record<string, string> = {
+  "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&apos;": "'",
+};
+
+// Description is rich-text HTML; strip tags and return only the first sentence.
+function firstSentence(html: string | null): string {
+  if (!html) return "";
+  const text = html
+    .replace(/<\/(p|div|li|h[1-6]|br)>|<br\s*\/?>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&(nbsp|amp|lt|gt|quot|apos|#39);/g, (m) => HTML_ENTITIES[m] ?? m)
+    .replace(/\s+/g, " ")
+    .trim();
+  const match = text.match(/^.*?[.!?](?=\s|$)/);
+  return match ? match[0] : text;
+}
+
 async function getProductBySlug(slug: string): Promise<Record<string, unknown> | null> {
   // Primary lookup: stored slug column
   let { data } = await supabase
@@ -102,7 +121,32 @@ export async function generateMetadata({
   const { slug } = await params;
   const data = await getProductBySlug(slug);
   if (!data) return {};
-  return { title: data.name as string };
+
+  const title = data.name as string;
+  const description = firstSentence(data.description as string | null) || DEFAULT_DESCRIPTION;
+  const image = (data.social_image || data.main_image || data.image || null) as string | null;
+  const url = `/product/${(data.slug as string | null) || nameToSlug(title)}`;
+  const socialTitle = `${title} - xzvl.store`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      siteName: "xzvl.store",
+      url,
+      title: socialTitle,
+      description,
+      ...(image && { images: [{ url: image, alt: title }] }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: socialTitle,
+      description,
+      ...(image && { images: [image] }),
+    },
+  };
 }
 
 export default async function ProductPage({
