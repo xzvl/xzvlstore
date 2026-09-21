@@ -148,11 +148,21 @@ CREATE TABLE IF NOT EXISTS ledger (
   entry_date timestamptz NOT NULL DEFAULT now()
 );
 
+-- Site content (editable storefront copy, managed in /admin/content). One row per
+-- section (currently just "hero"); `value` is that section's JSON payload. A
+-- missing row falls back to the defaults in lib/site-content.ts.
+CREATE TABLE IF NOT EXISTS site_content (
+  key text PRIMARY KEY,
+  value jsonb NOT NULL DEFAULT '{}',
+  updated_at timestamptz DEFAULT now() NOT NULL
+);
+
 -- Enable RLS with no policies (default-deny for the anon/authenticated Data API).
 -- All reads/writes in this app go through server-side API routes using the
 -- service-role key (lib/supabase.ts), which always bypasses RLS — so this only
 -- blocks direct public access via the anon key, without breaking the app.
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE site_content ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE taxonomy ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
@@ -222,6 +232,18 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_date timestamptz;
 -- ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;
 -- ALTER TABLE orders ADD CONSTRAINT orders_status_check CHECK (status IN ('pending', 'pre-order', 'hold pre-order', 'processing', 'confirmed', 'shipped', 'completed', 'cancelled', 'refunded'));
+
+-- ─── "Sneak Peek" products + editable site content (run this against the live DB) ─
+-- A sneak-peek product is shown on the storefront but can't be bought, added to
+-- the cart or pre-ordered (and it can't be a pre-order product at the same time).
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS sneak_peek boolean NOT NULL DEFAULT false;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS sneak_peek_note text;
+-- CREATE TABLE IF NOT EXISTS site_content (
+--   key text PRIMARY KEY,
+--   value jsonb NOT NULL DEFAULT '{}',
+--   updated_at timestamptz DEFAULT now() NOT NULL
+-- );
+-- ALTER TABLE site_content ENABLE ROW LEVEL SECURITY;
 
 -- ─── Supabase Storage ─────────────────────────────────────────────────────────
 -- 1. Go to Storage → New bucket

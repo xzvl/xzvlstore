@@ -25,6 +25,7 @@ export type CartItem = {
 type FreshProduct = {
   id: string;
   status: "active" | "inactive";
+  sneak_peek?: boolean;
   stock: number;
   max_purchase_enabled: boolean;
   max_purchase_limit: number | null;
@@ -223,7 +224,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const next: CartItem[] = [];
       for (const item of prev) {
         const p = freshMap.get(item.id);
-        if (!p || p.status !== "active") {
+        if (!p || p.status !== "active" || p.sneak_peek) {
           messages.push(`${item.name} is no longer available and was removed from your cart.`);
           changed = true;
           continue;

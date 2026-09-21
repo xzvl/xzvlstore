@@ -6,6 +6,9 @@ export type StoreProduct = {
   sale_price: number | null;
   pre_order: boolean;
   pre_order_note?: string | null;
+  /** Announced but not purchasable yet — never addable to cart or orderable. */
+  sneak_peek?: boolean;
+  sneak_peek_note?: string | null;
   stock?: number;
   max_purchase_enabled?: boolean;
   max_purchase_limit?: number | null;

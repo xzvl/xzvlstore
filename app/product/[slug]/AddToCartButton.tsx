@@ -114,6 +114,21 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
 
   const atStockLimit = remaining != null && currentInCart >= (binding?.cap ?? 0);
 
+  // Sneak-peek products are preview-only: never purchasable, whatever else is true.
+  if (product.sneak_peek) {
+    return (
+      <div className="flex flex-col gap-3">
+        <button
+          disabled
+          className="w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase bg-[#1a1a1a] border border-[#603e39]/50 text-[#e2e2e2]/30 cursor-not-allowed flex items-center justify-center gap-3"
+        >
+          <span className="material-symbols-outlined text-[18px]">block</span>
+          Currently Unavailable
+        </button>
+      </div>
+    );
+  }
+
   if (isBlocked) {
     return (
       <div className="flex flex-col gap-3">

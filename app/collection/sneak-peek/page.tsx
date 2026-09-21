@@ -1,5 +1,3 @@
-import { cache } from "react";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { StoreProduct } from "@/lib/store-types";
@@ -33,88 +31,37 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
   };
 }
 
-const getTaxonomyAndProducts = cache(async function getTaxonomyAndProducts(slug: string): Promise<{
-  name: string;
-  type: string;
-  products: StoreProduct[];
-} | null> {
-  if (slug === "all") {
-    const { data } = await supabase
-      .from("products")
-      .select(FIELDS)
-      .eq("status", "active")
-      .or("stock.gt.0,pre_order.eq.true,sneak_peek.eq.true")
-      .order("sort_order", { ascending: true });
-    return { name: "All Products", type: "all", products: (data ?? []).map(mapProduct) };
-  }
-
-  if (slug === "new-releases") {
-    const since = new Date();
-    since.setDate(since.getDate() - 30);
-    const { data } = await supabase
-      .from("products")
-      .select(FIELDS)
-      .eq("status", "active")
-      .or("stock.gt.0,pre_order.eq.true,sneak_peek.eq.true")
-      .gte("created_at", since.toISOString())
-      .order("created_at", { ascending: false });
-    return { name: "New Arrivals", type: "new-releases", products: (data ?? []).map(mapProduct) };
-  }
-
-  const { data: taxonomy } = await supabase
-    .from("taxonomy")
-    .select("id, type, name, description, slug")
-    .eq("slug", slug)
-    .single();
-
-  if (!taxonomy) return null;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = supabase
+async function getSneakPeekProducts(): Promise<StoreProduct[]> {
+  const { data } = await supabase
     .from("products")
     .select(FIELDS)
+    .eq("sneak_peek", true)
     .eq("status", "active")
-    .or("stock.gt.0,sneak_peek.eq.true")
     .order("sort_order", { ascending: true });
-
-  if (taxonomy.type === "brand") {
-    query = query.eq("brand_id", taxonomy.id);
-  } else if (taxonomy.type === "category") {
-    query = query.contains("category_ids", [taxonomy.id]);
-  } else if (taxonomy.type === "tag") {
-    query = query.contains("tag_ids", [taxonomy.id]);
-  }
-
-  const { data } = await query;
-  return {
-    name: taxonomy.name,
-    type: taxonomy.type,
-    products: (data ?? []).map(mapProduct),
-  };
-});
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ taxonomy: string }>;
-}): Promise<Metadata> {
-  const { taxonomy: slug } = await params;
-  const result = await getTaxonomyAndProducts(slug);
-  if (!result) return {};
-  return { title: result.name };
+  return (data ?? []).map(mapProduct);
 }
 
-export default async function CollectionPage({
-  params,
-}: {
-  params: Promise<{ taxonomy: string }>;
-}) {
-  const { taxonomy: slug } = await params;
-  const result = await getTaxonomyAndProducts(slug);
+const SOCIAL_IMAGE = "/assets/new-releases-v2.webp";
+const DESCRIPTION = "A first look at upcoming Beyblade X releases. These products aren't available to order yet — check back soon.";
 
-  if (!result) notFound();
+export const metadata: Metadata = {
+  title: "Sneak Peek",
+  description: DESCRIPTION,
+  openGraph: {
+    title: "Sneak Peek - xzvl.store",
+    description: DESCRIPTION,
+    images: [{ url: SOCIAL_IMAGE }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sneak Peek - xzvl.store",
+    description: DESCRIPTION,
+    images: [SOCIAL_IMAGE],
+  },
+};
 
-  const { name, products } = result;
+export default async function SneakPeekCollectionPage() {
+  const products = await getSneakPeekProducts();
 
   return (
     <>
@@ -134,7 +81,7 @@ export default async function CollectionPage({
               className="font-inter font-black uppercase leading-none tracking-tight text-[#e2e2e2]"
               style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)" }}
             >
-              {name}
+              Sneak Peek
             </h1>
             <p className="font-mono text-[12px] text-[#ebbbb4]/40 mt-4">
               {products.length} {products.length === 1 ? "product" : "products"} found
@@ -150,7 +97,7 @@ export default async function CollectionPage({
                 inventory_2
               </span>
               <p className="font-inter font-bold text-[18px] text-[#e2e2e2]/40 uppercase mb-2">
-                No products yet
+                No sneak peeks yet
               </p>
               <p className="font-mono text-[12px] text-[#ebbbb4]/25 mb-8">
                 Check back soon or browse other collections.
@@ -165,7 +112,7 @@ export default async function CollectionPage({
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {products.map((p) => (
-                <ProductCard key={p.id} product={p} sneakPeekLabel={slug === "all" ? "Sneak Peek" : undefined} />
+                <ProductCard key={p.id} product={p} useSocialImage sneakPeekLabel="Sneak Peek" />
               ))}
             </div>
           )}

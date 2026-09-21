@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DbProduct, Taxonomy } from "@/lib/supabase";
+import { reorderVisible } from "@/lib/reorder";
 
 type SortKey = "name" | "sku" | "stock" | "brand";
 
@@ -228,6 +229,7 @@ function AdminProductsPageInner() {
   const categoryFilter = searchParams.get("category") ?? "all";
   const brandFilter = searchParams.get("brand") ?? "all";
   const preorderFilter = searchParams.get("preorder") === "1";
+  const sneakPeekFilter = searchParams.get("sneakpeek") === "1";
   const taxableFilter = searchParams.get("taxable") === "1";
 
   const setParam = (key: string, value: string, def: string) => {
@@ -244,7 +246,13 @@ function AdminProductsPageInner() {
   const [categories, setCategories] = useState<Taxonomy[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState<string | null>(null);
-  const [reordering, setReordering] = useState<string | null>(null);
+  // Drag-and-drop reorder. The ref is what the drag handlers read (always current);
+  // the state only drives the visuals.
+  const dragIdRef = useRef<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [reorderError, setReorderError] = useState<string | null>(null);
   const [quickEdit, setQuickEdit] = useState<DbProduct | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
 
@@ -269,7 +277,7 @@ function AdminProductsPageInner() {
   const brandMap = Object.fromEntries(brands.map((b) => [b.id, b.name]));
 
   // ── Derived list ────────────────────────────────────────────────────────────
-  const isFiltered = q.trim() !== "" || visibility !== "all" || categoryFilter !== "all" || brandFilter !== "all" || preorderFilter || taxableFilter || sort !== null;
+  const isFiltered = q.trim() !== "" || visibility !== "all" || categoryFilter !== "all" || brandFilter !== "all" || preorderFilter || sneakPeekFilter || taxableFilter || sort !== null;
 
   const displayed = (() => {
     let list = [...products];
@@ -282,6 +290,7 @@ function AdminProductsPageInner() {
     if (categoryFilter !== "all") list = list.filter((p) => p.category_ids?.includes(categoryFilter));
     if (brandFilter !== "all") list = list.filter((p) => p.brand_id === brandFilter);
     if (preorderFilter) list = list.filter((p) => p.pre_order);
+    if (sneakPeekFilter) list = list.filter((p) => p.sneak_peek);
     if (taxableFilter) list = list.filter((p) => p.taxable);
     if (sort) {
       list.sort((a, b) => {
@@ -348,6 +357,8 @@ function AdminProductsPageInner() {
         status: p.status,
         pre_order: p.pre_order,
         pre_order_note: p.pre_order_note,
+        sneak_peek: p.sneak_peek,
+        sneak_peek_note: p.sneak_peek_note,
         taxable: p.taxable,
         main_image: p.main_image,
         gallery_images: p.gallery_images,
@@ -371,46 +382,101 @@ function AdminProductsPageInner() {
     }
   };
 
-  // ── Reorder ─────────────────────────────────────────────────────────────────
-  const moveProduct = async (id: string, dir: "up" | "down") => {
-    const idx = products.findIndex((p) => p.id === id);
-    const targetIdx = dir === "up" ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= products.length) return;
+  // ── Reorder (drag & drop) ────────────────────────────────────────────────────
+  // Works under any filter or search: the visible products are re-arranged
+  // among the positions they already occupy in the full list, so products the
+  // filter hides keep their place. Only a column sort disables it, because
+  // then the on-screen order isn't the store order.
+  const canReorder = sort === null && !savingOrder;
 
-    const current = products[idx];
-    const target = products[targetIdx];
+  const endDrag = () => {
+    dragIdRef.current = null;
+    setDragId(null);
+    setOverId(null);
+  };
 
-    setReordering(id);
+  const reorderProducts = async (fromId: string, toId: string) => {
+    const result = reorderVisible(products, displayed, fromId, toId);
+    if (!result) return;
+    const { next, changed } = result;
+
+    const previous = products;
+    setProducts(next);
+    setSavingOrder(true);
+    setReorderError(null);
     try {
-      await Promise.all([
-        fetch(`/api/admin/products/${current.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sort_order: target.sort_order }),
-        }),
-        fetch(`/api/admin/products/${target.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sort_order: current.sort_order }),
-        }),
-      ]);
-      setProducts((prev) => {
-        const updated = [...prev];
-        updated[idx] = { ...current, sort_order: target.sort_order };
-        updated[targetIdx] = { ...target, sort_order: current.sort_order };
-        return updated.sort((a, b) => a.sort_order - b.sort_order);
+      const res = await fetch("/api/admin/products/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: changed }),
       });
+      if (!res.ok) throw new Error();
+    } catch {
+      setProducts(previous);
+      setReorderError("Couldn't save the new order — it was put back.");
+      setTimeout(() => setReorderError(null), 5000);
     } finally {
-      setReordering(null);
+      setSavingOrder(false);
     }
   };
+
+  // Row-level drop target props (shared by the mobile cards and the table rows).
+  const dropTarget = (id: string) => {
+    let indicator = "";
+    if (dragId && overId === id && dragId !== id) {
+      const from = displayed.findIndex((p) => p.id === dragId);
+      const to = displayed.findIndex((p) => p.id === id);
+      indicator = from < to ? "below" : "above";
+    }
+    return {
+      onDragOver: (e: React.DragEvent) => {
+        if (!dragIdRef.current || !canReorder) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setOverId((cur) => (cur === id ? cur : id));
+      },
+      onDrop: (e: React.DragEvent) => {
+        e.preventDefault();
+        const fromId = dragIdRef.current;
+        endDrag();
+        if (fromId) reorderProducts(fromId, id);
+      },
+      indicator,
+      dragging: dragId === id,
+    };
+  };
+
+  // The move handle. A plain function (not a component) on purpose: a component
+  // defined in here would be re-created on every render, and remounting the
+  // element mid-drag cancels the drag.
+  const renderHandle = (p: DbProduct) => (
+    <span
+      draggable={canReorder}
+      onDragStart={(e) => {
+        if (!canReorder) return;
+        const row = e.currentTarget.closest("[data-product-row]");
+        if (row) e.dataTransfer.setDragImage(row, 16, 16);
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", p.id);
+        dragIdRef.current = p.id;
+        // Defer the visual change: restyling the row inside dragstart can cancel the drag.
+        setTimeout(() => setDragId(p.id), 0);
+      }}
+      onDragEnd={endDrag}
+      title={sort !== null ? "Clear the column sort to reorder" : "Drag to reorder"}
+      className={`w-7 h-7 flex items-center justify-center flex-shrink-0 select-none transition-colors ${
+        canReorder
+          ? "cursor-move text-[#ebbbb4]/40 hover:text-primary"
+          : "cursor-not-allowed text-[#ebbbb4]/15"
+      }`}
+    >
+      <span className="material-symbols-outlined text-[18px] pointer-events-none">open_with</span>
+    </span>
+  );
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
   const profit = (p: DbProduct) => (p.sale_price ?? p.price) - p.cost;
   const thumb = thumbOf;
-
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric", timeZone: "Asia/Manila" });
 
   const thBase = "text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3 whitespace-nowrap";
 
@@ -551,6 +617,17 @@ function AdminProductsPageInner() {
         </button>
 
         <button
+          onClick={() => setParam("sneakpeek", sneakPeekFilter ? "" : "1", "")}
+          className={`px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase border transition-colors ${
+            sneakPeekFilter
+              ? "border-sky-400/60 bg-sky-400/10 text-sky-400"
+              : "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70"
+          }`}
+        >
+          Sneak Peek
+        </button>
+
+        <button
           onClick={() => setParam("taxable", taxableFilter ? "" : "1", "")}
           className={`px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase border transition-colors ${
             taxableFilter
@@ -575,6 +652,10 @@ function AdminProductsPageInner() {
           </button>
         )}
 
+        {reorderError && (
+          <span className="font-mono text-[10px] text-red-400">{reorderError}</span>
+        )}
+
         {/* Count */}
         <span className="ml-auto font-mono text-[10px] text-[#ebbbb4]/30">
           {displayed.length} / {products.length}
@@ -596,14 +677,22 @@ function AdminProductsPageInner() {
           {/* ── Mobile cards (hidden on md+) ── */}
           <div className="md:hidden space-y-2">
             {displayed.map((p) => {
-              const posInFull = products.findIndex((x) => x.id === p.id);
+              const drop = dropTarget(p.id);
               return (
                 <div
                   key={p.id}
-                  className={`flex gap-3 bg-[#1a1a1a] border border-[#603e39]/30 p-3 ${
+                  data-product-row
+                  onDragOver={drop.onDragOver}
+                  onDrop={drop.onDrop}
+                  className={`flex gap-2 bg-[#1a1a1a] border border-[#603e39]/30 p-3 ${
                     p.status === "inactive" ? "opacity-40" : ""
+                  } ${drop.dragging ? "!opacity-30" : ""} ${
+                    drop.indicator === "above" ? "shadow-[inset_0_2px_0_0_#ed0d11]" : drop.indicator === "below" ? "shadow-[inset_0_-2px_0_0_#ed0d11]" : ""
                   }`}
                 >
+                  {/* Move handle */}
+                  <div className="flex items-center -ml-1">{renderHandle(p)}</div>
+
                   {/* Left: image */}
                   <div className="relative w-16 h-16 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
                     {thumb(p) ? (
@@ -623,6 +712,11 @@ function AdminProductsPageInner() {
                       {p.pre_order && (
                         <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400 flex-shrink-0">
                           pre-order
+                        </span>
+                      )}
+                      {p.sneak_peek && (
+                        <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-sky-400/30 bg-sky-400/10 text-sky-400 flex-shrink-0">
+                          sneak peek
                         </span>
                       )}
                       {p.status === "inactive" && (
@@ -671,12 +765,6 @@ function AdminProductsPageInner() {
 
                     {/* Row 4: actions */}
                     <div className="flex items-center gap-1.5 pt-0.5">
-                      <button onClick={() => moveProduct(p.id, "up")} disabled={isFiltered || posInFull === 0 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title="Move up">
-                        <span className="material-symbols-outlined text-[13px]">arrow_upward</span>
-                      </button>
-                      <button onClick={() => moveProduct(p.id, "down")} disabled={isFiltered || posInFull === products.length - 1 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title="Move down">
-                        <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
-                      </button>
                       <button onClick={() => setQuickEdit(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Quick edit">
                         <span className="material-symbols-outlined text-[13px]">bolt</span>
                       </button>
@@ -704,6 +792,7 @@ function AdminProductsPageInner() {
             <table className="w-full border-collapse min-w-[900px]">
               <thead>
                 <tr className="border-b border-[#603e39]/40 group">
+                  <th className={`${thBase} w-8 px-1`}></th>
                   <th className={thBase}>Image</th>
                   <SortTh label="Name" sortKey="name" />
                   <SortTh label="SKU" sortKey="sku" />
@@ -712,15 +801,23 @@ function AdminProductsPageInner() {
                   <th className={thBase}>Cost</th>
                   <th className={thBase}>Profit</th>
                   <SortTh label="Brand" sortKey="brand" />
-                  <th className={thBase}>Date</th>
                   <th className={thBase}></th>
                 </tr>
               </thead>
               <tbody>
                 {displayed.map((p) => {
-                  const posInFull = products.findIndex((x) => x.id === p.id);
+                  const drop = dropTarget(p.id);
                   return (
-                    <tr key={p.id} className={`border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors ${p.status === "inactive" ? "opacity-40" : ""}`}>
+                    <tr
+                      key={p.id}
+                      data-product-row
+                      onDragOver={drop.onDragOver}
+                      onDrop={drop.onDrop}
+                      className={`border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors ${p.status === "inactive" ? "opacity-40" : ""} ${drop.dragging ? "!opacity-30" : ""} ${
+                        drop.indicator === "above" ? "[&>td]:shadow-[inset_0_2px_0_0_#ed0d11]" : drop.indicator === "below" ? "[&>td]:shadow-[inset_0_-2px_0_0_#ed0d11]" : ""
+                      }`}
+                    >
+                      <td className="pl-2 pr-0 py-3 w-8">{renderHandle(p)}</td>
                       <td className="px-3 py-3">
                         <div className="w-10 h-10 relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
                           {thumb(p) ? (
@@ -736,6 +833,7 @@ function AdminProductsPageInner() {
                         <ProductTitleLink p={p} className="font-inter font-bold text-[13px] text-[#e2e2e2] leading-tight max-w-[180px] truncate" />
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {p.pre_order && <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400">pre-order</span>}
+                          {p.sneak_peek && <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-sky-400/30 bg-sky-400/10 text-sky-400">sneak peek</span>}
                           {p.status === "inactive" && <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-[#ebbbb4]/20 bg-[#ebbbb4]/5 text-[#ebbbb4]/40">inactive</span>}
                         </div>
                       </td>
@@ -762,15 +860,8 @@ function AdminProductsPageInner() {
                         )}
                       </td>
                       <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 max-w-[120px] truncate">{p.brand_id && brandMap[p.brand_id] ? brandMap[p.brand_id] : <span className="text-[#ebbbb4]/20">—</span>}</td>
-                      <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/40 whitespace-nowrap">{formatDate(p.created_at)}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1.5">
-                          <button onClick={() => moveProduct(p.id, "up")} disabled={isFiltered || posInFull === 0 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title={isFiltered ? "Clear filters to reorder" : "Move up"}>
-                            <span className="material-symbols-outlined text-[13px]">arrow_upward</span>
-                          </button>
-                          <button onClick={() => moveProduct(p.id, "down")} disabled={isFiltered || posInFull === products.length - 1 || reordering === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors disabled:opacity-20 disabled:cursor-not-allowed" title={isFiltered ? "Clear filters to reorder" : "Move down"}>
-                            <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
-                          </button>
                           <button onClick={() => setQuickEdit(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Quick edit">
                             <span className="material-symbols-outlined text-[13px]">bolt</span>
                           </button>

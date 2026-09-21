@@ -1,20 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
+import { useSiteContent } from "@/components/SiteContentProvider";
 import SearchBar from "@/components/SearchBar";
-
-const navLinks = [
-  { href: "/collection/all", label: "All Products" },
-  { href: "/collection/new-releases", label: "New Arrivals" },
-  { href: "/collection/takara-tomy", label: "Takara Tomy" },
-  { href: "/collection/hasbro", label: "Hasbro" },
-  { href: "/pre-order", label: "Pre-Order" },
-];
 
 export default function Header() {
   const { count } = useCart();
+  const { branding, header } = useSiteContent();
+  const navLinks = header.navLinks;
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -26,16 +22,24 @@ export default function Header() {
           href="/"
           className="font-inter font-black text-[20px] uppercase shrink-0 tracking-tight"
         >
-          <span className="text-[#e2e2e2]">xzvl</span>
-          <span className="text-primary">.</span>
-          <span className="text-[#e2e2e2]">store</span>
+          {branding.logoImageUrl ? (
+            <span className="relative block h-8 w-36">
+              <Image src={branding.logoImageUrl} alt="xzvl.store" fill sizes="144px" className="object-contain object-left" priority />
+            </span>
+          ) : (
+            <>
+              <span className="text-[#e2e2e2]">xzvl</span>
+              <span className="text-primary">.</span>
+              <span className="text-[#e2e2e2]">store</span>
+            </>
+          )}
         </Link>
 
         {/* Center nav */}
         <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
-          {navLinks.map((link) => (
+          {navLinks.map((link, i) => (
             <Link
-              key={link.href}
+              key={`${link.href}-${i}`}
               href={link.href}
               className="font-mono text-[11px] tracking-[0.12em] uppercase text-[#e2e2e2]/55 hover:text-primary transition-colors"
             >
@@ -104,9 +108,9 @@ export default function Header() {
       {open && (
         <div className="md:hidden bg-[#1a1a1a] border-b border-[#603e39]/40">
           <nav className="flex flex-col px-6 py-4 gap-4">
-            {navLinks.map((link) => (
+            {navLinks.map((link, i) => (
               <Link
-                key={link.href}
+                key={`${link.href}-${i}`}
                 href={link.href}
                 onClick={() => setOpen(false)}
                 className="font-mono text-[12px] tracking-[0.12em] uppercase text-[#e2e2e2]/60 hover:text-primary transition-colors py-1 border-b border-[#603e39]/20 last:border-0"

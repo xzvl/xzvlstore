@@ -326,6 +326,22 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Sneak-peek products can't be bought or pre-ordered, whatever the client sent.
+    const orderedIds = Array.from(new Set(items.map((it) => it.product_id).filter((id): id is string => !!id)));
+    if (orderedIds.length > 0) {
+      const { data: sneakPeeks } = await supabase
+        .from("products")
+        .select("name")
+        .in("id", orderedIds)
+        .eq("sneak_peek", true);
+      if (sneakPeeks && sneakPeeks.length > 0) {
+        return NextResponse.json(
+          { error: `"${sneakPeeks[0].name}" is a sneak peek and isn't available to order yet.` },
+          { status: 400 }
+        );
+      }
+    }
+
     const date = new Date().toLocaleDateString("en-PH", {
       year: "numeric",
       month: "long",

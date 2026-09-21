@@ -11,7 +11,7 @@ import AddToCartButton from "./AddToCartButton";
 import ProductImages from "./ProductImages";
 
 const FIELDS =
-  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, sneak_peek, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
 
 function mapProduct(p: Record<string, unknown>): StoreProduct {
   return {
@@ -22,6 +22,8 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     sale_price: (p.sale_price as number | null) ?? null,
     pre_order: (p.pre_order as boolean) ?? false,
     pre_order_note: (p.pre_order_note as string | null) ?? null,
+    sneak_peek: (p.sneak_peek as boolean) ?? false,
+    sneak_peek_note: (p.sneak_peek_note as string | null) ?? null,
     stock: (p.stock as number) ?? 0,
     max_purchase_enabled: (p.max_purchase_enabled as boolean) ?? false,
     max_purchase_limit: (p.max_purchase_limit as number | null) ?? null,
@@ -65,7 +67,7 @@ async function getRecommended(brandId: string | null, excludeId: string): Promis
 }
 
 const PRODUCT_SELECT =
-  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, pre_order_note, status, brand_id, brands, category_ids, tag_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, pre_order_note, sneak_peek, sneak_peek_note, status, brand_id, brands, category_ids, tag_ids, max_purchase_enabled, max_purchase_limit";
 
 const nameToSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -215,6 +217,11 @@ export default async function ProductPage({
                     Pre-Order
                   </span>
                 )}
+                {product.sneak_peek && (
+                  <span className="bg-sky-500 px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
+                    Sneak Peek
+                  </span>
+                )}
               </div>
 
               {/* Name */}
@@ -239,10 +246,12 @@ export default async function ProductPage({
               {/* Stock info */}
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${
-                  product.pre_order ? "bg-primary" : (product.stock ?? 0) > 0 ? "bg-green-500" : "bg-[#603e39]"
+                  product.sneak_peek ? "bg-sky-400" : product.pre_order ? "bg-primary" : (product.stock ?? 0) > 0 ? "bg-green-500" : "bg-[#603e39]"
                 }`} />
                 <span className="font-mono text-[11px] text-[#e2e2e2]/50">
-                  {product.pre_order
+                  {product.sneak_peek
+                    ? "Sneak peek — not available yet"
+                    : product.pre_order
                     ? "Available for pre-order"
                     : (product.stock ?? 0) > 0
                     ? "In stock"
@@ -260,6 +269,17 @@ export default async function ProductPage({
                   <div
                     className="font-mono text-[12px] text-[#ebbbb4]/70 leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-[#e2e2e2] [&_p]:mb-1"
                     dangerouslySetInnerHTML={{ __html: product.pre_order_note }}
+                  />
+                </div>
+              )}
+
+              {/* Sneak peek note */}
+              {product.sneak_peek && product.sneak_peek_note && (
+                <div className="border border-sky-400/30 bg-sky-400/5 px-4 py-3">
+                  <p className="font-mono text-[10px] tracking-widest uppercase text-sky-400/70 mb-1.5">Sneak Peek Note</p>
+                  <div
+                    className="font-mono text-[12px] text-[#ebbbb4]/70 leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-[#e2e2e2] [&_p]:mb-1"
+                    dangerouslySetInnerHTML={{ __html: product.sneak_peek_note }}
                   />
                 </div>
               )}

@@ -234,26 +234,31 @@ function TogglePill({
   title,
   subtitle,
   activeClass,
+  switchClass = "bg-orange-400",
+  disabled = false,
 }: {
   active: boolean;
   onClick: () => void;
   title: string;
   subtitle: string;
   activeClass: string;
+  switchClass?: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center justify-between px-4 py-3 border transition-colors ${
-        active ? activeClass : "border-[#603e39]/50 bg-[#1f1f1f] hover:border-[#ebbbb4]/30"
+      disabled={disabled}
+      className={`w-full flex items-center justify-between px-4 py-3 border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+        active ? activeClass : `border-[#603e39]/50 bg-[#1f1f1f] ${disabled ? "" : "hover:border-[#ebbbb4]/30"}`
       }`}
     >
       <div>
         <p className="font-mono text-[11px] tracking-widest uppercase text-left text-[#e2e2e2]">{title}</p>
         <p className="font-mono text-[10px] text-[#ebbbb4]/40 text-left mt-0.5">{subtitle}</p>
       </div>
-      <div className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${active ? "bg-orange-400" : "bg-[#603e39]/40"}`}>
+      <div className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${active ? switchClass : "bg-[#603e39]/40"}`}>
         <span
           className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-white transition-transform"
           style={{ transform: `translateX(${active ? "0.125rem" : "-1.125rem"})` }}
@@ -283,6 +288,8 @@ type FormState = {
   status: "active" | "inactive";
   pre_order: boolean;
   pre_order_note: string;
+  sneak_peek: boolean;
+  sneak_peek_note: string;
   taxable: boolean;
   max_purchase_enabled: boolean;
   max_purchase_limit: string;
@@ -306,6 +313,8 @@ const EMPTY_FORM: FormState = {
   status: "active",
   pre_order: false,
   pre_order_note: "",
+  sneak_peek: false,
+  sneak_peek_note: "",
   taxable: false,
   max_purchase_enabled: false,
   max_purchase_limit: "",
@@ -330,6 +339,8 @@ function productToForm(p: DbProduct): FormState {
     status: p.status,
     pre_order: p.pre_order ?? false,
     pre_order_note: p.pre_order_note ?? "",
+    sneak_peek: p.sneak_peek ?? false,
+    sneak_peek_note: p.sneak_peek_note ?? "",
     taxable: p.taxable ?? false,
     max_purchase_enabled: p.max_purchase_enabled ?? false,
     max_purchase_limit: p.max_purchase_limit ? String(p.max_purchase_limit) : "",
@@ -630,8 +641,13 @@ export default function ProductForm({ productId }: { productId?: string }) {
               active={form.pre_order}
               onClick={() => set$("pre_order", !form.pre_order)}
               title="Pre-Order"
-              subtitle="Allow customers to place pre-orders for this product"
+              subtitle={
+                form.sneak_peek && !form.pre_order
+                  ? "Turn off Sneak Peek first to enable Pre-Order"
+                  : "Allow customers to place pre-orders for this product"
+              }
               activeClass="border-orange-400/50 bg-orange-400/10"
+              disabled={form.sneak_peek && !form.pre_order}
             />
           </div>
 
@@ -639,6 +655,29 @@ export default function ProductForm({ productId }: { productId?: string }) {
             <div className="md:col-span-2">
               <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-orange-400/70 mb-1.5">Pre-Order Note</label>
               <RichTextEditor value={form.pre_order_note} onChange={(html) => set$("pre_order_note", html)} />
+            </div>
+          )}
+
+          <div className="md:col-span-2">
+            <TogglePill
+              active={form.sneak_peek}
+              onClick={() => set$("sneak_peek", !form.sneak_peek)}
+              title="Sneak Peek"
+              subtitle={
+                form.pre_order && !form.sneak_peek
+                  ? "Turn off Pre-Order first to enable Sneak Peek"
+                  : "Show this product as a preview only — it can't be bought or added to the cart"
+              }
+              activeClass="border-sky-400/50 bg-sky-400/10"
+              switchClass="bg-sky-400"
+              disabled={form.pre_order && !form.sneak_peek}
+            />
+          </div>
+
+          {form.sneak_peek && (
+            <div className="md:col-span-2">
+              <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-sky-400/70 mb-1.5">Sneak Peek Note</label>
+              <RichTextEditor value={form.sneak_peek_note} onChange={(html) => set$("sneak_peek_note", html)} />
             </div>
           )}
 

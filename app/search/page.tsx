@@ -11,7 +11,7 @@ import SearchBar from "@/components/SearchBar";
 import BlockedBanner from "@/components/BlockedBanner";
 
 const FIELDS =
-  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, sneak_peek, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
 
 function mapProduct(p: Record<string, unknown>): StoreProduct {
   return {
@@ -21,6 +21,7 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     price: p.price as number,
     sale_price: (p.sale_price as number | null) ?? null,
     pre_order: (p.pre_order as boolean) ?? false,
+    sneak_peek: (p.sneak_peek as boolean) ?? false,
     stock: (p.stock as number) ?? 0,
     max_purchase_enabled: (p.max_purchase_enabled as boolean) ?? false,
     max_purchase_limit: (p.max_purchase_limit as number | null) ?? null,
@@ -46,7 +47,7 @@ const getFilteredProducts = cache(async function getFilteredProducts(params: {
     .from("products")
     .select(FIELDS)
     .eq("status", "active")
-    .or("stock.gt.0,pre_order.eq.true");
+    .or("stock.gt.0,pre_order.eq.true,sneak_peek.eq.true");
 
   if (params.q) {
     const term = params.q.replace(/[,()]/g, " ").trim();

@@ -85,6 +85,8 @@ export type DbProduct = {
   social_image: string | null;
   pre_order: boolean;
   pre_order_note: string | null;
+  sneak_peek: boolean;
+  sneak_peek_note: string | null;
   taxable: boolean;
   max_purchase_enabled: boolean;
   max_purchase_limit: number | null;

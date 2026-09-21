@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { getSiteContent } from "@/lib/get-site-content";
 import type { StoreProduct } from "@/lib/store-types";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -12,7 +13,7 @@ import MobileProductCarousel from "@/components/MobileProductCarousel";
 // ─── Data helpers ─────────────────────────────────────────────────────────────
 
 const FIELDS =
-  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, sneak_peek, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
 
 function mapProduct(p: Record<string, unknown>): StoreProduct {
   return {
@@ -22,6 +23,7 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     price: p.price as number,
     sale_price: (p.sale_price as number | null) ?? null,
     pre_order: (p.pre_order as boolean) ?? false,
+    sneak_peek: (p.sneak_peek as boolean) ?? false,
     stock: (p.stock as number) ?? 0,
     max_purchase_enabled: (p.max_purchase_enabled as boolean) ?? false,
     max_purchase_limit: (p.max_purchase_limit as number | null) ?? null,
@@ -49,7 +51,7 @@ async function getProductsByBrand(slug: string, limit: number): Promise<StorePro
     .select(FIELDS)
     .eq("brand_id", brand.id)
     .eq("status", "active")
-    .gt("stock", 0)
+    .or("stock.gt.0,sneak_peek.eq.true")
     .order("sort_order", { ascending: true })
     .limit(limit);
   return (data ?? []).map(mapProduct);
@@ -67,7 +69,7 @@ async function getNewReleases(limit: number): Promise<StoreProduct[]> {
     .from("products")
     .select(FIELDS)
     .eq("status", "active")
-    .gt("stock", 0)
+    .or("stock.gt.0,sneak_peek.eq.true")
     .limit(limit);
 
   if (category) {
@@ -142,7 +144,8 @@ function ProductGrid({ products }: { products: StoreProduct[] }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const [newReleases, preOrders, ttProducts, hasbroProducts] = await Promise.all([
+  const [siteContent, newReleases, preOrders, ttProducts, hasbroProducts] = await Promise.all([
+    getSiteContent(),
     getNewReleases(5),
     getPreOrders(),
     getProductsByBrand("takara-tomy", 5),
@@ -155,7 +158,7 @@ export default async function HomePage() {
       <main className="bg-[#131313]">
 
         {/* ── Hero ── */}
-        <HeroSlider />
+        <HeroSlider slides={siteContent.hero.slides} />
 
         {/* ── New Releases ── */}
         {newReleases.length > 0 && (

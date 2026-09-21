@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { revalidateStorefront } from "@/lib/revalidate";
 
 export async function GET(
   _req: NextRequest,
@@ -31,6 +32,8 @@ export async function PATCH(
   if (body.status !== undefined) updates.status = body.status;
   if (body.pre_order !== undefined) updates.pre_order = Boolean(body.pre_order);
   if (body.pre_order_note !== undefined) updates.pre_order_note = body.pre_order_note || null;
+  if (body.sneak_peek !== undefined) updates.sneak_peek = Boolean(body.sneak_peek);
+  if (body.sneak_peek_note !== undefined) updates.sneak_peek_note = body.sneak_peek_note || null;
   if (body.taxable !== undefined) updates.taxable = Boolean(body.taxable);
   if (body.max_purchase_enabled !== undefined) updates.max_purchase_enabled = Boolean(body.max_purchase_enabled);
   if (body.max_purchase_limit !== undefined) updates.max_purchase_limit = body.max_purchase_limit ? Number(body.max_purchase_limit) : null;
@@ -45,6 +48,24 @@ export async function PATCH(
   if (body.social_image !== undefined) updates.social_image = body.social_image || null;
   if (body.sort_order !== undefined) updates.sort_order = Number(body.sort_order);
 
+  // Sneak Peek and Pre-Order are mutually exclusive. A request may only touch
+  // one of the two flags, so check the result against the stored row.
+  if (updates.sneak_peek === true || updates.pre_order === true) {
+    const { data: current } = await supabase
+      .from("products")
+      .select("pre_order, sneak_peek")
+      .eq("id", id)
+      .single();
+    const sneakPeek = (updates.sneak_peek as boolean | undefined) ?? current?.sneak_peek ?? false;
+    const preOrder = (updates.pre_order as boolean | undefined) ?? current?.pre_order ?? false;
+    if (sneakPeek && preOrder) {
+      return NextResponse.json(
+        { error: "A Sneak Peek product cannot also be a Pre-Order. Turn one off first." },
+        { status: 400 }
+      );
+    }
+  }
+
   const { data, error } = await supabase
     .from("products")
     .update(updates)
@@ -53,6 +74,7 @@ export async function PATCH(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  revalidateStorefront();
   return NextResponse.json(data);
 }
 
@@ -63,5 +85,6 @@ export async function DELETE(
   const { id } = await params;
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  revalidateStorefront();
   return NextResponse.json({ success: true });
 }

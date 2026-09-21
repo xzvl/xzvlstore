@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/bir", label: "BIR Tax", icon: "request_quote" },
   { href: "/admin/analytics", label: "Analytics", icon: "analytics" },
   { href: "/admin/taxonomy", label: "Taxonomy", icon: "account_tree" },
+  { href: "/admin/content", label: "Content", icon: "web" },
 ];
 
 function isActive(pathname: string, href: string) {

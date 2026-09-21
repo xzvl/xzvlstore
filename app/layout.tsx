@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
+import { getSiteContent } from "@/lib/get-site-content";
+import { SiteContentProvider } from "@/components/SiteContentProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -17,23 +19,30 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://xzvl.store"),
-  title: {
-    template: "%s - xzvl.store",
-    default: "xzvl.store",
-  },
-  description: "xzvl.store",
-  icons: {
-    icon: "/assets/favicon.webp",
-  },
-};
+// Async so the favicon can come from /admin/content's Branding tab (falls back
+// to the default when none is set).
+export async function generateMetadata(): Promise<Metadata> {
+  const { branding } = await getSiteContent();
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://xzvl.store"),
+    title: {
+      template: "%s - xzvl.store",
+      default: "xzvl.store",
+    },
+    description: "xzvl.store",
+    icons: {
+      icon: branding.faviconUrl || "/assets/favicon.webp",
+    },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const siteContent = await getSiteContent();
+
   return (
     <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
@@ -44,7 +53,9 @@ export default function RootLayout({
       </head>
       <body className="overflow-x-clip">
         <div className="fixed inset-0 scanline z-[100] pointer-events-none" />
-        <CartProvider>{children}</CartProvider>
+        <CartProvider>
+          <SiteContentProvider value={siteContent}>{children}</SiteContentProvider>
+        </CartProvider>
       </body>
     </html>
   );

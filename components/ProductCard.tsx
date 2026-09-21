@@ -10,9 +10,12 @@ import type { StoreProduct } from "@/lib/store-types";
 export default function ProductCard({
   product,
   useSocialImage = false,
+  sneakPeekLabel = "Currently Unavailable",
 }: {
   product: StoreProduct;
   useSocialImage?: boolean;
+  /** Text of the disabled button shown for sneak-peek products. */
+  sneakPeekLabel?: string;
 }) {
   const [adding, setAdding] = useState(false);
   const [stockLimited, setStockLimited] = useState(false);
@@ -24,6 +27,7 @@ export default function ProductCard({
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
+    if (product.sneak_peek) return;
     if (isBlocked) return;
     if (product.pre_order) {
       router.push(`/pre-order?product=${product.slug}`);
@@ -79,6 +83,11 @@ export default function ProductCard({
             Pre-Order
           </span>
         )}
+        {product.sneak_peek && (
+          <span className="absolute top-2 left-2 bg-sky-500 px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
+            Sneak Peek
+          </span>
+        )}
         {product.sale_price && (
           <span className="absolute top-2 right-2 bg-[#1a1a1a] border border-primary/50 px-1.5 py-0.5 font-mono text-[9px] text-primary tracking-widest uppercase">
             Sale
@@ -111,19 +120,28 @@ export default function ProductCard({
           )}
         </div>
 
-        <button
-          onClick={handleAddToCart}
-          disabled={isBlocked}
-          className={`w-full py-2 font-mono text-[10px] tracking-widest uppercase transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-            stockLimited
-              ? "bg-transparent border border-red-500/60 text-red-400"
-              : adding
-              ? "bg-primary text-white"
-              : "bg-transparent border border-[#603e39]/50 text-[#e2e2e2]/60 hover:border-primary hover:text-primary"
-          }`}
-        >
-          {isBlocked ? "Account Blocked" : stockLimited ? "Limit Reached" : adding ? "Added!" : product.pre_order ? "Pre-Order" : "Add to Cart"}
-        </button>
+        {product.sneak_peek ? (
+          <button
+            disabled
+            className="w-full py-2 font-mono text-[10px] tracking-widest uppercase border border-[#603e39]/30 text-[#e2e2e2]/30 cursor-not-allowed"
+          >
+            {sneakPeekLabel}
+          </button>
+        ) : (
+          <button
+            onClick={handleAddToCart}
+            disabled={isBlocked}
+            className={`w-full py-2 font-mono text-[10px] tracking-widest uppercase transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+              stockLimited
+                ? "bg-transparent border border-red-500/60 text-red-400"
+                : adding
+                ? "bg-primary text-white"
+                : "bg-transparent border border-[#603e39]/50 text-[#e2e2e2]/60 hover:border-primary hover:text-primary"
+            }`}
+          >
+            {isBlocked ? "Account Blocked" : stockLimited ? "Limit Reached" : adding ? "Added!" : product.pre_order ? "Pre-Order" : "Add to Cart"}
+          </button>
+        )}
       </div>
     </div>
   );

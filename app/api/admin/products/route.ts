@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { revalidateStorefront } from "@/lib/revalidate";
 
 export async function GET() {
   const { data, error } = await supabase
@@ -26,6 +27,8 @@ export async function POST(req: NextRequest) {
     status = "active",
     pre_order = false,
     pre_order_note,
+    sneak_peek = false,
+    sneak_peek_note,
     taxable = false,
     max_purchase_enabled = false,
     max_purchase_limit,
@@ -39,6 +42,10 @@ export async function POST(req: NextRequest) {
 
   if (!name) {
     return NextResponse.json({ error: "Name is required." }, { status: 400 });
+  }
+
+  if (sneak_peek && pre_order) {
+    return NextResponse.json({ error: "A Sneak Peek product cannot also be a Pre-Order." }, { status: 400 });
   }
 
   const { data: maxData } = await supabase
@@ -73,6 +80,8 @@ export async function POST(req: NextRequest) {
       tag_ids: tag_ids ?? [],
       pre_order: Boolean(pre_order),
       pre_order_note: pre_order_note || null,
+      sneak_peek: Boolean(sneak_peek),
+      sneak_peek_note: sneak_peek_note || null,
       taxable: Boolean(taxable),
       max_purchase_enabled: Boolean(max_purchase_enabled),
       max_purchase_limit: max_purchase_limit ? Number(max_purchase_limit) : null,
@@ -83,5 +92,6 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  revalidateStorefront();
   return NextResponse.json(data, { status: 201 });
 }
