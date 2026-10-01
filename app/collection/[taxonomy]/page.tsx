@@ -2,10 +2,12 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
+import type { Taxonomy } from "@/lib/supabase";
 import type { StoreProduct } from "@/lib/store-types";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import SearchFilters from "@/components/SearchFilters";
 import BlockedBanner from "@/components/BlockedBanner";
 
 const FIELDS =
@@ -33,31 +35,56 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
   };
 }
 
-const getTaxonomyAndProducts = cache(async function getTaxonomyAndProducts(slug: string): Promise<{
+type CollectionFilters = {
+  category?: string;
+  brand?: string;
+  minPrice?: string;
+  maxPrice?: string;
+};
+
+const getTaxonomyAndProducts = cache(async function getTaxonomyAndProducts(
+  slug: string,
+  filters: CollectionFilters = {}
+): Promise<{
   name: string;
   type: string;
   products: StoreProduct[];
 } | null> {
   if (slug === "all") {
-    const { data } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = supabase
       .from("products")
       .select(FIELDS)
       .eq("status", "active")
-      .or("stock.gt.0,pre_order.eq.true,sneak_peek.eq.true")
-      .order("sort_order", { ascending: true });
+      .or("stock.gt.0,pre_order.eq.true,sneak_peek.eq.true");
+
+    const categoryIds = filters.category?.split(",").filter(Boolean) ?? [];
+    if (categoryIds.length > 0) query = query.overlaps("category_ids", categoryIds);
+
+    const brandIds = filters.brand?.split(",").filter(Boolean) ?? [];
+    if (brandIds.length > 0) query = query.in("brand_id", brandIds);
+
+    const min = filters.minPrice ? Number(filters.minPrice) : undefined;
+    const max = filters.maxPrice ? Number(filters.maxPrice) : undefined;
+    if (min !== undefined && !Number.isNaN(min)) query = query.gte("price", min);
+    if (max !== undefined && !Number.isNaN(max)) query = query.lte("price", max);
+
+    query = query.order("sort_order", { ascending: true });
+
+    const { data } = await query;
     return { name: "All Products", type: "all", products: (data ?? []).map(mapProduct) };
   }
 
   if (slug === "new-releases") {
-    const since = new Date();
-    since.setDate(since.getDate() - 30);
+    const nowIso = new Date().toISOString();
     const { data } = await supabase
       .from("products")
       .select(FIELDS)
       .eq("status", "active")
+      .eq("new_arrival", true)
+      .or(`new_arrival_until.is.null,new_arrival_until.gt.${nowIso}`)
       .or("stock.gt.0,pre_order.eq.true,sneak_peek.eq.true")
-      .gte("created_at", since.toISOString())
-      .order("created_at", { ascending: false });
+      .order("sort_order", { ascending: true });
     return { name: "New Arrivals", type: "new-releases", products: (data ?? []).map(mapProduct) };
   }
 
@@ -93,6 +120,15 @@ const getTaxonomyAndProducts = cache(async function getTaxonomyAndProducts(slug:
   };
 });
 
+function parseFilters(sp: Record<string, string | string[] | undefined>): CollectionFilters {
+  return {
+    category: typeof sp.category === "string" ? sp.category : undefined,
+    brand: typeof sp.brand === "string" ? sp.brand : undefined,
+    minPrice: typeof sp.minPrice === "string" ? sp.minPrice : undefined,
+    maxPrice: typeof sp.maxPrice === "string" ? sp.maxPrice : undefined,
+  };
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -106,15 +142,25 @@ export async function generateMetadata({
 
 export default async function CollectionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ taxonomy: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { taxonomy: slug } = await params;
-  const result = await getTaxonomyAndProducts(slug);
+  const filters = parseFilters(await searchParams);
+  const [result, taxonomyRows] = await Promise.all([
+    getTaxonomyAndProducts(slug, filters),
+    slug === "all"
+      ? supabase.from("taxonomy").select("id, type, name, description, slug, created_at").order("name", { ascending: true })
+      : Promise.resolve({ data: null }),
+  ]);
 
   if (!result) notFound();
 
   const { name, products } = result;
+  const categories = ((taxonomyRows.data ?? []) as Taxonomy[]).filter((t) => t.type === "category");
+  const brands = ((taxonomyRows.data ?? []) as Taxonomy[]).filter((t) => t.type === "brand");
 
   return (
     <>
@@ -143,32 +189,37 @@ export default async function CollectionPage({
         </section>
 
         {/* Products */}
-        <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-12">
-          {products.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <span className="material-symbols-outlined text-[64px] text-[#603e39]/30 mb-6">
-                inventory_2
-              </span>
-              <p className="font-inter font-bold text-[18px] text-[#e2e2e2]/40 uppercase mb-2">
-                No products yet
-              </p>
-              <p className="font-mono text-[12px] text-[#ebbbb4]/25 mb-8">
-                Check back soon or browse other collections.
-              </p>
-              <a
-                href="/collection/all"
-                className="inline-flex items-center gap-2 px-6 py-3 border border-[#603e39]/40 font-mono text-[10px] tracking-widest uppercase text-[#e2e2e2]/40 hover:text-primary hover:border-primary transition-all"
-              >
-                View All Products
-              </a>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {products.map((p) => (
-                <ProductCard key={p.id} product={p} sneakPeekLabel={slug === "all" ? "Sneak Peek" : undefined} />
-              ))}
-            </div>
+        <section className={`max-w-[1440px] mx-auto px-4 md:px-16 py-12 ${slug === "all" ? "flex flex-col lg:flex-row gap-8" : ""}`}>
+          {slug === "all" && (
+            <SearchFilters categories={categories} brands={brands} currentParams={filters} />
           )}
+          <div className={slug === "all" ? "flex-1 min-w-0" : undefined}>
+            {products.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <span className="material-symbols-outlined text-[64px] text-[#603e39]/30 mb-6">
+                  inventory_2
+                </span>
+                <p className="font-inter font-bold text-[18px] text-[#e2e2e2]/40 uppercase mb-2">
+                  No products yet
+                </p>
+                <p className="font-mono text-[12px] text-[#ebbbb4]/25 mb-8">
+                  Check back soon or browse other collections.
+                </p>
+                <a
+                  href="/collection/all"
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-[#603e39]/40 font-mono text-[10px] tracking-widest uppercase text-[#e2e2e2]/40 hover:text-primary hover:border-primary transition-all"
+                >
+                  View All Products
+                </a>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {products.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       </main>
       <Footer />

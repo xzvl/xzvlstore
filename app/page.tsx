@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HeroSlider from "@/components/HeroSlider";
 import ProductCard from "@/components/ProductCard";
-import PreOrderCarousel from "@/components/PreOrderCarousel";
+import ProductTeaserCarousel from "@/components/ProductTeaserCarousel";
 import MobileProductCarousel from "@/components/MobileProductCarousel";
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
@@ -58,27 +58,16 @@ async function getProductsByBrand(slug: string, limit: number): Promise<StorePro
 }
 
 async function getNewReleases(limit: number): Promise<StoreProduct[]> {
-  const { data: category } = await supabase
-    .from("taxonomy")
-    .select("id")
-    .eq("slug", "new-releases")
-    .single();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = supabase
+  const nowIso = new Date().toISOString();
+  const { data } = await supabase
     .from("products")
     .select(FIELDS)
     .eq("status", "active")
-    .or("stock.gt.0,sneak_peek.eq.true")
+    .eq("new_arrival", true)
+    .or(`new_arrival_until.is.null,new_arrival_until.gt.${nowIso}`)
+    .or("stock.gt.0,pre_order.eq.true,sneak_peek.eq.true")
+    .order("sort_order", { ascending: true })
     .limit(limit);
-
-  if (category) {
-    query = query.contains("category_ids", [category.id]);
-  } else {
-    query = query.order("created_at", { ascending: false });
-  }
-
-  const { data } = await query;
   return (data ?? []).map(mapProduct);
 }
 
@@ -87,6 +76,16 @@ async function getPreOrders(): Promise<StoreProduct[]> {
     .from("products")
     .select(FIELDS)
     .eq("pre_order", true)
+    .eq("status", "active")
+    .order("sort_order", { ascending: true });
+  return (data ?? []).map(mapProduct);
+}
+
+async function getSneakPeeks(): Promise<StoreProduct[]> {
+  const { data } = await supabase
+    .from("products")
+    .select(FIELDS)
+    .eq("sneak_peek", true)
     .eq("status", "active")
     .order("sort_order", { ascending: true });
   return (data ?? []).map(mapProduct);
@@ -144,10 +143,11 @@ function ProductGrid({ products }: { products: StoreProduct[] }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const [siteContent, newReleases, preOrders, ttProducts, hasbroProducts] = await Promise.all([
+  const [siteContent, newReleases, preOrders, sneakPeeks, ttProducts, hasbroProducts] = await Promise.all([
     getSiteContent(),
     getNewReleases(5),
     getPreOrders(),
+    getSneakPeeks(),
     getProductsByBrand("takara-tomy", 5),
     getProductsByBrand("hasbro", 5),
   ]);
@@ -177,6 +177,30 @@ export default async function HomePage() {
                 View All
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
               </Link>
+            </div>
+          </section>
+        )}
+
+        {/* ── Pre-Order ── */}
+        {preOrders.length > 0 && (
+          <section className="py-16 border-t border-[#603e39]/20 bg-[#0e0e0e]">
+            <div className="max-w-[1440px] mx-auto px-4 md:px-16">
+              <SectionHeader
+                tag="// Available Now"
+                title="Pre-Order"
+                href="/pre-order"
+                linkLabel="View Form"
+              />
+              <ProductTeaserCarousel products={preOrders} kind="pre-order" />
+              <div className="mt-6 md:hidden text-center">
+                <Link
+                  href="/pre-order"
+                  className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2]/50 hover:text-primary transition-colors"
+                >
+                  Pre-Order Form
+                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </Link>
+              </div>
             </div>
           </section>
         )}
@@ -225,23 +249,23 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ── Pre-Order ── */}
-        {preOrders.length > 0 && (
+        {/* ── Sneak Peek ── */}
+        {sneakPeeks.length > 0 && (
           <section className="py-16 border-t border-[#603e39]/20 bg-[#0e0e0e]">
             <div className="max-w-[1440px] mx-auto px-4 md:px-16">
               <SectionHeader
-                tag="// Available Now"
-                title="Pre-Order"
-                href="/pre-order"
-                linkLabel="View Form"
+                tag="// Coming Soon"
+                title="Sneak Peek"
+                href="/collection/sneak-peek"
+                linkLabel="View All"
               />
-              <PreOrderCarousel products={preOrders} />
+              <ProductTeaserCarousel products={sneakPeeks} kind="sneak-peek" />
               <div className="mt-6 md:hidden text-center">
                 <Link
-                  href="/pre-order"
+                  href="/collection/sneak-peek"
                   className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2]/50 hover:text-primary transition-colors"
                 >
-                  Pre-Order Form
+                  View All
                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </Link>
               </div>

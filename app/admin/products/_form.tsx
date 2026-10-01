@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import type { DbProduct, Taxonomy } from "@/lib/supabase";
+import { sizedImageUrl } from "@/lib/image-sizes";
+import MediaLibraryModal from "@/components/admin/MediaLibraryModal";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
@@ -26,29 +28,7 @@ function ImageUploader({
   label: string;
   aspectClass?: string;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const upload = async (file: File) => {
-    setUploading(true);
-    setError(null);
-    const fd = new FormData();
-    fd.append("file", file);
-    try {
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      const json = await res.json();
-      if (res.ok) {
-        onChange(json.url);
-      } else {
-        setError(json.error ?? "Upload failed.");
-      }
-    } catch {
-      setError("Network error.");
-    } finally {
-      setUploading(false);
-    }
-  };
+  const [showPicker, setShowPicker] = useState(false);
 
   return (
     <div>
@@ -57,11 +37,20 @@ function ImageUploader({
       </p>
       <div
         className={`relative w-full ${aspectClass} bg-[#0e0e0e] border border-dashed border-[#603e39]/50 overflow-hidden flex items-center justify-center cursor-pointer hover:border-primary transition-colors group`}
-        onClick={() => ref.current?.click()}
+        onClick={() => setShowPicker(true)}
       >
         {value ? (
           <>
-            <Image src={value} alt={label} fill sizes="200px" className="object-cover" />
+            <Image
+              src={sizedImageUrl(value, "medium") ?? value}
+              alt={label}
+              fill
+              sizes="200px"
+              className="object-cover"
+              onError={(e) => {
+                if (e.currentTarget.src !== value) e.currentTarget.src = value;
+              }}
+            />
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <span className="material-symbols-outlined text-white text-[20px]">upload</span>
               <span className="font-mono text-white text-[11px] uppercase tracking-wider">
@@ -71,16 +60,8 @@ function ImageUploader({
           </>
         ) : (
           <div className="flex flex-col items-center gap-1 text-[#ebbbb4]/30">
-            {uploading ? (
-              <span className="material-symbols-outlined animate-spin text-[24px] text-primary">
-                progress_activity
-              </span>
-            ) : (
-              <>
-                <span className="material-symbols-outlined text-[24px]">upload</span>
-                <span className="font-mono text-[10px] uppercase tracking-widest">Upload</span>
-              </>
-            )}
+            <span className="material-symbols-outlined text-[24px]">upload</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest">Upload</span>
           </div>
         )}
       </div>
@@ -93,20 +74,16 @@ function ImageUploader({
           Remove
         </button>
       )}
-      {error && (
-        <p className="mt-1 font-mono text-[10px] text-red-400">{error}</p>
+
+      {showPicker && (
+        <MediaLibraryModal
+          onClose={() => setShowPicker(false)}
+          onSelect={(urls) => {
+            onChange(urls[0]);
+            setShowPicker(false);
+          }}
+        />
       )}
-      <input
-        ref={ref}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) upload(file);
-          e.target.value = "";
-        }}
-      />
     </div>
   );
 }
@@ -120,9 +97,7 @@ function GalleryUploader({
   values: string[];
   onChange: (urls: string[]) => void;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
@@ -132,29 +107,6 @@ function GalleryUploader({
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     onChange(next);
-  };
-
-  const uploadFiles = async (files: FileList) => {
-    setUploading(true);
-    setError(null);
-    const uploaded: string[] = [];
-    for (const file of Array.from(files)) {
-      const fd = new FormData();
-      fd.append("file", file);
-      try {
-        const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-        const json = await res.json();
-        if (res.ok) {
-          uploaded.push(json.url);
-        } else {
-          setError(json.error ?? "Upload failed.");
-        }
-      } catch {
-        setError("Network error.");
-      }
-    }
-    onChange([...values, ...uploaded]);
-    setUploading(false);
   };
 
   const remove = (i: number) => onChange(values.filter((_, idx) => idx !== i));
@@ -184,7 +136,17 @@ function GalleryUploader({
               overIndex === i && dragIndex !== null && dragIndex !== i ? "border-primary" : "border-[#603e39]/40"
             } ${dragIndex === i ? "opacity-40" : ""}`}
           >
-            <Image src={url} alt="" fill sizes="64px" className="object-cover pointer-events-none" draggable={false} />
+            <Image
+              src={sizedImageUrl(url, "thumbnail") ?? url}
+              alt=""
+              fill
+              sizes="64px"
+              className="object-cover pointer-events-none"
+              draggable={false}
+              onError={(e) => {
+                if (e.currentTarget.src !== url) e.currentTarget.src = url;
+              }}
+            />
             <button
               type="button"
               onClick={() => remove(i)}
@@ -197,38 +159,30 @@ function GalleryUploader({
 
         <button
           type="button"
-          onClick={() => ref.current?.click()}
-          disabled={uploading}
-          className="w-16 h-16 flex flex-col items-center justify-center bg-[#0e0e0e] border border-dashed border-[#603e39]/50 hover:border-primary text-[#ebbbb4]/30 hover:text-primary transition-colors disabled:opacity-50"
+          onClick={() => setShowPicker(true)}
+          className="w-16 h-16 flex flex-col items-center justify-center bg-[#0e0e0e] border border-dashed border-[#603e39]/50 hover:border-primary text-[#ebbbb4]/30 hover:text-primary transition-colors"
         >
-          {uploading ? (
-            <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-          ) : (
-            <span className="material-symbols-outlined text-[20px]">add</span>
-          )}
+          <span className="material-symbols-outlined text-[20px]">add</span>
         </button>
       </div>
-      {error && (
-        <p className="mt-1 font-mono text-[10px] text-red-400">{error}</p>
+
+      {showPicker && (
+        <MediaLibraryModal
+          multiple
+          onClose={() => setShowPicker(false)}
+          onSelect={(urls) => {
+            onChange([...values, ...urls]);
+            setShowPicker(false);
+          }}
+        />
       )}
-      <input
-        ref={ref}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files?.length) uploadFiles(e.target.files);
-          e.target.value = "";
-        }}
-      />
     </div>
   );
 }
 
 // ─── Toggle pill ──────────────────────────────────────────────────────────────
 
-function TogglePill({
+export function TogglePill({
   active,
   onClick,
   title,
@@ -273,6 +227,12 @@ function TogglePill({
 const toSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+const defaultNewArrivalUntil = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 14);
+  return d.toISOString().slice(0, 10);
+};
+
 type FormState = {
   name: string;
   slug: string;
@@ -293,6 +253,8 @@ type FormState = {
   taxable: boolean;
   max_purchase_enabled: boolean;
   max_purchase_limit: string;
+  new_arrival: boolean;
+  new_arrival_until: string;
   main_image: string;
   gallery_images: string[];
   social_image: string;
@@ -318,6 +280,8 @@ const EMPTY_FORM: FormState = {
   taxable: false,
   max_purchase_enabled: false,
   max_purchase_limit: "",
+  new_arrival: false,
+  new_arrival_until: "",
   main_image: "",
   gallery_images: [],
   social_image: "",
@@ -344,6 +308,8 @@ function productToForm(p: DbProduct): FormState {
     taxable: p.taxable ?? false,
     max_purchase_enabled: p.max_purchase_enabled ?? false,
     max_purchase_limit: p.max_purchase_limit ? String(p.max_purchase_limit) : "",
+    new_arrival: p.new_arrival ?? false,
+    new_arrival_until: p.new_arrival_until ? p.new_arrival_until.slice(0, 10) : "",
     main_image: p.main_image ?? p.image ?? "",
     gallery_images: p.gallery_images ?? [],
     social_image: p.social_image ?? "",
@@ -411,6 +377,9 @@ export default function ProductForm({ productId }: { productId?: string }) {
           cost: Number(form.cost || 0),
           stock: Number(form.stock || 0),
           max_purchase_limit: form.max_purchase_enabled ? (Number(form.max_purchase_limit) || null) : null,
+          new_arrival_until: form.new_arrival && form.new_arrival_until
+            ? new Date(form.new_arrival_until).toISOString()
+            : null,
         }),
       });
       if (!res.ok) {
@@ -608,6 +577,37 @@ export default function ProductForm({ productId }: { productId?: string }) {
               {form.sale_price && <span className="font-normal text-[10px] ml-2 opacity-60">(on sale price)</span>}
             </div>
           </div>
+          <div className="md:col-span-2">
+            <TogglePill
+              active={form.new_arrival}
+              onClick={() =>
+                setForm((prev) => ({
+                  ...prev,
+                  new_arrival: !prev.new_arrival,
+                  new_arrival_until: !prev.new_arrival && !prev.new_arrival_until
+                    ? defaultNewArrivalUntil()
+                    : prev.new_arrival_until,
+                }))
+              }
+              title="New Arrival"
+              subtitle="Feature this product as a new arrival until the schedule below"
+              activeClass="border-green-400/50 bg-green-400/10"
+              switchClass="bg-green-400"
+            />
+          </div>
+
+          {form.new_arrival && (
+            <div className="md:col-span-2">
+              <label className={LABEL}>Auto-disable On</label>
+              <input
+                type="date"
+                value={form.new_arrival_until}
+                onChange={(e) => set$("new_arrival_until", e.target.value)}
+                className={INPUT}
+              />
+            </div>
+          )}
+
           <div className="md:col-span-2">
             <TogglePill
               active={form.taxable}

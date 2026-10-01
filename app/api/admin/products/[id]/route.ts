@@ -37,6 +37,20 @@ export async function PATCH(
   if (body.taxable !== undefined) updates.taxable = Boolean(body.taxable);
   if (body.max_purchase_enabled !== undefined) updates.max_purchase_enabled = Boolean(body.max_purchase_enabled);
   if (body.max_purchase_limit !== undefined) updates.max_purchase_limit = body.max_purchase_limit ? Number(body.max_purchase_limit) : null;
+  if (body.new_arrival !== undefined) {
+    updates.new_arrival = Boolean(body.new_arrival);
+    if (body.new_arrival_until !== undefined) {
+      updates.new_arrival_until = body.new_arrival_until || null;
+    } else if (updates.new_arrival) {
+      const until = new Date();
+      until.setDate(until.getDate() + 14);
+      updates.new_arrival_until = until.toISOString();
+    } else {
+      updates.new_arrival_until = null;
+    }
+  } else if (body.new_arrival_until !== undefined) {
+    updates.new_arrival_until = body.new_arrival_until || null;
+  }
   if (body.brand_id !== undefined) updates.brand_id = body.brand_id || null;
   if (body.category_ids !== undefined) updates.category_ids = body.category_ids;
   if (body.tag_ids !== undefined) updates.tag_ids = body.tag_ids;

@@ -7,6 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import type { Order, OrderStatus } from "@/lib/supabase";
 import { ExportOrdersModal } from "./_export";
 import { OrderQuickEditModal } from "./_quick-edit";
+import { sizedImageUrl } from "@/lib/image-sizes";
 
 const STATUS_TABS: { value: string; label: string; icon: string }[] = [
   { value: "default", label: "Default", icon: "inbox" },
@@ -439,7 +440,16 @@ function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
   return (
     <div className="w-[30px] h-[30px] relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
       {src ? (
-        <Image src={src} alt={alt} fill sizes="30px" className="object-cover" />
+        <Image
+          src={sizedImageUrl(src, "small") ?? src}
+          alt={alt}
+          fill
+          sizes="30px"
+          className="object-cover"
+          onError={(e) => {
+            if (e.currentTarget.src !== src) e.currentTarget.src = src;
+          }}
+        />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <span className="material-symbols-outlined text-[13px] text-[#ebbbb4]/20">image</span>

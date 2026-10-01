@@ -3,12 +3,21 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import type { StoreProduct } from "@/lib/store-types";
+import { sizedImageUrl } from "@/lib/image-sizes";
 
 const VISIBLE = 3;
 const SLIDE_MS = 420;
 const AUTO_MS = 5000;
 
-export default function PreOrderCarousel({ products }: { products: StoreProduct[] }) {
+type Kind = "pre-order" | "sneak-peek";
+
+export default function ProductTeaserCarousel({
+  products,
+  kind = "pre-order",
+}: {
+  products: StoreProduct[];
+  kind?: Kind;
+}) {
   const n = products.length;
 
   // Responsive visible count: 1 on mobile, 3 on desktop
@@ -95,7 +104,7 @@ export default function PreOrderCarousel({ products }: { products: StoreProduct[
         }`}
       >
         {products.map((product) => (
-          <CarouselCard key={product.id} product={product} />
+          <CarouselCard key={product.id} product={product} kind={kind} />
         ))}
       </div>
     );
@@ -156,7 +165,7 @@ export default function PreOrderCarousel({ products }: { products: StoreProduct[
               style={{ width: `${cardW}%` }}
               className="px-1.5"
             >
-              <CarouselCard product={product} />
+              <CarouselCard product={product} kind={kind} />
             </div>
           ))}
         </div>
@@ -188,21 +197,31 @@ export default function PreOrderCarousel({ products }: { products: StoreProduct[
 
 // ─── Individual card ──────────────────────────────────────────────────────────
 
-function CarouselCard({ product }: { product: StoreProduct }) {
+function CarouselCard({ product, kind }: { product: StoreProduct; kind: Kind }) {
   const img = product.social_image ?? product.image;
+  const isSneakPeek = kind === "sneak-peek";
+  const href = isSneakPeek
+    ? `/product/${product.slug ?? product.id}`
+    : `/pre-order?product=${product.slug ?? product.id}`;
+  const badgeLabel = isSneakPeek ? "Sneak Peek" : "Pre-Order";
+  const ctaLabel = isSneakPeek ? "View Details" : "Order Now";
+
   return (
     <Link
-      href={`/pre-order?product=${product.slug ?? product.id}`}
+      href={href}
       className="group block relative overflow-hidden border border-[#603e39]/30 hover:border-primary/60 transition-all"
       style={{ aspectRatio: "3/3" }}
     >
       {img ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={img}
+          src={sizedImageUrl(img, "medium") ?? img}
           alt={product.name}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
+          onError={(e) => {
+            if (e.currentTarget.src !== img) e.currentTarget.src = img;
+          }}
         />
       ) : (
         <div className="absolute inset-0 bg-[#1a1a1a] flex items-center justify-center">
@@ -215,7 +234,7 @@ function CarouselCard({ product }: { product: StoreProduct }) {
       {/* Info */}
       <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
         <p className="font-mono text-[8px] md:text-[9px] tracking-[0.2em] uppercase text-primary mb-1">
-          Pre-Order
+          {badgeLabel}
         </p>
         <p className="font-inter font-bold text-[12px] md:text-[13px] text-white leading-tight line-clamp-2">
           {product.name}
@@ -228,7 +247,7 @@ function CarouselCard({ product }: { product: StoreProduct }) {
       {/* Hover CTA */}
       <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
         <span className="font-mono text-[8px] bg-primary text-white px-2 py-1 tracking-widest uppercase">
-          Order Now
+          {ctaLabel}
         </span>
       </div>
     </Link>

@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
     taxable = false,
     max_purchase_enabled = false,
     max_purchase_limit,
+    new_arrival = false,
+    new_arrival_until,
     brand_id,
     category_ids,
     tag_ids,
@@ -57,6 +59,13 @@ export async function POST(req: NextRequest) {
 
   const sort_order = (maxData?.sort_order ?? 0) + 1;
   const id = `prod-${Date.now()}`;
+
+  let newArrivalUntil: string | null = new_arrival_until || null;
+  if (new_arrival && !newArrivalUntil) {
+    const until = new Date();
+    until.setDate(until.getDate() + 14);
+    newArrivalUntil = until.toISOString();
+  }
 
   const { data, error } = await supabase
     .from("products")
@@ -85,6 +94,8 @@ export async function POST(req: NextRequest) {
       taxable: Boolean(taxable),
       max_purchase_enabled: Boolean(max_purchase_enabled),
       max_purchase_limit: max_purchase_limit ? Number(max_purchase_limit) : null,
+      new_arrival: Boolean(new_arrival),
+      new_arrival_until: newArrivalUntil,
       status,
       sort_order,
     })

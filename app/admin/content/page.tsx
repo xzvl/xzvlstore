@@ -7,12 +7,14 @@ import BrandingTab from "./_BrandingTab";
 import HeaderTab from "./_HeaderTab";
 import HeroTab from "./_HeroTab";
 import FooterTab from "./_FooterTab";
+import ImageOptimizationTab from "./_ImageOptimizationTab";
 
 const TABS = [
   { key: "branding", label: "Branding", icon: "image" },
   { key: "header", label: "Header", icon: "web_asset" },
   { key: "hero", label: "Hero", icon: "slideshow" },
   { key: "footer", label: "Footer", icon: "vertical_align_bottom" },
+  { key: "images", label: "Images", icon: "photo_library" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -143,6 +145,7 @@ export default function AdminContentPage() {
           {active === "footer" && (
             <FooterTab initial={content.footer} onSaved={(footer) => setContent((c) => c && { ...c, footer })} />
           )}
+          {active === "images" && <ImageOptimizationTab />}
         </div>
       </div>
     </div>

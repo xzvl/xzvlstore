@@ -15,6 +15,8 @@ export type OrderItem = {
   subtotal: number;
   /** Current product thumbnail, attached at read time for display — not stored on the row. */
   image?: string | null;
+  /** Current product slug, attached at read time for linking to /product/[slug] — not stored on the row. */
+  slug?: string | null;
 };
 
 export type Order = {
@@ -90,6 +92,8 @@ export type DbProduct = {
   taxable: boolean;
   max_purchase_enabled: boolean;
   max_purchase_limit: number | null;
+  new_arrival: boolean;
+  new_arrival_until: string | null;
   status: "active" | "inactive";
   slug: string | null;
   description: string | null;

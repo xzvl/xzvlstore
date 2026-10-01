@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import { sizedImageUrl } from "@/lib/image-sizes";
 
 export default function ProductImages({ images, name }: { images: string[]; name: string }) {
   const [selected, setSelected] = useState(0);
@@ -21,12 +22,15 @@ export default function ProductImages({ images, name }: { images: string[]; name
       <div className="relative aspect-square bg-[#1a1a1a] border border-[#603e39]/30 p-6 overflow-hidden">
         <div className="relative aspect-square">
           <Image
-            src={main}
+            src={sizedImageUrl(main, "large") ?? main}
             alt={name}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-contain bg-white"
             priority
+            onError={(e) => {
+              if (e.currentTarget.src !== main) e.currentTarget.src = main;
+            }}
           />
       </div>
       </div>
@@ -54,7 +58,14 @@ export default function ProductImages({ images, name }: { images: string[]; name
                   i === selected ? "border-primary" : "border-[#603e39]/40 hover:border-[#ebbbb4]/40"
                 } bg-[#1a1a1a]`}
               >
-                <img src={img} alt={`${name} view ${i + 1}`} className="w-full h-full object-contain p-1" />
+                <img
+                  src={sizedImageUrl(img, "thumbnail") ?? img}
+                  alt={`${name} view ${i + 1}`}
+                  className="w-full h-full object-contain p-1"
+                  onError={(e) => {
+                    if (e.currentTarget.src !== img) e.currentTarget.src = img;
+                  }}
+                />
               </button>
             ))}
           </div>

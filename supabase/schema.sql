@@ -245,6 +245,12 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- );
 -- ALTER TABLE site_content ENABLE ROW LEVEL SECURITY;
 
+-- ─── "New Arrival" flag with auto-expiring schedule (run against the live DB) ──
+-- new_arrival_until is checked at read-time (new_arrival_until IS NULL OR > now());
+-- nothing flips the boolean itself — expired items just stop matching the query.
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS new_arrival boolean NOT NULL DEFAULT false;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS new_arrival_until timestamptz;
+
 -- ─── Supabase Storage ─────────────────────────────────────────────────────────
 -- 1. Go to Storage → New bucket
 -- 2. Name: product-images

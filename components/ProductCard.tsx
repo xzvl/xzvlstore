@@ -6,11 +6,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import type { StoreProduct } from "@/lib/store-types";
+import { sizedImageUrl } from "@/lib/image-sizes";
 
 export default function ProductCard({
   product,
   useSocialImage = false,
-  sneakPeekLabel = "Currently Unavailable",
+  sneakPeekLabel = "Coming Soon",
 }: {
   product: StoreProduct;
   useSocialImage?: boolean;
@@ -58,11 +59,14 @@ export default function ProductCard({
       <Link href={`/product/${product.slug}`} className="block relative aspect-square bg-[#131313] overflow-hidden">
         {mainImage ? (
           <Image
-            src={mainImage}
+            src={sizedImageUrl(mainImage, "thumbnail") ?? mainImage}
             alt={product.name}
             fill
             className="object-contain bg-[#ffffff]"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            onError={(e) => {
+              if (e.currentTarget.src !== mainImage) e.currentTarget.src = mainImage;
+            }}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a]">
@@ -71,11 +75,14 @@ export default function ProductCard({
         )}
         {hoverImage && (
           <Image
-            src={hoverImage}
+            src={sizedImageUrl(hoverImage, "thumbnail") ?? hoverImage}
             alt=""
             fill
             className="object-contain bg-[#ffffff] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            onError={(e) => {
+              if (e.currentTarget.src !== hoverImage) e.currentTarget.src = hoverImage;
+            }}
           />
         )}
         {product.pre_order && (

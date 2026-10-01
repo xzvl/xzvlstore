@@ -2,11 +2,13 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase-client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import type { Order } from "@/lib/supabase";
+import { sizedImageUrl } from "@/lib/image-sizes";
 
 type Tab = "info" | "billing" | "shipping" | "orders";
 const TABS_LIST: Tab[] = ["orders", "info", "billing", "shipping"];
@@ -75,7 +77,16 @@ function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
   return (
     <div className="w-[30px] h-[30px] relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
       {src ? (
-        <Image src={src} alt={alt} fill sizes="30px" className="object-cover" />
+        <Image
+          src={sizedImageUrl(src, "small") ?? src}
+          alt={alt}
+          fill
+          sizes="30px"
+          className="object-cover"
+          onError={(e) => {
+            if (e.currentTarget.src !== src) e.currentTarget.src = src;
+          }}
+        />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <span className="material-symbols-outlined text-[13px] text-[#ebbbb4]/20">image</span>
@@ -469,8 +480,24 @@ function AccountPageInner() {
                         <tbody>
                           {order.items.map((item, i) => (
                             <tr key={i} className="border-b border-[#603e39]/10">
-                              <td className="py-1.5 pr-2 w-[30px]"><ItemThumb src={item.image} alt={item.product} /></td>
-                              <td className="py-1.5 font-mono text-[#e2e2e2]">{item.product}</td>
+                              <td className="py-1.5 pr-2 w-[30px]">
+                                {item.slug ? (
+                                  <Link href={`/product/${item.slug}`}>
+                                    <ItemThumb src={item.image} alt={item.product} />
+                                  </Link>
+                                ) : (
+                                  <ItemThumb src={item.image} alt={item.product} />
+                                )}
+                              </td>
+                              <td className="py-1.5 font-mono text-[#e2e2e2]">
+                                {item.slug ? (
+                                  <Link href={`/product/${item.slug}`} className="hover:text-primary hover:underline underline-offset-2 transition-colors">
+                                    {item.product}
+                                  </Link>
+                                ) : (
+                                  item.product
+                                )}
+                              </td>
                               <td className="py-1.5 text-center font-mono text-[#ebbbb4]/50 w-10">×{item.qty}</td>
                               <td className="py-1.5 text-right font-mono text-primary">₱{item.subtotal.toLocaleString()}</td>
                             </tr>

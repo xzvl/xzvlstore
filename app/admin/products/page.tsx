@@ -6,6 +6,8 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DbProduct, Taxonomy } from "@/lib/supabase";
 import { reorderVisible } from "@/lib/reorder";
+import { TogglePill } from "./_form";
+import { sizedImageUrl } from "@/lib/image-sizes";
 
 type SortKey = "name" | "sku" | "stock" | "brand";
 
@@ -47,6 +49,9 @@ function QuickEditModal({
   const [salePrice, setSalePrice] = useState(product.sale_price != null ? String(product.sale_price) : "");
   const [cost, setCost] = useState(String(product.cost));
   const [taxable, setTaxable] = useState(product.taxable);
+  const [preOrder, setPreOrder] = useState(product.pre_order);
+  const [sneakPeek, setSneakPeek] = useState(product.sneak_peek);
+  const [newArrival, setNewArrival] = useState(product.new_arrival);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,6 +87,9 @@ function QuickEditModal({
         sale_price: salePrice.trim() === "" ? null : num(salePrice),
         cost: num(cost),
         taxable,
+        pre_order: preOrder,
+        sneak_peek: sneakPeek,
+        new_arrival: newArrival,
       }),
     });
     if (res.ok) {
@@ -126,7 +134,16 @@ function QuickEditModal({
           <div className="flex gap-4">
             <div className="relative w-24 h-24 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
               {img ? (
-                <Image src={img} alt={product.name} fill sizes="96px" className="object-cover" />
+                <Image
+                  src={sizedImageUrl(img, "small") ?? img}
+                  alt={product.name}
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                  onError={(e) => {
+                    if (e.currentTarget.src !== img) e.currentTarget.src = img;
+                  }}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <span className="material-symbols-outlined text-[24px] text-[#ebbbb4]/20">image</span>
@@ -179,20 +196,49 @@ function QuickEditModal({
             </div>
           </div>
 
-          {/* Taxable */}
-          <button
-            onClick={() => setTaxable((v) => !v)}
-            className={`flex items-center gap-2 px-3 py-2 border font-mono text-[10px] tracking-widest uppercase transition-colors ${
-              taxable
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70"
-            }`}
-          >
-            <span className="material-symbols-outlined text-[14px]">
-              {taxable ? "check_box" : "check_box_outline_blank"}
-            </span>
-            Taxable
-          </button>
+          {/* Flags */}
+          <div className="space-y-2">
+            <TogglePill
+              active={preOrder}
+              onClick={() => setPreOrder((v) => !v)}
+              title="Pre-Order"
+              subtitle={
+                sneakPeek && !preOrder
+                  ? "Turn off Sneak Peek first to enable Pre-Order"
+                  : "Allow customers to place pre-orders for this product"
+              }
+              activeClass="border-orange-400/50 bg-orange-400/10"
+              disabled={sneakPeek && !preOrder}
+            />
+            <TogglePill
+              active={sneakPeek}
+              onClick={() => setSneakPeek((v) => !v)}
+              title="Sneak Peek"
+              subtitle={
+                preOrder && !sneakPeek
+                  ? "Turn off Pre-Order first to enable Sneak Peek"
+                  : "Show this product as a preview only — it can't be bought or added to the cart"
+              }
+              activeClass="border-sky-400/50 bg-sky-400/10"
+              switchClass="bg-sky-400"
+              disabled={preOrder && !sneakPeek}
+            />
+            <TogglePill
+              active={newArrival}
+              onClick={() => setNewArrival((v) => !v)}
+              title="New Arrival"
+              subtitle="Feature this product as a new arrival"
+              activeClass="border-green-400/50 bg-green-400/10"
+              switchClass="bg-green-400"
+            />
+            <TogglePill
+              active={taxable}
+              onClick={() => setTaxable((v) => !v)}
+              title="Taxable"
+              subtitle="Apply tax to this product's price"
+              activeClass="border-primary/50 bg-primary/10"
+            />
+          </div>
 
           {error && <p className="font-mono text-[11px] text-red-500">{error}</p>}
         </div>
@@ -696,7 +742,17 @@ function AdminProductsPageInner() {
                   {/* Left: image */}
                   <div className="relative w-16 h-16 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
                     {thumb(p) ? (
-                      <Image src={thumb(p)!} alt={p.name} fill sizes="64px" className="object-cover" />
+                      <Image
+                        src={sizedImageUrl(thumb(p), "small") ?? thumb(p)!}
+                        alt={p.name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                        onError={(e) => {
+                          const original = thumb(p)!;
+                          if (e.currentTarget.src !== original) e.currentTarget.src = original;
+                        }}
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <span className="material-symbols-outlined text-[20px] text-[#ebbbb4]/20">image</span>
@@ -821,7 +877,17 @@ function AdminProductsPageInner() {
                       <td className="px-3 py-3">
                         <div className="w-10 h-10 relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
                           {thumb(p) ? (
-                            <Image src={thumb(p)!} alt={p.name} fill sizes="40px" className="object-cover" />
+                            <Image
+                              src={sizedImageUrl(thumb(p), "small") ?? thumb(p)!}
+                              alt={p.name}
+                              fill
+                              sizes="40px"
+                              className="object-cover"
+                              onError={(e) => {
+                                const original = thumb(p)!;
+                                if (e.currentTarget.src !== original) e.currentTarget.src = original;
+                              }}
+                            />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/20">image</span>

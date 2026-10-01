@@ -20,6 +20,7 @@ type ProductRow = {
 
 type ContactForm = {
   name: string;
+  address: string;
   location: string;
   phone: string;
   email: string;
@@ -421,7 +422,7 @@ export default function PreOrderPage() {
   const [profileAddresses, setProfileAddresses] = useState<ProfileAddresses | null>(null);
   const [purchasedMap, setPurchasedMap] = useState<Record<string, number>>({});
 
-  const [contact, setContact] = useState<ContactForm>({ name: "", location: "", phone: "", email: "", facebook: "" });
+  const [contact, setContact] = useState<ContactForm>({ name: "", address: "", location: "", phone: "", email: "", facebook: "" });
   const [rows, setRows] = useState<ProductRow[]>([{ id: uid(), productId: "", qty: 1 }]);
   const [selectedProductDetail, setSelectedProductDetail] = useState<{ product: Product; qty: number } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string; facebook?: string }>({});
@@ -470,6 +471,7 @@ export default function PreOrderPage() {
         name: name || "",
         email: user.email ?? "",
         phone: profile.billing_phone || "",
+        address: profile.billing_address_1 || "",
         location: location || "",
         facebook: profile.facebook_url || "",
       });
@@ -551,22 +553,24 @@ export default function PreOrderPage() {
         return { product_id: p.id, product: p.name, qty: r.qty, unit_price: price, subtotal: price * r.qty };
       });
       const estimatedTotal = orderItems.reduce((s, i) => s + i.subtotal, 0);
-      const billing = profileAddresses ? {
-        address_1: profileAddresses.billing_address_1,
-        address_2: profileAddresses.billing_address_2,
-        city: profileAddresses.billing_city,
-        state: profileAddresses.billing_state,
-        postcode: profileAddresses.billing_postcode,
-        region: profileAddresses.billing_region,
-      } : undefined;
-      const shipping = profileAddresses ? {
-        address_1: profileAddresses.shipping_address_1,
-        address_2: profileAddresses.shipping_address_2,
-        city: profileAddresses.shipping_city,
-        state: profileAddresses.shipping_state,
-        postcode: profileAddresses.shipping_postcode,
-        region: profileAddresses.shipping_region,
-      } : undefined;
+      const [destCity, ...destRest] = contact.location.split(",").map((s) => s.trim());
+      const destProvince = destRest.join(", ").trim();
+      const billing = {
+        address_1: contact.address.trim(),
+        address_2: profileAddresses?.billing_address_2 ?? "",
+        city: destCity ?? "",
+        state: destProvince,
+        postcode: profileAddresses?.billing_postcode ?? "",
+        region: profileAddresses?.billing_region ?? "Philippines",
+      };
+      const shipping = {
+        address_1: contact.address.trim(),
+        address_2: profileAddresses?.shipping_address_2 ?? "",
+        city: destCity ?? "",
+        state: destProvince,
+        postcode: profileAddresses?.shipping_postcode ?? "",
+        region: profileAddresses?.shipping_region ?? "Philippines",
+      };
       const res = await fetch("/api/pre-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -710,9 +714,15 @@ export default function PreOrderPage() {
                     onChange={(e) => setContact$("name", e.target.value)} className={inputClass()} />
                 </div>
                 <div>
-                  <label className={labelClass}>Location <span className="text-primary">*</span></label>
-                  <input type="text" required placeholder="City, Province" value={contact.location}
-                    onChange={(e) => setContact$("location", e.target.value)} className={inputClass()} />
+                  <label className={labelClass}>Facebook Link <span className="text-primary">*</span></label>
+                  <input type="url" required placeholder="https://facebook.com/username" value={contact.facebook}
+                    onChange={(e) => { setContact$("facebook", e.target.value); if (fieldErrors.facebook) setFieldErrors((p) => ({ ...p, facebook: "" })); }}
+                    onBlur={blurFacebook} className={inputClass(!!fieldErrors.facebook)} />
+                  {fieldErrors.facebook && (
+                    <p className="mt-1.5 font-mono text-[11px] text-primary flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">error</span>{fieldErrors.facebook}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -740,15 +750,14 @@ export default function PreOrderPage() {
                 </div>
               </div>
               <div>
-                <label className={labelClass}>Facebook Link <span className="text-primary">*</span></label>
-                <input type="url" required placeholder="https://facebook.com/username" value={contact.facebook}
-                  onChange={(e) => { setContact$("facebook", e.target.value); if (fieldErrors.facebook) setFieldErrors((p) => ({ ...p, facebook: "" })); }}
-                  onBlur={blurFacebook} className={inputClass(!!fieldErrors.facebook)} />
-                {fieldErrors.facebook && (
-                  <p className="mt-1.5 font-mono text-[11px] text-primary flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[13px]">error</span>{fieldErrors.facebook}
-                  </p>
-                )}
+                <label className={labelClass}>Address <span className="text-primary">*</span></label>
+                <input type="text" required placeholder="Street, Barangay" value={contact.address}
+                  onChange={(e) => setContact$("address", e.target.value)} className={inputClass()} />
+              </div>
+              <div>
+                <label className={labelClass}>Destination <span className="text-primary">*</span></label>
+                <input type="text" required placeholder="City, Province" value={contact.location}
+                  onChange={(e) => setContact$("location", e.target.value)} className={inputClass()} />
               </div>
             </div>
           </section>
