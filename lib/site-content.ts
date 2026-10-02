@@ -300,6 +300,64 @@ function validateFooter(raw: unknown): Validation<FooterContent> {
   return { ok: true, value: normalizeFooter(raw) };
 }
 
+// ─── Point of Sale ──────────────────────────────────────────────────────────
+// References taxonomy rows by id only (never a copied name), so renaming an
+// entry in /admin/taxonomy is reflected in the POS automatically. Each entry
+// can be a brand, category or tag — a product matches a filter chip/nav item
+// if its brand_id, category_ids or tag_ids contains that id, whichever applies.
+
+/** A taxonomy entry (any type) shown as a quick-filter chip in the POS, in order. */
+export type PosBrandFilter = { taxonomyId: string };
+/** A taxonomy entry (any type) shown in the POS side nav, with its icon. */
+export type PosCategoryNavItem = { taxonomyId: string; icon: string };
+
+export type PosContent = {
+  /** Empty = fall back to showing every brand, alphabetically. */
+  brandFilters: PosBrandFilter[];
+  /** Empty = fall back to showing every category with a default icon. */
+  categoryNav: PosCategoryNavItem[];
+};
+
+export const DEFAULT_POS: PosContent = { brandFilters: [], categoryNav: [] };
+
+export const DEFAULT_CATEGORY_ICON = "category";
+// Material Symbols names are lowercase letters/digits/underscores only.
+const ICON_NAME = /^[a-z0-9_]+$/;
+
+function normalizePos(raw: unknown): PosContent {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const brandFilters = Array.isArray(o.brandFilters)
+    ? o.brandFilters.flatMap((b) => {
+        const id = str((b && typeof b === "object" ? (b as Record<string, unknown>).taxonomyId : ""), "").trim();
+        return id ? [{ taxonomyId: id }] : [];
+      })
+    : [];
+  const categoryNav = Array.isArray(o.categoryNav)
+    ? o.categoryNav.flatMap((c) => {
+        const r = (c && typeof c === "object" ? c : {}) as Record<string, unknown>;
+        const id = str(r.taxonomyId, "").trim();
+        if (!id) return [];
+        const icon = str(r.icon, "").trim();
+        return [{ taxonomyId: id, icon: ICON_NAME.test(icon) ? icon : DEFAULT_CATEGORY_ICON }];
+      })
+    : [];
+  return { brandFilters, categoryNav };
+}
+
+function validatePos(raw: unknown): Validation<PosContent> {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  if (!Array.isArray(o.brandFilters)) return { ok: false, error: "Brand filters must be a list." };
+  if (!Array.isArray(o.categoryNav)) return { ok: false, error: "Category nav must be a list." };
+  for (let i = 0; i < o.categoryNav.length; i++) {
+    const r = (o.categoryNav[i] && typeof o.categoryNav[i] === "object" ? o.categoryNav[i] : {}) as Record<string, unknown>;
+    const icon = str(r.icon, "").trim();
+    if (icon && !ICON_NAME.test(icon)) {
+      return { ok: false, error: `Category ${i + 1}: icon must be a Material Symbols name (lowercase letters, numbers, underscores).` };
+    }
+  }
+  return { ok: true, value: normalizePos(raw) };
+}
+
 // ─── Registry ───────────────────────────────────────────────────────────────
 
 export type SiteContent = {
@@ -307,6 +365,7 @@ export type SiteContent = {
   header: HeaderContent;
   hero: HeroContent;
   footer: FooterContent;
+  pos: PosContent;
 };
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
@@ -314,6 +373,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   header: DEFAULT_HEADER,
   hero: DEFAULT_HERO,
   footer: DEFAULT_FOOTER,
+  pos: DEFAULT_POS,
 };
 
 export const SITE_CONTENT_KEYS = Object.keys(DEFAULT_SITE_CONTENT) as (keyof SiteContent)[];
@@ -325,6 +385,7 @@ export const NORMALIZERS: { [K in keyof SiteContent]: (raw: unknown) => SiteCont
   header: normalizeHeader,
   hero: normalizeHero,
   footer: normalizeFooter,
+  pos: normalizePos,
 };
 
 const VALIDATORS: { [K in keyof SiteContent]: (raw: unknown) => Validation<SiteContent[K]> } = {
@@ -332,6 +393,7 @@ const VALIDATORS: { [K in keyof SiteContent]: (raw: unknown) => Validation<SiteC
   header: validateHeader,
   hero: validateHero,
   footer: validateFooter,
+  pos: validatePos,
 };
 
 export function validateSection(key: keyof SiteContent, raw: unknown): Validation<unknown> {
