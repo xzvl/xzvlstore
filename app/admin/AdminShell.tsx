@@ -37,9 +37,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="min-h-screen md:h-screen md:overflow-hidden bg-[#0e0e0e] flex flex-col md:flex-row">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-[#0e0e0e] flex flex-col lg:flex-row">
       {/* Mobile top bar */}
-      <header className="md:hidden border-b border-[#603e39]/30 bg-[#131313] px-4 py-3 flex items-center justify-between">
+      <header className="lg:hidden border-b border-[#603e39]/30 bg-[#131313] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setMenuOpen(o => !o)}
@@ -66,10 +66,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       {menuOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/60 md:hidden"
+            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
             onClick={() => setMenuOpen(false)}
           />
-          <aside className="fixed top-0 left-0 z-50 h-full w-64 bg-[#131313] border-r border-[#603e39]/30 flex flex-col md:hidden">
+          <aside className="fixed top-0 left-0 z-50 h-full w-64 bg-[#131313] border-r border-[#603e39]/30 flex flex-col lg:hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#603e39]/30">
               <span className="font-mono text-[11px] tracking-[0.2em] text-primary uppercase select-none">
                 XZVL_ADMIN
@@ -124,7 +124,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       )}
 
       {/* Desktop left sidebar */}
-      <aside className={`hidden md:flex md:flex-col ${collapsed ? "w-16" : "w-56"} flex-shrink-0 md:h-full bg-[#131313] border-r border-[#603e39]/30 transition-all duration-200`}>
+      <aside className={`hidden lg:flex lg:flex-col ${collapsed ? "w-16" : "w-56"} flex-shrink-0 lg:h-full bg-[#131313] border-r border-[#603e39]/30 transition-all duration-200`}>
         <div className="flex items-center justify-between px-5 py-5 border-b border-[#603e39]/30">
           {!collapsed && (
             <span className="font-mono text-[11px] tracking-[0.2em] text-primary uppercase select-none">
@@ -183,7 +183,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </div>
       </aside>
 
-      <main className="flex-1 p-4 md:p-8 min-w-0 md:h-full md:overflow-y-auto">{children}</main>
+      <main className="flex-1 p-4 md:p-8 min-w-0 lg:h-full lg:overflow-y-auto">{children}</main>
     </div>
   );
 }
