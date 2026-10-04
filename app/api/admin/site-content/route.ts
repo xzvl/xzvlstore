@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
-import { getSiteContent } from "@/lib/get-site-content";
+import { getSiteContent, isMaintenanceForced } from "@/lib/get-site-content";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const content = await getSiteContent();
-  return NextResponse.json(content, { headers: { "Cache-Control": "no-store" } });
+  // Extra flag (not a content section) so the Maintenance tab can show the env override.
+  return NextResponse.json(
+    { ...content, maintenanceForced: isMaintenanceForced() },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }

@@ -149,6 +149,10 @@ function rewriteReferences(
       if (row.value.logoImageUrl === oldUrl) { row.value.logoImageUrl = newUrl; changed = true; }
       if (row.value.faviconUrl === oldUrl) { row.value.faviconUrl = newUrl; changed = true; }
     }
+    if (row.key === "maintenance" && row.value.image === oldUrl) {
+      row.value.image = newUrl;
+      changed = true;
+    }
     if (changed) changedSiteContentKeys.add(row.key);
   }
 }
@@ -178,7 +182,7 @@ export async function POST(req: NextRequest) {
 
     const [{ data: productRows }, { data: siteContentRowsRaw }] = await Promise.all([
       supabase.from("products").select("id, image, main_image, gallery_images, social_image"),
-      supabase.from("site_content").select("key, value").in("key", ["hero", "branding"]),
+      supabase.from("site_content").select("key, value").in("key", ["hero", "branding", "maintenance"]),
     ]);
     const products = (productRows ?? []) as ProductRow[];
     const siteContentRows = (siteContentRowsRaw ?? []) as SiteContentRow[];

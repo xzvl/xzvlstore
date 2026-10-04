@@ -9,14 +9,16 @@ import HeroTab from "./_HeroTab";
 import FooterTab from "./_FooterTab";
 import ImageOptimizationTab from "./_ImageOptimizationTab";
 import PosTab from "./_PosTab";
+import MaintenanceTab from "./_MaintenanceTab";
 
 const TABS = [
   { key: "branding", label: "Branding", icon: "image" },
+  { key: "pos", label: "Point of Sale", icon: "point_of_sale" },
   { key: "header", label: "Header", icon: "web_asset" },
   { key: "hero", label: "Hero", icon: "slideshow" },
   { key: "footer", label: "Footer", icon: "vertical_align_bottom" },
-  { key: "pos", label: "Point of Sale", icon: "point_of_sale" },
   { key: "images", label: "Images", icon: "photo_library" },
+  { key: "maintenance", label: "Maintenance", icon: "construction" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -65,7 +67,7 @@ function ClearCacheButton() {
 }
 
 export default function AdminContentPage() {
-  const [content, setContent] = useState<SiteContent | null>(null);
+  const [content, setContent] = useState<(SiteContent & { maintenanceForced: boolean }) | null>(null);
   const [active, setActive] = useState<TabKey>("branding");
   const [loadError, setLoadError] = useState(false);
 
@@ -151,6 +153,13 @@ export default function AdminContentPage() {
             <PosTab initial={content.pos} onSaved={(pos) => setContent((c) => c && { ...c, pos })} />
           )}
           {active === "images" && <ImageOptimizationTab />}
+          {active === "maintenance" && (
+            <MaintenanceTab
+              initial={content.maintenance}
+              forced={content.maintenanceForced}
+              onSaved={(maintenance) => setContent((c) => c && { ...c, maintenance })}
+            />
+          )}
         </div>
       </div>
     </div>

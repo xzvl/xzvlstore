@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
-import { getSiteContent } from "@/lib/get-site-content";
+import { getSiteContent, isMaintenanceForced } from "@/lib/get-site-content";
 import { SiteContentProvider } from "@/components/SiteContentProvider";
+import MaintenanceGate from "@/components/MaintenanceGate";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -54,7 +55,9 @@ export default async function RootLayout({
       <body className="overflow-x-clip">
         <div className="fixed inset-0 scanline z-[100] pointer-events-none" />
         <CartProvider>
-          <SiteContentProvider value={siteContent}>{children}</SiteContentProvider>
+          <SiteContentProvider value={siteContent}>
+            <MaintenanceGate forced={isMaintenanceForced()}>{children}</MaintenanceGate>
+          </SiteContentProvider>
         </CartProvider>
       </body>
     </html>

@@ -358,6 +358,52 @@ function validatePos(raw: unknown): Validation<PosContent> {
   return { ok: true, value: normalizePos(raw) };
 }
 
+// ─── Maintenance ────────────────────────────────────────────────────────────
+// When enabled, every storefront page renders the maintenance screen instead
+// (see components/MaintenanceGate.tsx). /admin is never affected.
+
+export type MaintenanceContent = {
+  enabled: boolean;
+  /** Small mono line above the title. */
+  tag: string;
+  title: string;
+  message: string;
+  /** Optional image shown above the text. Empty = none. */
+  image: string;
+  /** Show the footer's social links under the message. */
+  showSocialLinks: boolean;
+};
+
+export const DEFAULT_MAINTENANCE: MaintenanceContent = {
+  enabled: false,
+  tag: "// System Maintenance",
+  title: "We'll Be Right Back",
+  message: "xzvl.store is currently undergoing scheduled maintenance. Please check back soon.",
+  image: "",
+  showSocialLinks: true,
+};
+
+function normalizeMaintenance(raw: unknown): MaintenanceContent {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const image = str(o.image, "").trim();
+  return {
+    enabled: o.enabled === true,
+    tag: str(o.tag, DEFAULT_MAINTENANCE.tag),
+    title: str(o.title, DEFAULT_MAINTENANCE.title),
+    message: str(o.message, DEFAULT_MAINTENANCE.message),
+    image: isImageUrl(image) ? image : "",
+    showSocialLinks: typeof o.showSocialLinks === "boolean" ? o.showSocialLinks : DEFAULT_MAINTENANCE.showSocialLinks,
+  };
+}
+
+function validateMaintenance(raw: unknown): Validation<MaintenanceContent> {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  if (typeof o.enabled !== "boolean") return { ok: false, error: "Maintenance mode must be on or off." };
+  if (!str(o.title, "").trim()) return { ok: false, error: "Title is required." };
+  if (!isImageUrl(str(o.image, "").trim())) return { ok: false, error: "Image must be an uploaded image." };
+  return { ok: true, value: normalizeMaintenance(raw) };
+}
+
 // ─── Registry ───────────────────────────────────────────────────────────────
 
 export type SiteContent = {
@@ -366,6 +412,7 @@ export type SiteContent = {
   hero: HeroContent;
   footer: FooterContent;
   pos: PosContent;
+  maintenance: MaintenanceContent;
 };
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
@@ -374,6 +421,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   hero: DEFAULT_HERO,
   footer: DEFAULT_FOOTER,
   pos: DEFAULT_POS,
+  maintenance: DEFAULT_MAINTENANCE,
 };
 
 export const SITE_CONTENT_KEYS = Object.keys(DEFAULT_SITE_CONTENT) as (keyof SiteContent)[];
@@ -386,6 +434,7 @@ export const NORMALIZERS: { [K in keyof SiteContent]: (raw: unknown) => SiteCont
   hero: normalizeHero,
   footer: normalizeFooter,
   pos: normalizePos,
+  maintenance: normalizeMaintenance,
 };
 
 const VALIDATORS: { [K in keyof SiteContent]: (raw: unknown) => Validation<SiteContent[K]> } = {
@@ -394,6 +443,7 @@ const VALIDATORS: { [K in keyof SiteContent]: (raw: unknown) => Validation<SiteC
   hero: validateHero,
   footer: validateFooter,
   pos: validatePos,
+  maintenance: validateMaintenance,
 };
 
 export function validateSection(key: keyof SiteContent, raw: unknown): Validation<unknown> {

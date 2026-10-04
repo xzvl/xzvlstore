@@ -21,3 +21,8 @@ export const getSiteContent = cache(async (): Promise<SiteContent> => {
   }
   return result;
 });
+
+// MAINTENANCE_MODE=true in the environment forces the maintenance screen on,
+// regardless of the toggle in /admin/content (which it never overwrites).
+// Useful during deploys/migrations or if the admin panel itself is broken.
+export const isMaintenanceForced = () => process.env.MAINTENANCE_MODE?.trim().toLowerCase() === "true";
