@@ -9,7 +9,7 @@ export type HeroSlide = {
   id: string;
   /** Small mono line above the title, e.g. "XZVL.STORE // 2026". */
   tag: string;
-  /** First title line, rendered white. */
+  /** First title line, rendered in the slide's text color. */
   titleWhite: string;
   /** Second title line, rendered red. */
   titleRed: string;
@@ -22,8 +22,18 @@ export type HeroSlide = {
   image: string;
   /** Full-bleed background image behind the slide. Empty = none. */
   background: string;
-  /** Solid color behind everything (and the fade that blends the images in). */
-  backgroundColor: string;
+  /**
+   * Per theme mode: the solid color behind everything (and the fade that blends
+   * the images in), and the color of the title's first line, description and controls.
+   */
+  colors: Record<ThemeMode, HeroSlideColors>;
+};
+
+export type HeroSlideColors = { background: string; text: string };
+
+const DEFAULT_SLIDE_COLORS: Record<ThemeMode, HeroSlideColors> = {
+  dark: { background: "#0e0e0e", text: "#e2e2e2" },
+  light: { background: "#ececec", text: "#161616" },
 };
 
 export type HeroContent = {
@@ -43,7 +53,7 @@ export const DEFAULT_HERO: HeroContent = {
       buttonLink: "/collection/all",
       image: "/assets/shop-v2.webp",
       background: "",
-      backgroundColor: "#0e0e0e",
+      colors: DEFAULT_SLIDE_COLORS,
     },
     {
       id: "slide-2",
@@ -56,7 +66,7 @@ export const DEFAULT_HERO: HeroContent = {
       buttonLink: "/pre-order",
       image: "/assets/new-releases-v2.webp",
       background: "",
-      backgroundColor: "#0e0e0e",
+      colors: DEFAULT_SLIDE_COLORS,
     },
     {
       id: "slide-3",
@@ -69,7 +79,7 @@ export const DEFAULT_HERO: HeroContent = {
       buttonLink: "/collection/takara-tomy",
       image: "/assets/takara-tomy-v2.webp",
       background: "",
-      backgroundColor: "#0e0e0e",
+      colors: DEFAULT_SLIDE_COLORS,
     },
   ],
 };
@@ -96,8 +106,22 @@ function normalizeSlide(raw: unknown, def: HeroSlide): HeroSlide {
     buttonLink: isSafeHref(link) ? link : def.buttonLink,
     image: str(s.image, def.image),
     background: str(s.background, def.background),
-    backgroundColor: isHexColor(s.backgroundColor) ? s.backgroundColor : def.backgroundColor,
+    colors: normalizeSlideColors(s, def.colors),
   };
+}
+
+function normalizeSlideColors(s: Record<string, unknown>, def: HeroSlide["colors"]): HeroSlide["colors"] {
+  const c = (s.colors && typeof s.colors === "object" ? s.colors : {}) as Record<string, unknown>;
+  const pick = (mode: ThemeMode): HeroSlideColors => {
+    const m = (c[mode] && typeof c[mode] === "object" ? c[mode] : {}) as Record<string, unknown>;
+    // Slides saved before per-mode colors had a single backgroundColor: keep it as the dark one.
+    const legacyBg = mode === "dark" ? s.backgroundColor : undefined;
+    return {
+      background: isHexColor(m.background) ? m.background : isHexColor(legacyBg) ? legacyBg : def[mode].background,
+      text: isHexColor(m.text) ? m.text : def[mode].text,
+    };
+  };
+  return { dark: pick("dark"), light: pick("light") };
 }
 
 // Always yields exactly DEFAULT_HERO.slides.length slides, with any missing or
@@ -120,8 +144,12 @@ export function validateHero(raw: unknown): { ok: true; value: HeroContent } | {
   for (let i = 0; i < list.length; i++) {
     const s = (list[i] && typeof list[i] === "object" ? list[i] : {}) as Record<string, unknown>;
     const n = i + 1;
-    if (!isHexColor(s.backgroundColor)) {
-      return { ok: false, error: `Slide ${n}: background color must be a hex value like #0e0e0e.` };
+    const colors = (s.colors && typeof s.colors === "object" ? s.colors : {}) as Record<string, unknown>;
+    for (const mode of THEME_MODES) {
+      const m = (colors[mode] && typeof colors[mode] === "object" ? colors[mode] : {}) as Record<string, unknown>;
+      if (!isHexColor(m.background) || !isHexColor(m.text)) {
+        return { ok: false, error: `Slide ${n}: ${mode} mode colors must be hex values like #0e0e0e.` };
+      }
     }
     const label = str(s.buttonLabel, "").trim();
     if (label && !isSafeHref(str(s.buttonLink, "").trim())) {
@@ -404,6 +432,87 @@ function validateMaintenance(raw: unknown): Validation<MaintenanceContent> {
   return { ok: true, value: normalizeMaintenance(raw) };
 }
 
+// ─── Colors ─────────────────────────────────────────────────────────────────
+// One palette per mode. The root layout turns these into CSS variables
+// (lib/theme.ts), which the Tailwind theme tokens (primary, fg, canvas…) read,
+// so the storefront follows whichever mode the visitor picked in the header.
+
+export const THEME_MODES = ["dark", "light"] as const;
+export type ThemeMode = (typeof THEME_MODES)[number];
+
+export const PALETTE_KEYS = [
+  "primary",
+  "accent",
+  "text",
+  "background",
+  "surface",
+  "surfaceDeep",
+  "border",
+  "header",
+  "headerText",
+] as const;
+export type PaletteKey = (typeof PALETTE_KEYS)[number];
+export type Palette = Record<PaletteKey, string>;
+
+export type ColorsContent = {
+  /** Mode shown to visitors who haven't picked one with the header toggle. */
+  defaultMode: ThemeMode;
+  dark: Palette;
+  light: Palette;
+};
+
+export const DEFAULT_COLORS: ColorsContent = {
+  defaultMode: "dark",
+  dark: {
+    primary: "#ed0d11",
+    accent: "#ebbbb4",
+    text: "#e2e2e2",
+    background: "#131313",
+    surface: "#1a1a1a",
+    surfaceDeep: "#0e0e0e",
+    border: "#603e39",
+    header: "#131313",
+    headerText: "#e2e2e2",
+  },
+  light: {
+    primary: "#d90b0f",
+    accent: "#7a4f49",
+    text: "#161616",
+    background: "#f4f4f4",
+    surface: "#ffffff",
+    surfaceDeep: "#e9e9e9",
+    border: "#d9c6c3",
+    header: "#ffffff",
+    headerText: "#161616",
+  },
+};
+
+function normalizePalette(raw: unknown, def: Palette): Palette {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  return Object.fromEntries(PALETTE_KEYS.map((k) => [k, isHexColor(o[k]) ? o[k] : def[k]])) as Palette;
+}
+
+function normalizeColors(raw: unknown): ColorsContent {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  return {
+    defaultMode: THEME_MODES.includes(o.defaultMode as ThemeMode) ? (o.defaultMode as ThemeMode) : DEFAULT_COLORS.defaultMode,
+    dark: normalizePalette(o.dark, DEFAULT_COLORS.dark),
+    light: normalizePalette(o.light, DEFAULT_COLORS.light),
+  };
+}
+
+function validateColors(raw: unknown): Validation<ColorsContent> {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  if (!THEME_MODES.includes(o.defaultMode as ThemeMode)) return { ok: false, error: "Default mode must be dark or light." };
+  for (const mode of THEME_MODES) {
+    const p = (o[mode] && typeof o[mode] === "object" ? o[mode] : {}) as Record<string, unknown>;
+    for (const k of PALETTE_KEYS) {
+      if (!isHexColor(p[k])) return { ok: false, error: `${mode} mode: ${k} must be a hex value like #131313.` };
+    }
+  }
+  return { ok: true, value: normalizeColors(raw) };
+}
+
 // ─── Registry ───────────────────────────────────────────────────────────────
 
 export type SiteContent = {
@@ -413,6 +522,7 @@ export type SiteContent = {
   footer: FooterContent;
   pos: PosContent;
   maintenance: MaintenanceContent;
+  colors: ColorsContent;
 };
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
@@ -422,6 +532,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   footer: DEFAULT_FOOTER,
   pos: DEFAULT_POS,
   maintenance: DEFAULT_MAINTENANCE,
+  colors: DEFAULT_COLORS,
 };
 
 export const SITE_CONTENT_KEYS = Object.keys(DEFAULT_SITE_CONTENT) as (keyof SiteContent)[];
@@ -435,6 +546,7 @@ export const NORMALIZERS: { [K in keyof SiteContent]: (raw: unknown) => SiteCont
   footer: normalizeFooter,
   pos: normalizePos,
   maintenance: normalizeMaintenance,
+  colors: normalizeColors,
 };
 
 const VALIDATORS: { [K in keyof SiteContent]: (raw: unknown) => Validation<SiteContent[K]> } = {
@@ -444,6 +556,7 @@ const VALIDATORS: { [K in keyof SiteContent]: (raw: unknown) => Validation<SiteC
   footer: validateFooter,
   pos: validatePos,
   maintenance: validateMaintenance,
+  colors: validateColors,
 };
 
 export function validateSection(key: keyof SiteContent, raw: unknown): Validation<unknown> {

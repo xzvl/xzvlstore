@@ -23,7 +23,7 @@ function MaintenancePage() {
   const { branding, footer, maintenance } = useSiteContent();
 
   return (
-    <main className="relative min-h-screen bg-[#0e0e0e] cyber-grid flex flex-col items-center justify-center px-4 py-16 overflow-hidden">
+    <main className="relative min-h-screen bg-deep cyber-grid flex flex-col items-center justify-center px-4 py-16 overflow-hidden">
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary" />
 
       <div className="w-full max-w-xl flex flex-col items-center text-center">
@@ -34,9 +34,9 @@ function MaintenancePage() {
             </span>
           ) : (
             <>
-              <span className="text-[#e2e2e2]">xzvl</span>
+              <span className="text-fg">xzvl</span>
               <span className="text-primary">.</span>
-              <span className="text-[#e2e2e2]">store</span>
+              <span className="text-fg">store</span>
             </>
           )}
         </p>
@@ -53,13 +53,13 @@ function MaintenancePage() {
           <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-3">{maintenance.tag}</p>
         )}
         <h1
-          className="font-inter font-black uppercase leading-none tracking-tight text-[#e2e2e2]"
+          className="font-inter font-black uppercase leading-none tracking-tight text-fg"
           style={{ fontSize: "clamp(2rem, 6vw, 4rem)" }}
         >
           {maintenance.title}
         </h1>
         {maintenance.message && (
-          <p className="font-mono text-[12px] text-[#ebbbb4]/50 mt-5 leading-relaxed whitespace-pre-line">
+          <p className="font-mono text-[12px] text-accent/50 mt-5 leading-relaxed whitespace-pre-line">
             {maintenance.message}
           </p>
         )}
@@ -73,7 +73,7 @@ function MaintenancePage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={SOCIAL_LABELS[s.platform]}
-                className="w-9 h-9 border border-[#603e39]/50 flex items-center justify-center text-[#e2e2e2]/40 hover:text-primary hover:border-primary transition-all"
+                className="w-9 h-9 border border-line/50 flex items-center justify-center text-fg/40 hover:text-primary hover:border-primary transition-all"
               >
                 {SOCIAL_ICONS[s.platform]}
               </a>
@@ -84,7 +84,7 @@ function MaintenancePage() {
 
       <div className="absolute bottom-6 flex gap-1.5 items-center">
         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-        <p className="font-mono text-[10px] text-[#e2e2e2]/20 uppercase tracking-widest">{footer.bottomText}</p>
+        <p className="font-mono text-[10px] text-fg/20 uppercase tracking-widest">{footer.bottomText}</p>
       </div>
     </main>
   );

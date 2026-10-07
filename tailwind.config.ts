@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: "class",
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,7 +10,17 @@ const config: Config = {
       colors: {
         "on-secondary-container": "#b4b5b5",
         "on-primary-fixed": "#4a0000",
-        primary: "#ed0d11",
+        // Theme colors: CSS variables set per mode from /admin/content → Colors
+        // (see lib/theme.ts), defaulting to the dark palette in globals.css.
+        primary: "rgb(var(--c-primary) / <alpha-value>)",
+        accent: "rgb(var(--c-accent) / <alpha-value>)",
+        fg: "rgb(var(--c-fg) / <alpha-value>)",
+        canvas: "rgb(var(--c-canvas) / <alpha-value>)",
+        panel: "rgb(var(--c-panel) / <alpha-value>)",
+        deep: "rgb(var(--c-deep) / <alpha-value>)",
+        line: "rgb(var(--c-line) / <alpha-value>)",
+        header: "rgb(var(--c-header) / <alpha-value>)",
+        "header-fg": "rgb(var(--c-header-fg) / <alpha-value>)",
         outline: "#b18780",
         "on-error": "#690005",
         "on-tertiary-container": "#00285b",

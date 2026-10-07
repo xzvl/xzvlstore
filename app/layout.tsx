@@ -5,6 +5,7 @@ import { CartProvider } from "@/lib/cart-context";
 import { getSiteContent, isMaintenanceForced } from "@/lib/get-site-content";
 import { SiteContentProvider } from "@/components/SiteContentProvider";
 import MaintenanceGate from "@/components/MaintenanceGate";
+import { THEME_INIT_SCRIPT, themeCss } from "@/lib/theme";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -45,8 +46,16 @@ export default async function RootLayout({
   const siteContent = await getSiteContent();
 
   return (
-    <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html
+      lang="en"
+      data-theme={siteContent.colors.defaultMode}
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      // The init script may switch data-theme to the visitor's saved mode before hydration.
+      suppressHydrationWarning
+    >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <style dangerouslySetInnerHTML={{ __html: themeCss(siteContent.colors) }} />
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"

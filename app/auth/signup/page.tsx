@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase-client";
 
-const INPUT = "w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
+const INPUT = "w-full bg-panel border border-line text-fg font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -49,12 +49,12 @@ export default function SignupPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-[#131313] border border-[#603e39]/50 p-8 text-center space-y-4">
+      <div className="min-h-screen bg-deep flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md bg-canvas border border-line/50 p-8 text-center space-y-4">
           <span className="material-symbols-outlined text-[40px] text-primary">mark_email_unread</span>
-          <h2 className="font-inter font-black text-[22px] uppercase text-[#e2e2e2]">Check your email</h2>
-          <p className="font-mono text-[12px] text-[#ebbbb4]/60 leading-relaxed">
-            We sent a confirmation link to <span className="text-[#e2e2e2]">{email}</span>.<br />
+          <h2 className="font-inter font-black text-[22px] uppercase text-fg">Check your email</h2>
+          <p className="font-mono text-[12px] text-accent/60 leading-relaxed">
+            We sent a confirmation link to <span className="text-fg">{email}</span>.<br />
             Click it to activate your account.
           </p>
           <Link href="/auth/login" className="inline-block font-mono text-[11px] text-primary hover:underline">
@@ -66,16 +66,16 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-deep flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <p className="font-mono text-[10px] tracking-[0.3em] text-primary uppercase mb-1">xzvl.store</p>
-            <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2] tracking-tight">Create Account</h1>
+            <h1 className="font-inter font-black text-[28px] uppercase text-fg tracking-tight">Create Account</h1>
           </Link>
         </div>
 
-        <div className="bg-[#131313] border border-[#603e39]/50 p-8 space-y-5">
+        <div className="bg-canvas border border-line/50 p-8 space-y-5">
           {/* OAuth */}
           <div className="space-y-3">
             <button
@@ -93,28 +93,28 @@ export default function SignupPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-[#603e39]/30" />
-            <span className="font-mono text-[10px] text-[#ebbbb4]/30 uppercase">or</span>
-            <div className="flex-1 h-px bg-[#603e39]/30" />
+            <div className="flex-1 h-px bg-line/30" />
+            <span className="font-mono text-[10px] text-accent/30 uppercase">or</span>
+            <div className="flex-1 h-px bg-line/30" />
           </div>
 
           <form onSubmit={signUp} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5">First Name</label>
+                <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5">First Name</label>
                 <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Juan" className={INPUT} />
               </div>
               <div>
-                <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5">Last Name</label>
+                <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5">Last Name</label>
                 <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Dela Cruz" className={INPUT} />
               </div>
             </div>
             <div>
-              <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5">Email <span className="text-primary">*</span></label>
+              <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5">Email <span className="text-primary">*</span></label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" required className={INPUT} />
             </div>
             <div>
-              <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5">Password <span className="text-primary">*</span></label>
+              <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5">Password <span className="text-primary">*</span></label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters" required className={INPUT} />
             </div>
 
@@ -123,14 +123,14 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-white font-mono text-[11px] tracking-widest uppercase hover:bg-[#c00] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-primary text-white font-mono text-[11px] tracking-widest uppercase hover:brightness-110 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading && <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>}
               {loading ? "Creating account…" : "Create Account"}
             </button>
           </form>
 
-          <p className="text-center font-mono text-[11px] text-[#ebbbb4]/40">
+          <p className="text-center font-mono text-[11px] text-accent/40">
             Already have an account?{" "}
             <Link href="/auth/login" className="text-primary hover:underline">Sign in</Link>
           </p>

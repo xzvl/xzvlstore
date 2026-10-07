@@ -177,11 +177,11 @@ export default async function ProductPage({
   return (
     <>
       <Header />
-      <main className="bg-[#131313] min-h-screen">
+      <main className="bg-canvas min-h-screen">
         {/* Breadcrumb */}
         <div className="max-w-[1440px] mx-auto px-4 md:px-16 pt-6">
           <BlockedBanner className="mb-6" />
-          <div className="flex items-center gap-2 font-mono text-[10px] text-[#e2e2e2]/30 tracking-widest uppercase">
+          <div className="flex items-center gap-2 font-mono text-[10px] text-fg/30 tracking-widest uppercase">
             <Link href="/" className="hover:text-primary transition-colors">Home</Link>
             <span>/</span>
             {product.brand_name && (
@@ -192,7 +192,7 @@ export default async function ProductPage({
                 <span>/</span>
               </>
             )}
-            <span className="text-[#e2e2e2]/60 truncate max-w-[200px]">{product.name}</span>
+            <span className="text-fg/60 truncate max-w-[200px]">{product.name}</span>
           </div>
         </div>
 
@@ -208,7 +208,7 @@ export default async function ProductPage({
               {/* Brand + badges */}
               <div className="flex items-center gap-3">
                 {product.brand_name && (
-                  <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#ebbbb4]/50">
+                  <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-accent/50">
                     {product.brand_name}
                   </span>
                 )}
@@ -225,7 +225,7 @@ export default async function ProductPage({
               </div>
 
               {/* Name */}
-              <h1 className="font-inter font-black text-[22px] md:text-[28px] text-[#e2e2e2] leading-tight uppercase">
+              <h1 className="font-inter font-black text-[22px] md:text-[28px] text-fg leading-tight uppercase">
                 {product.name}
               </h1>
 
@@ -235,20 +235,20 @@ export default async function ProductPage({
                   ₱{displayPrice.toLocaleString()}
                 </span>
                 {product.sale_price && (
-                  <span className="font-mono text-[16px] text-[#e2e2e2]/30 line-through">
+                  <span className="font-mono text-[16px] text-fg/30 line-through">
                     ₱{product.price.toLocaleString()}
                   </span>
                 )}
               </div>
 
-              <div className="h-px bg-[#603e39]/30" />
+              <div className="h-px bg-line/30" />
 
               {/* Stock info */}
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${
-                  product.sneak_peek ? "bg-sky-400" : product.pre_order ? "bg-primary" : (product.stock ?? 0) > 0 ? "bg-green-500" : "bg-[#603e39]"
+                  product.sneak_peek ? "bg-sky-400" : product.pre_order ? "bg-primary" : (product.stock ?? 0) > 0 ? "bg-green-500" : "bg-line"
                 }`} />
-                <span className="font-mono text-[11px] text-[#e2e2e2]/50">
+                <span className="font-mono text-[11px] text-fg/50">
                   {product.sneak_peek
                     ? "Sneak peek — not available yet"
                     : product.pre_order
@@ -267,7 +267,7 @@ export default async function ProductPage({
                 <div className="border border-orange-400/30 bg-orange-400/5 px-4 py-3">
                   <p className="font-mono text-[10px] tracking-widest uppercase text-orange-400/70 mb-1.5">Pre-Order Note</p>
                   <div
-                    className="font-mono text-[12px] text-[#ebbbb4]/70 leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-[#e2e2e2] [&_p]:mb-1"
+                    className="font-mono text-[12px] text-accent/70 leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-fg [&_p]:mb-1"
                     dangerouslySetInnerHTML={{ __html: product.pre_order_note }}
                   />
                 </div>
@@ -278,28 +278,28 @@ export default async function ProductPage({
                 <div className="border border-sky-400/30 bg-sky-400/5 px-4 py-3">
                   <p className="font-mono text-[10px] tracking-widest uppercase text-sky-400/70 mb-1.5">Sneak Peek Note</p>
                   <div
-                    className="font-mono text-[12px] text-[#ebbbb4]/70 leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-[#e2e2e2] [&_p]:mb-1"
+                    className="font-mono text-[12px] text-accent/70 leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-fg [&_p]:mb-1"
                     dangerouslySetInnerHTML={{ __html: product.sneak_peek_note }}
                   />
                 </div>
               )}
 
-              <div className="h-px bg-[#603e39]/30" />
+              <div className="h-px bg-line/30" />
 
               {/* SKU, brand, categories */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                 {(data as { sku?: string }).sku && (
-                  <p className="font-mono text-[10px] text-[#ebbbb4]/30 tracking-widest">
+                  <p className="font-mono text-[10px] text-accent/30 tracking-widest">
                     SKU: {(data as { sku?: string }).sku}
                   </p>
                 )}
                 {product.brand_name && (
-                  <p className="font-mono text-[10px] text-[#ebbbb4]/30 tracking-widest">
+                  <p className="font-mono text-[10px] text-accent/30 tracking-widest">
                     Brand: {product.brand_name}
                   </p>
                 )}
                 {categories.length > 0 && (
-                  <p className="font-mono text-[10px] text-[#ebbbb4]/30 tracking-widest">
+                  <p className="font-mono text-[10px] text-accent/30 tracking-widest">
                     Categories:{" "}
                     {categories.map((c, i) => (
                       <span key={c.id}>
@@ -320,7 +320,7 @@ export default async function ProductPage({
                     <Link
                       key={t.id}
                       href={`/collection/${t.slug}`}
-                      className="px-2 py-1 border border-[#603e39]/40 font-mono text-[9px] tracking-widest uppercase text-[#e2e2e2]/50 hover:border-primary hover:text-primary transition-colors"
+                      className="px-2 py-1 border border-line/40 font-mono text-[9px] tracking-widest uppercase text-fg/50 hover:border-primary hover:text-primary transition-colors"
                     >
                       {t.name}
                     </Link>
@@ -331,20 +331,20 @@ export default async function ProductPage({
               {/* Description */}
               {product.description && (
                 <div
-                  className="prose prose-invert prose-sm max-w-none text-[#e2e2e2]/70 prose-headings:text-[#e2e2e2] prose-headings:font-inter prose-headings:uppercase prose-headings:tracking-wide prose-p:font-mono prose-p:text-[13px] prose-li:font-mono prose-li:text-[13px] prose-strong:text-[#e2e2e2]"
+                  className="prose prose-invert prose-sm max-w-none text-fg/70 prose-headings:text-fg prose-headings:font-inter prose-headings:uppercase prose-headings:tracking-wide prose-p:font-mono prose-p:text-[13px] prose-li:font-mono prose-li:text-[13px] prose-strong:text-fg"
                   dangerouslySetInnerHTML={{ __html: product.description }}
                 />
               )}
 
               {/* Shipping note */}
-              <div className="border border-[#603e39]/20 p-4 space-y-2">
+              <div className="border border-line/20 p-4 space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[16px] text-primary">local_shipping</span>
-                  <span className="font-mono text-[11px] text-[#e2e2e2]/50">Shipping available nationwide (Philippines)</span>
+                  <span className="font-mono text-[11px] text-fg/50">Shipping available nationwide (Philippines)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[16px] text-primary">verified</span>
-                  <span className="font-mono text-[11px] text-[#e2e2e2]/50">100% authentic products</span>
+                  <span className="font-mono text-[11px] text-fg/50">100% authentic products</span>
                 </div>
               </div>
             </div>
@@ -353,10 +353,10 @@ export default async function ProductPage({
 
         {/* Recommended */}
         {recommended.length > 0 && (
-          <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-12 border-t border-[#603e39]/20">
+          <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-12 border-t border-line/20">
             <div className="mb-6">
               <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-primary mb-1.5">// You May Also Like</p>
-              <h2 className="font-inter font-black text-[24px] uppercase text-[#e2e2e2]">Recommended</h2>
+              <h2 className="font-inter font-black text-[24px] uppercase text-fg">Recommended</h2>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {recommended.map((p) => (

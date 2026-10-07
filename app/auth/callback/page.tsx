@@ -31,8 +31,8 @@ export default function AuthCallbackPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center">
-      <div className="flex items-center gap-3 font-mono text-[12px] text-[#ebbbb4]/40">
+    <div className="min-h-screen bg-deep flex items-center justify-center">
+      <div className="flex items-center gap-3 font-mono text-[12px] text-accent/40">
         <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
         Signing you in…
       </div>

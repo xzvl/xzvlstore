@@ -30,9 +30,9 @@ export default function SearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`flex items-center gap-2 border border-[#603e39]/40 focus-within:border-primary bg-[#1a1a1a] px-3 py-2 transition-colors ${className}`}
+      className={`flex items-center gap-2 border border-line/40 focus-within:border-primary bg-panel px-3 py-2 transition-colors ${className}`}
     >
-      <span className="material-symbols-outlined text-[#e2e2e2]/40" style={{ fontSize: 18 }}>
+      <span className="material-symbols-outlined text-fg/40" style={{ fontSize: 18 }}>
         search
       </span>
       <input
@@ -41,7 +41,7 @@ export default function SearchBar({
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search products..."
         autoFocus={autoFocus}
-        className="flex-1 bg-transparent font-mono text-[13px] text-[#e2e2e2] placeholder:text-[#e2e2e2]/30 outline-none"
+        className="flex-1 bg-transparent font-mono text-[13px] text-fg placeholder:text-fg/30 outline-none"
       />
       <button
         type="submit"

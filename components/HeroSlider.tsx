@@ -1,15 +1,25 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { HeroSlide } from "@/lib/site-content";
+import { channels } from "@/lib/theme";
 
-// "#rrggbb" → "rgba(r, g, b, a)" (colors are validated as hex when saved).
-function withAlpha(hex: string, alpha: number) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+// A slide's dark and light colors as CSS variables. Inside a .hero-colors
+// element, --hero-bg / --hero-fg resolve to the pair for the current mode
+// (globals.css), so the server-rendered slider never needs to know the mode.
+function slideVars(s: HeroSlide) {
+  return {
+    "--hero-bg-dark": channels(s.colors.dark.background),
+    "--hero-fg-dark": channels(s.colors.dark.text),
+    "--hero-bg-light": channels(s.colors.light.background),
+    "--hero-fg-light": channels(s.colors.light.text),
+  } as CSSProperties;
 }
+
+const bg = (alpha = 1) => `rgb(var(--hero-bg) / ${alpha})`;
+const fg = (alpha = 1) => `rgb(var(--hero-fg) / ${alpha})`;
 
 export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const [current, setCurrent] = useState(0);
@@ -41,14 +51,17 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const slide = slides[current];
 
   return (
-    <section className="relative overflow-hidden bg-[#0e0e0e]" style={{ minHeight: "88vh" }}>
+    <section
+      className="hero-colors relative overflow-hidden"
+      style={{ ...slideVars(slide), minHeight: "88vh", backgroundColor: bg() }}
+    >
       {/* Per-slide background: solid color + optional full-bleed image */}
       {slides.map((s, i) => (
         <div
           key={s.id}
           aria-hidden
-          className="absolute inset-0 pointer-events-none transition-opacity duration-700"
-          style={{ opacity: i === current ? 1 : 0, backgroundColor: s.backgroundColor }}
+          className="hero-colors absolute inset-0 pointer-events-none transition-opacity duration-700"
+          style={{ ...slideVars(s), opacity: i === current ? 1 : 0, backgroundColor: bg() }}
         >
           {s.background && (
             <>
@@ -57,7 +70,7 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
               <div
                 className="absolute inset-0"
                 style={{
-                  background: `linear-gradient(to right, ${withAlpha(s.backgroundColor, 0.9)}, ${withAlpha(s.backgroundColor, 0.5)} 55%, ${withAlpha(s.backgroundColor, 0.15)})`,
+                  background: `linear-gradient(to right, ${bg(0.9)}, ${bg(0.5)} 55%, ${bg(0.15)})`,
                 }}
               />
             </>
@@ -71,8 +84,8 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
         {slides.map((s, i) => (
           <div
             key={s.id}
-            className="absolute inset-0 transition-opacity duration-700"
-            style={{ opacity: i === current ? 1 : 0 }}
+            className="hero-colors absolute inset-0 transition-opacity duration-700"
+            style={{ ...slideVars(s), opacity: i === current ? 1 : 0 }}
           >
             {s.image && (
               <div className="absolute inset-[7.5%]">
@@ -90,7 +103,7 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(to right, ${s.backgroundColor}, ${withAlpha(s.backgroundColor, 0.4)} 50%, transparent)`,
+                background: `linear-gradient(to right, ${bg()}, ${bg(0.4)} 50%, transparent)`,
               }}
             />
           </div>
@@ -121,8 +134,8 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
 
           {/* Heading */}
           <h1
-            className="font-inter font-black uppercase leading-[0.9] tracking-tight text-[#e2e2e2]"
-            style={{ fontSize: "clamp(3rem, 8vw, 6.5rem)" }}
+            className="font-inter font-black uppercase leading-[0.9] tracking-tight"
+            style={{ fontSize: "clamp(3rem, 8vw, 6.5rem)", color: fg() }}
           >
             {slide.titleWhite}
             {slide.titleWhite && slide.titleRed && <br />}
@@ -132,12 +145,12 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
           {/* Divider */}
           <div className="flex items-center gap-4 my-7">
             <div className="w-12 h-px bg-primary" />
-            <div className="flex-1 h-px bg-[#603e39]/40" />
+            <div className="flex-1 h-px" style={{ backgroundColor: fg(0.15) }} />
           </div>
 
           {/* Body */}
           {slide.description && (
-            <p className="font-mono text-[13px] text-[#ebbbb4]/60 leading-relaxed max-w-md">
+            <p className="font-mono text-[13px] leading-relaxed max-w-md" style={{ color: fg(0.65) }}>
               {slide.description}
             </p>
           )}
@@ -169,16 +182,15 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                   onClick={() => goTo(i)}
                   aria-label={`Go to slide ${i + 1}`}
                   className={`transition-all duration-300 ${
-                    i === current
-                      ? "w-8 h-[3px] bg-primary"
-                      : "w-3 h-[3px] bg-[#603e39]/60 hover:bg-[#603e39]"
+                    i === current ? "w-8 h-[3px] bg-primary" : "w-3 h-[3px] opacity-25 hover:opacity-50"
                   }`}
+                  style={i === current ? undefined : { backgroundColor: fg() }}
                 />
               ))}
             </div>
 
             {/* Counter */}
-            <span className="font-mono text-[10px] text-[#e2e2e2]/20">
+            <span className="font-mono text-[10px]" style={{ color: fg(0.3) }}>
               {String(current + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
             </span>
           </div>
@@ -188,14 +200,16 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
             <button
               onClick={() => goTo((current - 1 + count) % count)}
               aria-label="Previous slide"
-              className="w-10 h-10 border border-[#603e39]/40 flex items-center justify-center text-[#e2e2e2]/40 hover:border-primary hover:text-primary transition-all"
+              className="w-10 h-10 border flex items-center justify-center hover:!border-primary hover:!text-primary transition-all"
+              style={{ borderColor: fg(0.25), color: fg(0.45) }}
             >
               <span className="material-symbols-outlined text-[18px]">chevron_left</span>
             </button>
             <button
               onClick={() => goTo((current + 1) % count)}
               aria-label="Next slide"
-              className="w-10 h-10 border border-[#603e39]/40 flex items-center justify-center text-[#e2e2e2]/40 hover:border-primary hover:text-primary transition-all"
+              className="w-10 h-10 border flex items-center justify-center hover:!border-primary hover:!text-primary transition-all"
+              style={{ borderColor: fg(0.25), color: fg(0.45) }}
             >
               <span className="material-symbols-outlined text-[18px]">chevron_right</span>
             </button>

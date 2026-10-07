@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useSiteContent } from "@/components/SiteContentProvider";
 import SearchBar from "@/components/SearchBar";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Header() {
   const { count } = useCart();
@@ -15,7 +16,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-[#131313]/95 backdrop-blur-md border-b border-[#603e39]/40">
+    <header className="sticky top-0 z-50 bg-header/95 backdrop-blur-md border-b border-line/40">
       <div className="max-w-[1440px] mx-auto px-4 md:px-16 h-16 flex items-center gap-6">
         {/* Logo */}
         <Link
@@ -28,9 +29,9 @@ export default function Header() {
             </span>
           ) : (
             <>
-              <span className="text-[#e2e2e2]">xzvl</span>
+              <span className="text-header-fg">xzvl</span>
               <span className="text-primary">.</span>
-              <span className="text-[#e2e2e2]">store</span>
+              <span className="text-header-fg">store</span>
             </>
           )}
         </Link>
@@ -41,7 +42,7 @@ export default function Header() {
             <Link
               key={`${link.href}-${i}`}
               href={link.href}
-              className="font-mono text-[11px] tracking-[0.12em] uppercase text-[#e2e2e2]/55 hover:text-primary transition-colors"
+              className="font-mono text-[11px] tracking-[0.12em] uppercase text-header-fg/55 hover:text-primary transition-colors"
             >
               {link.label}
             </Link>
@@ -50,9 +51,10 @@ export default function Header() {
 
         {/* Right icons */}
         <div className="flex items-center gap-3 ml-auto md:ml-0">
+          <ThemeToggle className="text-header-fg/55 hover:text-primary transition-colors" />
           <Link
             href="/account"
-            className="text-[#e2e2e2]/55 hover:text-primary transition-colors"
+            className="text-header-fg/55 hover:text-primary transition-colors"
             aria-label="Account"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 22 }}>
@@ -61,7 +63,7 @@ export default function Header() {
           </Link>
           <button
             onClick={() => setSearchOpen((v) => !v)}
-            className="text-[#e2e2e2]/55 hover:text-primary transition-colors"
+            className="text-header-fg/55 hover:text-primary transition-colors"
             aria-label="Search"
             type="button"
           >
@@ -71,7 +73,7 @@ export default function Header() {
           </button>
           <Link
             href="/cart"
-            className="relative text-[#e2e2e2]/55 hover:text-primary transition-colors"
+            className="relative text-header-fg/55 hover:text-primary transition-colors"
             aria-label="Cart"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 22 }}>
@@ -84,7 +86,7 @@ export default function Header() {
             )}
           </Link>
           <button
-            className="md:hidden text-[#e2e2e2]/55 hover:text-primary transition-colors"
+            className="md:hidden text-header-fg/55 hover:text-primary transition-colors"
             onClick={() => setOpen((v) => !v)}
             aria-label="Toggle menu"
           >
@@ -97,7 +99,7 @@ export default function Header() {
 
       {/* Search bar */}
       {searchOpen && (
-        <div className="border-b border-[#603e39]/40 bg-[#131313]">
+        <div className="border-b border-line/40 bg-header">
           <div className="max-w-[1440px] mx-auto px-4 md:px-16 py-3">
             <SearchBar autoFocus onSubmit={() => setSearchOpen(false)} />
           </div>
@@ -106,14 +108,14 @@ export default function Header() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-[#1a1a1a] border-b border-[#603e39]/40">
+        <div className="md:hidden bg-header border-b border-line/40">
           <nav className="flex flex-col px-6 py-4 gap-4">
             {navLinks.map((link, i) => (
               <Link
                 key={`${link.href}-${i}`}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="font-mono text-[12px] tracking-[0.12em] uppercase text-[#e2e2e2]/60 hover:text-primary transition-colors py-1 border-b border-[#603e39]/20 last:border-0"
+                className="font-mono text-[12px] tracking-[0.12em] uppercase text-header-fg/60 hover:text-primary transition-colors py-1 border-b border-line/20 last:border-0"
               >
                 {link.label}
               </Link>

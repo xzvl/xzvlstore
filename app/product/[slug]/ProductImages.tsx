@@ -19,7 +19,7 @@ export default function ProductImages({ images, name }: { images: string[]; name
   return (
     <div className="flex flex-col gap-3">
       {/* Main image */}
-      <div className="relative aspect-square bg-[#1a1a1a] border border-[#603e39]/30 p-6 overflow-hidden">
+      <div className="relative aspect-square bg-panel border border-line/30 p-6 overflow-hidden">
         <div className="relative aspect-square">
           <Image
             src={sizedImageUrl(main, "large") ?? main}
@@ -40,7 +40,7 @@ export default function ProductImages({ images, name }: { images: string[]; name
           <button
             type="button"
             onClick={() => goTo(selected - 1)}
-            className="shrink-0 w-8 h-8 flex items-center justify-center text-[#e2e2e2]/50 border border-[#603e39]/40 hover:text-primary hover:border-primary transition-colors"
+            className="shrink-0 w-8 h-8 flex items-center justify-center text-fg/50 border border-line/40 hover:text-primary hover:border-primary transition-colors"
             aria-label="Previous image"
           >
             <span className="material-symbols-outlined text-[18px]">chevron_left</span>
@@ -55,8 +55,8 @@ export default function ProductImages({ images, name }: { images: string[]; name
                 type="button"
                 onClick={() => goTo(i)}
                 className={`shrink-0 w-24 h-24 border overflow-hidden transition-colors ${
-                  i === selected ? "border-primary" : "border-[#603e39]/40 hover:border-[#ebbbb4]/40"
-                } bg-[#1a1a1a]`}
+                  i === selected ? "border-primary" : "border-line/40 hover:border-accent/40"
+                } bg-panel`}
               >
                 <img
                   src={sizedImageUrl(img, "thumbnail") ?? img}
@@ -72,7 +72,7 @@ export default function ProductImages({ images, name }: { images: string[]; name
           <button
             type="button"
             onClick={() => goTo(selected + 1)}
-            className="shrink-0 w-8 h-8 flex items-center justify-center text-[#e2e2e2]/50 border border-[#603e39]/40 hover:text-primary hover:border-primary transition-colors"
+            className="shrink-0 w-8 h-8 flex items-center justify-center text-fg/50 border border-line/40 hover:text-primary hover:border-primary transition-colors"
             aria-label="Next image"
           >
             <span className="material-symbols-outlined text-[18px]">chevron_right</span>

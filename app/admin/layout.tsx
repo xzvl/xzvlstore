@@ -9,5 +9,11 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <AdminShell>{children}</AdminShell>;
+  // .admin-theme pins the built-in dark palette, so the storefront's light mode
+  // and custom Colors never restyle the admin panel.
+  return (
+    <div className="admin-theme min-h-screen bg-[#0e0e0e] text-[#e2e2e2]">
+      <AdminShell>{children}</AdminShell>
+    </div>
+  );
 }

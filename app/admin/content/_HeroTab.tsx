@@ -1,11 +1,47 @@
 "use client";
 
 import { useState } from "react";
-import { isHexColor, type HeroContent, type HeroSlide } from "@/lib/site-content";
+import {
+  THEME_MODES,
+  isHexColor,
+  type HeroContent,
+  type HeroSlide,
+  type HeroSlideColors,
+  type ThemeMode,
+} from "@/lib/site-content";
 import { useSectionEditor } from "@/components/admin/useSectionEditor";
 import { CARD, CARD_TITLE, INPUT, LABEL } from "@/components/admin/formKit";
 import ImageUploader from "@/components/admin/ImageUploader";
 import SaveBar from "@/components/admin/SaveBar";
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className={LABEL}>{label}</label>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={isHexColor(value) ? value : "#000000"}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-11 h-11 p-1 bg-[#1f1f1f] border border-[#603e39] cursor-pointer flex-shrink-0"
+          aria-label={`${label} picker`}
+        />
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value.trim())}
+          placeholder="#0e0e0e"
+          maxLength={7}
+          className={`${INPUT} ${isHexColor(value) ? "" : "!border-primary"}`}
+        />
+      </div>
+    </div>
+  );
+}
+
+const MODE_META: Record<ThemeMode, { title: string; icon: string }> = {
+  dark: { title: "Dark Mode", icon: "dark_mode" },
+  light: { title: "Light Mode", icon: "light_mode" },
+};
 
 export default function HeroTab({
   initial,
@@ -20,6 +56,8 @@ export default function HeroTab({
   const slide = value.slides[active];
   const update = (patch: Partial<HeroSlide>) =>
     setValue((v) => ({ ...v, slides: v.slides.map((s, i) => (i === active ? { ...s, ...patch } : s)) }));
+  const updateColor = (mode: ThemeMode, patch: Partial<HeroSlideColors>) =>
+    update({ colors: { ...slide.colors, [mode]: { ...slide.colors[mode], ...patch } } });
 
   return (
     <div className="space-y-6">
@@ -54,7 +92,7 @@ export default function HeroTab({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={LABEL}>Title — white text</label>
+            <label className={LABEL}>Title — main text</label>
             <input value={slide.titleWhite} onChange={(e) => update({ titleWhite: e.target.value })} className={INPUT} />
           </div>
           <div>
@@ -111,24 +149,45 @@ export default function HeroTab({
             onChange={(background) => update({ background })}
           />
         </div>
-        <div className="max-w-xs">
-          <label className={LABEL}>Background color</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={isHexColor(slide.backgroundColor) ? slide.backgroundColor : "#000000"}
-              onChange={(e) => update({ backgroundColor: e.target.value })}
-              className="w-11 h-11 p-1 bg-[#1f1f1f] border border-[#603e39] cursor-pointer flex-shrink-0"
-              aria-label="Background color picker"
-            />
-            <input
-              value={slide.backgroundColor}
-              onChange={(e) => update({ backgroundColor: e.target.value })}
-              placeholder="#0e0e0e"
-              maxLength={7}
-              className={INPUT}
-            />
-          </div>
+        <p className="font-mono text-[11px] text-[#ebbbb4]/40">
+          Background color fills the slide and fades the images into it. Text color is used for the main title line, the
+          description and the slide controls. The red title line and button always use the Primary color from the Colors tab.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {THEME_MODES.map((mode) => {
+            const c = slide.colors[mode];
+            return (
+              <div key={mode} className="space-y-3">
+                <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.15em] uppercase text-[#e2e2e2]">
+                  <span className="material-symbols-outlined text-[16px]">{MODE_META[mode].icon}</span>
+                  {MODE_META[mode].title}
+                </p>
+                <ColorField label="Background color" value={c.background} onChange={(background) => updateColor(mode, { background })} />
+                <ColorField label="Text color" value={c.text} onChange={(text) => updateColor(mode, { text })} />
+                {/* Preview */}
+                <div
+                  className="border border-[#603e39]/40 px-4 py-3"
+                  style={{ backgroundColor: isHexColor(c.background) ? c.background : undefined }}
+                >
+                  <p
+                    className="font-inter font-black uppercase text-[16px] leading-tight"
+                    style={{ color: isHexColor(c.text) ? c.text : undefined }}
+                  >
+                    {slide.titleWhite || "Title"}
+                  </p>
+                  <p className="font-inter font-black uppercase text-[16px] leading-tight text-primary">
+                    {slide.titleRed}
+                  </p>
+                  <p
+                    className="font-mono text-[10px] mt-1 line-clamp-2"
+                    style={{ color: isHexColor(c.text) ? c.text : undefined, opacity: 0.65 }}
+                  >
+                    {slide.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

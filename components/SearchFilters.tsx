@@ -68,7 +68,7 @@ export default function SearchFilters({
   return (
     <aside className="w-full lg:w-56 shrink-0 space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="font-inter font-bold text-[13px] uppercase text-[#e2e2e2]">Filters</h2>
+        <h2 className="font-inter font-bold text-[13px] uppercase text-fg">Filters</h2>
         {hasActiveFilters && (
           <button
             type="button"
@@ -82,20 +82,20 @@ export default function SearchFilters({
 
       {categories.length > 0 && (
         <div>
-          <h3 className="font-mono text-[11px] tracking-[0.2em] uppercase text-[#e2e2e2]/70 mb-3">
+          <h3 className="font-mono text-[11px] tracking-[0.2em] uppercase text-fg/70 mb-3">
             Category
           </h3>
           <div className="flex flex-col gap-2">
             {categories.map((c) => (
               <label
                 key={c.id}
-                className="flex items-center gap-2 font-mono text-[12px] text-[#e2e2e2]/60 hover:text-[#e2e2e2] cursor-pointer"
+                className="flex items-center gap-2 font-mono text-[12px] text-fg/60 hover:text-fg cursor-pointer"
               >
                 <input
                   type="checkbox"
                   checked={selectedCategories.includes(c.id)}
                   onChange={() => toggleCategory(c.id)}
-                  style={{ accentColor: "#ed0d11" }}
+                  style={{ accentColor: "rgb(var(--c-primary))" }}
                   className="w-3.5 h-3.5"
                 />
                 {c.name}
@@ -107,20 +107,20 @@ export default function SearchFilters({
 
       {brands.length > 0 && (
         <div>
-          <h3 className="font-mono text-[11px] tracking-[0.2em] uppercase text-[#e2e2e2]/70 mb-3">
+          <h3 className="font-mono text-[11px] tracking-[0.2em] uppercase text-fg/70 mb-3">
             Brands
           </h3>
           <div className="flex flex-col gap-2">
             {brands.map((b) => (
               <label
                 key={b.id}
-                className="flex items-center gap-2 font-mono text-[12px] text-[#e2e2e2]/60 hover:text-[#e2e2e2] cursor-pointer"
+                className="flex items-center gap-2 font-mono text-[12px] text-fg/60 hover:text-fg cursor-pointer"
               >
                 <input
                   type="checkbox"
                   checked={selectedBrands.includes(b.id)}
                   onChange={() => toggleBrand(b.id)}
-                  style={{ accentColor: "#ed0d11" }}
+                  style={{ accentColor: "rgb(var(--c-primary))" }}
                   className="w-3.5 h-3.5"
                 />
                 {b.name}
@@ -131,7 +131,7 @@ export default function SearchFilters({
       )}
 
       <div>
-        <h3 className="font-mono text-[11px] tracking-[0.2em] uppercase text-[#e2e2e2]/70 mb-3">
+        <h3 className="font-mono text-[11px] tracking-[0.2em] uppercase text-fg/70 mb-3">
           Price Range
         </h3>
         <form onSubmit={handlePriceSubmit} className="flex flex-col gap-2">
@@ -142,21 +142,21 @@ export default function SearchFilters({
               min={0}
               defaultValue={minPrice}
               placeholder="Min"
-              className="w-full bg-[#1a1a1a] border border-[#603e39]/40 px-2 py-1.5 font-mono text-[12px] text-[#e2e2e2] outline-none focus:border-primary"
+              className="w-full bg-panel border border-line/40 px-2 py-1.5 font-mono text-[12px] text-fg outline-none focus:border-primary"
             />
-            <span className="text-[#e2e2e2]/30">-</span>
+            <span className="text-fg/30">-</span>
             <input
               name="maxPrice"
               type="number"
               min={0}
               defaultValue={maxPrice}
               placeholder="Max"
-              className="w-full bg-[#1a1a1a] border border-[#603e39]/40 px-2 py-1.5 font-mono text-[12px] text-[#e2e2e2] outline-none focus:border-primary"
+              className="w-full bg-panel border border-line/40 px-2 py-1.5 font-mono text-[12px] text-fg outline-none focus:border-primary"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-1.5 border border-[#603e39]/50 font-mono text-[10px] tracking-widest uppercase text-[#e2e2e2]/60 hover:border-primary hover:text-primary transition-all"
+            className="w-full py-1.5 border border-line/50 font-mono text-[10px] tracking-widest uppercase text-fg/60 hover:border-primary hover:text-primary transition-all"
           >
             Apply
           </button>

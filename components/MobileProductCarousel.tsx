@@ -55,7 +55,7 @@ export default function MobileProductCarousel({ products }: { products: StorePro
             className={`transition-all duration-300 ${
               i === activeIdx
                 ? "w-8 h-[3px] bg-primary"
-                : "w-3 h-[3px] bg-[#603e39]/60 hover:bg-[#603e39]"
+                : "w-3 h-[3px] bg-line/60 hover:bg-line"
             }`}
           />
         ))}

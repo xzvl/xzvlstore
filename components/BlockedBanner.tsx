@@ -15,7 +15,7 @@ export default function BlockedBanner({ className = "mb-8" }: { className?: stri
         <span className="material-symbols-outlined text-red-400 text-[20px] flex-shrink-0 mt-0.5">gpp_bad</span>
         <div>
           <p className="font-mono text-[12px] text-red-400 tracking-wide uppercase">Account Blocked</p>
-          <p className="font-mono text-[11px] text-[#ebbbb4]/60 mt-1 leading-relaxed">
+          <p className="font-mono text-[11px] text-accent/60 mt-1 leading-relaxed">
             Your account has been blocked and cannot add items to cart or place pre-orders.
           </p>
         </div>

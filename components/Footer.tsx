@@ -42,7 +42,7 @@ export default function Footer() {
   const { branding, footer } = useSiteContent();
 
   return (
-    <footer className="bg-[#0e0e0e] border-t border-[#603e39]/30 mt-16">
+    <footer className="bg-deep border-t border-line/30 mt-16">
       <div className="max-w-[1440px] mx-auto px-4 md:px-16 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {/* Brand */}
@@ -54,13 +54,13 @@ export default function Footer() {
                 </span>
               ) : (
                 <>
-                  <span className="text-[#e2e2e2]">xzvl</span>
+                  <span className="text-fg">xzvl</span>
                   <span className="text-primary">.</span>
-                  <span className="text-[#e2e2e2]">store</span>
+                  <span className="text-fg">store</span>
                 </>
               )}
             </p>
-            <p className="font-mono text-[11px] text-[#ebbbb4]/50 leading-relaxed max-w-xs whitespace-pre-line">
+            <p className="font-mono text-[11px] text-accent/50 leading-relaxed max-w-xs whitespace-pre-line">
               {footer.description}
             </p>
           </div>
@@ -75,7 +75,7 @@ export default function Footer() {
                 <li key={`${link.href}-${i}`}>
                   <Link
                     href={link.href}
-                    className="font-mono text-[12px] text-[#e2e2e2]/50 hover:text-primary transition-colors tracking-wide"
+                    className="font-mono text-[12px] text-fg/50 hover:text-primary transition-colors tracking-wide"
                   >
                     {link.label}
                   </Link>
@@ -97,28 +97,28 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={SOCIAL_LABELS[s.platform]}
-                  className="w-9 h-9 border border-[#603e39]/50 flex items-center justify-center text-[#e2e2e2]/40 hover:text-primary hover:border-primary transition-all"
+                  className="w-9 h-9 border border-line/50 flex items-center justify-center text-fg/40 hover:text-primary hover:border-primary transition-all"
                 >
                   {SOCIAL_ICONS[s.platform]}
                 </a>
               ))}
             </div>
             {footer.socialNote && (
-              <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-6 leading-relaxed">
+              <p className="font-mono text-[10px] text-accent/30 mt-6 leading-relaxed">
                 {footer.socialNote}
               </p>
             )}
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-[#603e39]/20 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="font-mono text-[10px] tracking-widest text-[#e2e2e2]/20 uppercase">
+        <div className="mt-10 pt-6 border-t border-line/20 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="font-mono text-[10px] tracking-widest text-fg/20 uppercase">
             {footer.bottomText}
           </p>
           {footer.bottomTagline && (
             <div className="flex gap-1 items-center">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <p className="font-mono text-[10px] text-[#e2e2e2]/15 uppercase tracking-widest">
+              <p className="font-mono text-[10px] text-fg/15 uppercase tracking-widest">
                 {footer.bottomTagline}
               </p>
             </div>

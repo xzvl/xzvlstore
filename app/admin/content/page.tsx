@@ -10,6 +10,7 @@ import FooterTab from "./_FooterTab";
 import ImageOptimizationTab from "./_ImageOptimizationTab";
 import PosTab from "./_PosTab";
 import MaintenanceTab from "./_MaintenanceTab";
+import ColorsTab from "./_ColorsTab";
 
 const TABS = [
   { key: "branding", label: "Branding", icon: "image" },
@@ -18,6 +19,7 @@ const TABS = [
   { key: "hero", label: "Hero", icon: "slideshow" },
   { key: "footer", label: "Footer", icon: "vertical_align_bottom" },
   { key: "images", label: "Images", icon: "photo_library" },
+  { key: "colors", label: "Colors", icon: "palette" },
   { key: "maintenance", label: "Maintenance", icon: "construction" },
 ] as const;
 
@@ -101,7 +103,7 @@ export default function AdminContentPage() {
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">ADMIN // SITE CONTENT</p>
           <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Site Content</h1>
           <p className="font-mono text-[11px] text-[#ebbbb4]/40 mt-1">
-            Edit the storefront&apos;s logo, menus, homepage hero and footer. Saving refreshes the live pages automatically.
+            Edit the storefront&apos;s logo, menus, homepage hero, footer and colors. Saving refreshes the live pages automatically.
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -153,6 +155,9 @@ export default function AdminContentPage() {
             <PosTab initial={content.pos} onSaved={(pos) => setContent((c) => c && { ...c, pos })} />
           )}
           {active === "images" && <ImageOptimizationTab />}
+          {active === "colors" && (
+            <ColorsTab initial={content.colors} onSaved={(colors) => setContent((c) => c && { ...c, colors })} />
+          )}
           {active === "maintenance" && (
             <MaintenanceTab
               initial={content.maintenance}

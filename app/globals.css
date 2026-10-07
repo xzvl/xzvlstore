@@ -2,18 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* Theme colors as "r g b" channels (see lib/theme.ts). These are the built-in
+   dark palette; the root layout overrides them per mode with the palettes from
+   /admin/content → Colors. The admin panel always uses the built-in dark one. */
+:root,
+.admin-theme {
   color-scheme: dark;
+  --c-primary: 237 13 17;
+  --c-accent: 235 187 180;
+  --c-fg: 226 226 226;
+  --c-canvas: 19 19 19;
+  --c-panel: 26 26 26;
+  --c-deep: 14 14 14;
+  --c-line: 96 62 57;
+  --c-header: 19 19 19;
+  --c-header-fg: 226 226 226;
+}
+
+/* Hero slides: each slide sets --hero-{bg,fg}-{dark,light} inline (see
+   components/HeroSlider.tsx); this picks the pair for the active mode. */
+.hero-colors {
+  --hero-bg: var(--hero-bg-dark);
+  --hero-fg: var(--hero-fg-dark);
+}
+:root[data-theme="light"] .hero-colors {
+  --hero-bg: var(--hero-bg-light);
+  --hero-fg: var(--hero-fg-light);
 }
 
 html {
-  background-color: #131313;
+  background-color: rgb(var(--c-canvas));
   overflow-x: clip;
 }
 
 body {
-  background-color: #131313;
-  color: #e2e2e2;
+  background-color: rgb(var(--c-canvas));
+  color: rgb(var(--c-fg));
   font-family: var(--font-inter), Inter, sans-serif;
 }
 
@@ -59,7 +83,7 @@ body {
 }
 
 .glitch-hover:hover {
-  box-shadow: 0 0 0 1px #ed0d11;
+  box-shadow: 0 0 0 1px rgb(var(--c-primary));
 }
 
 .scrollbar-none {
@@ -81,15 +105,15 @@ body {
   width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #ed0d11;
+  background: rgb(var(--c-primary));
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
 select option {
-  background-color: #1f1f1f;
-  color: #e2e2e2;
+  background-color: rgb(var(--c-panel));
+  color: rgb(var(--c-fg));
 }
 
 input[type="number"]::-webkit-inner-spin-button,

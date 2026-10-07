@@ -108,14 +108,14 @@ function SectionHeader({
     <div className="flex items-end justify-between mb-8">
       <div>
         <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-primary mb-1.5">{tag}</p>
-        <h2 className="font-inter font-black text-[28px] md:text-[36px] uppercase leading-none tracking-tight text-[#e2e2e2]">
+        <h2 className="font-inter font-black text-[28px] md:text-[36px] uppercase leading-none tracking-tight text-fg">
           {title}
         </h2>
       </div>
       {href && (
         <Link
           href={href}
-          className="hidden md:flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] uppercase text-[#e2e2e2]/50 hover:text-primary transition-colors shrink-0"
+          className="hidden md:flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] uppercase text-fg/50 hover:text-primary transition-colors shrink-0"
         >
           {linkLabel}
           <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -155,7 +155,7 @@ export default async function HomePage() {
   return (
     <>
       <Header />
-      <main className="bg-[#131313]">
+      <main className="bg-canvas">
 
         {/* ── Hero ── */}
         <HeroSlider slides={siteContent.hero.slides} />
@@ -172,7 +172,7 @@ export default async function HomePage() {
             <div className="mt-6 md:hidden text-center">
               <Link
                 href="/collection/new-releases"
-                className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2]/50 hover:text-primary transition-colors"
+                className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-fg/50 hover:text-primary transition-colors"
               >
                 View All
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -183,7 +183,7 @@ export default async function HomePage() {
 
         {/* ── Pre-Order ── */}
         {preOrders.length > 0 && (
-          <section className="py-16 border-t border-[#603e39]/20 bg-[#0e0e0e]">
+          <section className="py-16 border-t border-line/20 bg-deep">
             <div className="max-w-[1440px] mx-auto px-4 md:px-16">
               <SectionHeader
                 tag="// Available Now"
@@ -195,7 +195,7 @@ export default async function HomePage() {
               <div className="mt-6 md:hidden text-center">
                 <Link
                   href="/pre-order"
-                  className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2]/50 hover:text-primary transition-colors"
+                  className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-fg/50 hover:text-primary transition-colors"
                 >
                   Pre-Order Form
                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -206,19 +206,19 @@ export default async function HomePage() {
         )}
 
         {/* ── Shop by Series ── */}
-        <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-16 border-t border-[#603e39]/20">
+        <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-16 border-t border-line/20">
           <SectionHeader tag="// Browse Series" title="Shop by Series" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { slug: "bx", label: "BX Series", sub: "Basic Line", color: "from-[#0369a1]/20", image: "/assets/bx.webp" },
               { slug: "ux", label: "UX Series", sub: "Unique Line", color: "from-[#ca8a04]/20", image: "/assets/ux.webp" },
-              { slug: "cx", label: "CX Series", sub: "Custom Line", color: "from-[#ed0d11]/20", image: "/assets/cx.webp" },
+              { slug: "cx", label: "CX Series", sub: "Custom Line", color: "from-primary/20", image: "/assets/cx.webp" },
               { slug: "collabs", label: "Collabs", sub: "Special Editions", color: "from-[#7c3aed]/20", image: "/assets/collabs.webp" },
             ].map((s) => (
               <Link
                 key={s.slug}
                 href={`/collection/${s.slug}`}
-                className={`group relative overflow-hidden border border-[#603e39]/30 hover:border-primary/50 transition-all bg-gradient-to-b ${s.color} to-transparent`}
+                className={`group relative overflow-hidden border border-line/30 hover:border-primary/50 transition-all bg-gradient-to-b ${s.color} to-transparent`}
                 style={{ aspectRatio: "3/4" }}
               >
                 <div className="absolute inset-0 cyber-grid opacity-30" />
@@ -229,10 +229,10 @@ export default async function HomePage() {
                 </div>
 
                 <div className="relative p-5 flex flex-col justify-end h-full">
-                  <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-[#ebbbb4]/40 mb-1">
+                  <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-accent/40 mb-1">
                     {s.sub}
                   </p>
-                  <h3 className="font-inter font-black text-[28px] md:text-[36px] uppercase leading-none text-[#e2e2e2] group-hover:text-primary transition-colors">
+                  <h3 className="font-inter font-black text-[28px] md:text-[36px] uppercase leading-none text-fg group-hover:text-primary transition-colors">
                     {s.label}
                   </h3>
                   <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -251,7 +251,7 @@ export default async function HomePage() {
 
         {/* ── Sneak Peek ── */}
         {sneakPeeks.length > 0 && (
-          <section className="py-16 border-t border-[#603e39]/20 bg-[#0e0e0e]">
+          <section className="py-16 border-t border-line/20 bg-deep">
             <div className="max-w-[1440px] mx-auto px-4 md:px-16">
               <SectionHeader
                 tag="// Coming Soon"
@@ -263,7 +263,7 @@ export default async function HomePage() {
               <div className="mt-6 md:hidden text-center">
                 <Link
                   href="/collection/sneak-peek"
-                  className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2]/50 hover:text-primary transition-colors"
+                  className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-fg/50 hover:text-primary transition-colors"
                 >
                   View All
                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -274,7 +274,7 @@ export default async function HomePage() {
         )}
 
         {/* ── Shop by Brand ── */}
-        <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-16 border-t border-[#603e39]/20">
+        <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-16 border-t border-line/20">
           <SectionHeader tag="// Official Brands" title="Shop by Brand" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
@@ -296,25 +296,25 @@ export default async function HomePage() {
               <Link
                 key={brand.slug}
                 href={`/collection/${brand.slug}`}
-                className="group relative overflow-hidden border border-[#603e39]/30 hover:border-primary/50 transition-all bg-[#1a1a1a] cyber-grid"
+                className="group relative overflow-hidden border border-line/30 hover:border-primary/50 transition-all bg-panel cyber-grid"
                 style={{ minHeight: 200 }}
               >
                 <div className="relative p-8 flex flex-col justify-between h-full" style={{ minHeight: 200 }}>
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#ebbbb4]/40 mb-2">
+                      <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-accent/40 mb-2">
                         {brand.sub}
                       </p>
-                      <h3 className="font-inter font-black text-[32px] md:text-[42px] uppercase leading-none text-[#e2e2e2] group-hover:text-primary transition-colors">
+                      <h3 className="font-inter font-black text-[32px] md:text-[42px] uppercase leading-none text-fg group-hover:text-primary transition-colors">
                         {brand.name}
                       </h3>
                     </div>
-                    <span className="font-inter font-black text-[60px] leading-none text-[#e2e2e2]/5 select-none">
+                    <span className="font-inter font-black text-[60px] leading-none text-fg/5 select-none">
                       {brand.tag}
                     </span>
                   </div>
                   <div className="flex items-end justify-between mt-4">
-                    <p className="font-mono text-[11px] text-[#ebbbb4]/40 max-w-xs">{brand.desc}</p>
+                    <p className="font-mono text-[11px] text-accent/40 max-w-xs">{brand.desc}</p>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-4">
                       <span className="font-mono text-[10px] tracking-widest uppercase text-primary">Shop</span>
                       <span className="material-symbols-outlined text-[14px] text-primary">arrow_forward</span>
@@ -328,7 +328,7 @@ export default async function HomePage() {
 
         {/* ── Takara Tomy ── */}
         {ttProducts.length > 0 && (
-          <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-16 border-t border-[#603e39]/20">
+          <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-16 border-t border-line/20">
             <SectionHeader
               tag="// Official TT"
               title="Takara Tomy"
@@ -338,7 +338,7 @@ export default async function HomePage() {
             <div className="mt-6 md:hidden text-center">
               <Link
                 href="/collection/takara-tomy"
-                className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2]/50 hover:text-primary transition-colors"
+                className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-fg/50 hover:text-primary transition-colors"
               >
                 View All
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -349,7 +349,7 @@ export default async function HomePage() {
 
         {/* ── Hasbro ── */}
         {hasbroProducts.length > 0 && (
-          <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-16 border-t border-[#603e39]/20">
+          <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-16 border-t border-line/20">
             <SectionHeader
               tag="// Official HB"
               title="Hasbro"
@@ -359,7 +359,7 @@ export default async function HomePage() {
             <div className="mt-6 md:hidden text-center">
               <Link
                 href="/collection/hasbro"
-                className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-[#e2e2e2]/50 hover:text-primary transition-colors"
+                className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-fg/50 hover:text-primary transition-colors"
               >
                 View All
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -369,20 +369,20 @@ export default async function HomePage() {
         )}
 
         {/* ── CTA ── */}
-        <section className="py-20 border-t border-[#603e39]/20 bg-[#0e0e0e] cyber-grid">
+        <section className="py-20 border-t border-line/20 bg-deep cyber-grid">
           <div className="max-w-[1440px] mx-auto px-4 md:px-16 text-center">
             <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-4">
               // Don&apos;t Miss Out
             </p>
             <h2
-              className="font-inter font-black uppercase leading-tight text-[#e2e2e2] mb-6"
+              className="font-inter font-black uppercase leading-tight text-fg mb-6"
               style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}
             >
               Secure Your Blade
               <br />
               <span className="text-primary">Before It&apos;s Gone</span>
             </h2>
-            <p className="font-mono text-[13px] text-[#ebbbb4]/50 max-w-md mx-auto mb-8 leading-relaxed">
+            <p className="font-mono text-[13px] text-accent/50 max-w-md mx-auto mb-8 leading-relaxed">
               Pre-order the latest Beyblade releases and get them delivered
               anywhere in the Philippines. Limited stocks only.
             </p>
@@ -396,7 +396,7 @@ export default async function HomePage() {
               </Link>
               <Link
                 href="/collection/all"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-[#603e39]/60 text-[#e2e2e2]/60 font-mono text-[11px] tracking-[0.2em] uppercase hover:border-primary hover:text-primary transition-all"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-line/60 text-fg/60 font-mono text-[11px] tracking-[0.2em] uppercase hover:border-primary hover:text-primary transition-all"
               >
                 Browse Catalog
               </Link>

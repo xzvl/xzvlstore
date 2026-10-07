@@ -19,17 +19,17 @@ export default function CartPage() {
   return (
     <>
       <Header />
-      <main className="bg-[#131313] min-h-screen">
+      <main className="bg-canvas min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 md:px-16 py-12">
           {/* Page title */}
           <div className="mb-10">
             <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-primary mb-1.5">
               // Shopping Cart
             </p>
-            <h1 className="font-inter font-black text-[32px] md:text-[40px] uppercase leading-none text-[#e2e2e2]">
+            <h1 className="font-inter font-black text-[32px] md:text-[40px] uppercase leading-none text-fg">
               Your Cart
               {count > 0 && (
-                <span className="text-[#ebbbb4]/30 text-[0.6em] ml-4">
+                <span className="text-accent/30 text-[0.6em] ml-4">
                   ({count} {count === 1 ? "item" : "items"})
                 </span>
               )}
@@ -70,13 +70,13 @@ export default function CartPage() {
 function EmptyCart() {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
-      <span className="material-symbols-outlined text-[64px] text-[#603e39]/40 mb-6">
+      <span className="material-symbols-outlined text-[64px] text-line/40 mb-6">
         shopping_cart
       </span>
-      <p className="font-inter font-bold text-[20px] text-[#e2e2e2]/60 mb-2 uppercase">
+      <p className="font-inter font-bold text-[20px] text-fg/60 mb-2 uppercase">
         Your cart is empty
       </p>
-      <p className="font-mono text-[12px] text-[#ebbbb4]/30 mb-8">
+      <p className="font-mono text-[12px] text-accent/30 mb-8">
         Add some products to get started.
       </p>
       <Link
@@ -119,10 +119,10 @@ function CartItem({
   }
 
   return (
-    <div className="flex gap-4 bg-[#1a1a1a] border border-[#603e39]/25 p-4">
+    <div className="flex gap-4 bg-panel border border-line/25 p-4">
       {/* Image */}
       <Link href={`/product/${item.slug}`} className="shrink-0">
-        <div className="relative w-20 h-20 bg-[#131313] border border-[#603e39]/20 overflow-hidden">
+        <div className="relative w-20 h-20 bg-canvas border border-line/20 overflow-hidden">
           <Image
             src={item.image}
             alt={item.name}
@@ -137,7 +137,7 @@ function CartItem({
       <div className="flex-1 min-w-0 flex flex-col justify-between">
         <div>
           <Link href={`/product/${item.slug}`}>
-            <h3 className="font-inter font-bold text-[13px] text-[#e2e2e2] leading-snug hover:text-primary transition-colors line-clamp-2">
+            <h3 className="font-inter font-bold text-[13px] text-fg leading-snug hover:text-primary transition-colors line-clamp-2">
               {item.name}
             </h3>
           </Link>
@@ -146,7 +146,7 @@ function CartItem({
               ₱{unitPrice.toLocaleString()}
             </span>
             {item.sale_price && (
-              <span className="font-mono text-[10px] text-[#e2e2e2]/25 line-through">
+              <span className="font-mono text-[10px] text-fg/25 line-through">
                 ₱{item.price.toLocaleString()}
               </span>
             )}
@@ -156,27 +156,27 @@ function CartItem({
         {/* Controls */}
         <div className="flex flex-col gap-1 mt-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center border border-[#603e39]/40">
+            <div className="flex items-center border border-line/40">
               <button
                 onClick={() => onQtyChange(item.qty - 1)}
-                className="w-8 h-8 flex items-center justify-center text-[#e2e2e2]/40 hover:text-primary transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-fg/40 hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[16px]">remove</span>
               </button>
-              <span className="w-8 text-center font-mono text-[13px] text-[#e2e2e2]">
+              <span className="w-8 text-center font-mono text-[13px] text-fg">
                 {item.qty}
               </span>
               <button
                 onClick={handleIncrement}
                 disabled={atMax}
-                className="w-8 h-8 flex items-center justify-center text-[#e2e2e2]/40 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-8 h-8 flex items-center justify-center text-fg/40 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <span className="material-symbols-outlined text-[16px]">add</span>
               </button>
             </div>
             <button
               onClick={onRemove}
-              className="font-mono text-[10px] tracking-widest uppercase text-[#e2e2e2]/25 hover:text-primary transition-colors"
+              className="font-mono text-[10px] tracking-widest uppercase text-fg/25 hover:text-primary transition-colors"
             >
               Remove
             </button>
@@ -189,7 +189,7 @@ function CartItem({
 
       {/* Subtotal */}
       <div className="shrink-0 text-right flex flex-col justify-between">
-        <span className="font-inter font-black text-[16px] text-[#e2e2e2]">
+        <span className="font-inter font-black text-[16px] text-fg">
           ₱{subtotal.toLocaleString()}
         </span>
       </div>
@@ -200,26 +200,26 @@ function CartItem({
 function OrderSummary({ total, count }: { total: number; count: number }) {
   const { isBlocked } = useCart();
   return (
-    <div className="sticky top-20 bg-[#1a1a1a] border border-[#603e39]/25 p-6 space-y-5">
-      <h2 className="font-inter font-bold text-[16px] uppercase text-[#e2e2e2]">
+    <div className="sticky top-20 bg-panel border border-line/25 p-6 space-y-5">
+      <h2 className="font-inter font-bold text-[16px] uppercase text-fg">
         Order Summary
       </h2>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[12px] text-[#ebbbb4]/50">Subtotal ({count} items)</span>
-          <span className="font-mono text-[13px] text-[#e2e2e2]">₱{total.toLocaleString()}</span>
+          <span className="font-mono text-[12px] text-accent/50">Subtotal ({count} items)</span>
+          <span className="font-mono text-[13px] text-fg">₱{total.toLocaleString()}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[12px] text-[#ebbbb4]/50">Shipping</span>
-          <span className="font-mono text-[12px] text-[#ebbbb4]/50 italic">TBA</span>
+          <span className="font-mono text-[12px] text-accent/50">Shipping</span>
+          <span className="font-mono text-[12px] text-accent/50 italic">TBA</span>
         </div>
       </div>
 
-      <div className="h-px bg-[#603e39]/30" />
+      <div className="h-px bg-line/30" />
 
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[12px] uppercase text-[#e2e2e2]">Estimated Total</span>
+        <span className="font-mono text-[12px] uppercase text-fg">Estimated Total</span>
         <span className="font-inter font-black text-[22px] text-primary">
           ₱{total.toLocaleString()}
         </span>
@@ -228,7 +228,7 @@ function OrderSummary({ total, count }: { total: number; count: number }) {
       {isBlocked ? (
         <button
           disabled
-          className="flex items-center justify-center gap-3 w-full py-4 bg-[#1a1a1a] border border-red-500/40 text-red-400/70 font-mono text-[11px] tracking-[0.2em] uppercase cursor-not-allowed"
+          className="flex items-center justify-center gap-3 w-full py-4 bg-panel border border-red-500/40 text-red-400/70 font-mono text-[11px] tracking-[0.2em] uppercase cursor-not-allowed"
         >
           <span className="material-symbols-outlined text-[16px]">gpp_bad</span>
           Account Blocked
@@ -245,12 +245,12 @@ function OrderSummary({ total, count }: { total: number; count: number }) {
 
       <Link
         href="/collection/new-releases"
-        className="flex items-center justify-center gap-2 w-full py-3 border border-[#603e39]/40 font-mono text-[10px] tracking-widest uppercase text-[#e2e2e2]/40 hover:text-primary hover:border-primary transition-all"
+        className="flex items-center justify-center gap-2 w-full py-3 border border-line/40 font-mono text-[10px] tracking-widest uppercase text-fg/40 hover:text-primary hover:border-primary transition-all"
       >
         Continue Shopping
       </Link>
 
-      <p className="font-mono text-[10px] text-[#ebbbb4]/25 text-center leading-relaxed">
+      <p className="font-mono text-[10px] text-accent/25 text-center leading-relaxed">
         Shipping fee will be confirmed upon order processing.
       </p>
     </div>

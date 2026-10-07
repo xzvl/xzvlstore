@@ -45,12 +45,12 @@ const STATUS_COLORS: Record<string, string> = {
   confirmed: "text-blue-400 border-blue-400/30 bg-blue-400/10",
   shipped: "text-green-400 border-green-400/30 bg-green-400/10",
   completed: "text-primary border-primary/30 bg-primary/10",
-  cancelled: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
-  refunded: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
+  cancelled: "text-accent/40 border-accent/20 bg-accent/5",
+  refunded: "text-accent/40 border-accent/20 bg-accent/5",
 };
 
-const INPUT = "w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
+const INPUT = "w-full bg-panel border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
+const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5";
 
 function OrderTotalInline({ order }: { order: Order }) {
   const downPayment = order.down_payment ?? 0;
@@ -65,17 +65,17 @@ function OrderTotalInline({ order }: { order: Order }) {
   return (
     <div className="leading-tight text-right">
       <div className="flex items-center gap-1.5">
-        <span className="font-mono text-[10px] text-[#ebbbb4]/40 line-through">₱{order.estimated_total.toLocaleString()}</span>
+        <span className="font-mono text-[10px] text-accent/40 line-through">₱{order.estimated_total.toLocaleString()}</span>
         <span className="font-mono text-[13px] text-primary font-bold">₱{remaining.toLocaleString()}</span>
       </div>
-      <p className="font-mono text-[9px] text-[#ebbbb4]/30">DP ₱{downPayment.toLocaleString()} paid</p>
+      <p className="font-mono text-[9px] text-accent/30">DP ₱{downPayment.toLocaleString()} paid</p>
     </div>
   );
 }
 
 function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
   return (
-    <div className="w-[30px] h-[30px] relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
+    <div className="w-[30px] h-[30px] relative bg-deep border border-line/20 overflow-hidden flex-shrink-0">
       {src ? (
         <Image
           src={sizedImageUrl(src, "small") ?? src}
@@ -89,7 +89,7 @@ function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
-          <span className="material-symbols-outlined text-[13px] text-[#ebbbb4]/20">image</span>
+          <span className="material-symbols-outlined text-[13px] text-accent/20">image</span>
         </div>
       )}
     </div>
@@ -225,7 +225,7 @@ function AccountPageInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center">
+      <div className="min-h-screen bg-deep flex items-center justify-center">
         <span className="material-symbols-outlined animate-spin text-primary text-[24px]">progress_activity</span>
       </div>
     );
@@ -239,20 +239,20 @@ function AccountPageInner() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0e0e0e] flex flex-col">
+    <div className="min-h-screen bg-deep flex flex-col">
       <Header />
 
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-1">Account</p>
-            <h1 className="font-inter font-black text-[26px] uppercase text-[#e2e2e2]">
+            <h1 className="font-inter font-black text-[26px] uppercase text-fg">
               {profile.first_name ? `${profile.first_name} ${profile.last_name}`.trim() : "My Account"}
             </h1>
           </div>
           <button
             onClick={signOut}
-            className="font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors flex items-center gap-1 flex-shrink-0 mt-1"
+            className="font-mono text-[11px] text-accent/40 hover:text-primary transition-colors flex items-center gap-1 flex-shrink-0 mt-1"
           >
             <span className="material-symbols-outlined text-[14px]">logout</span>
             Sign Out
@@ -266,7 +266,7 @@ function AccountPageInner() {
               <span className="material-symbols-outlined text-red-400 text-[24px] flex-shrink-0">gpp_bad</span>
               <div>
                 <p className="font-inter font-bold text-[15px] text-red-400 uppercase tracking-wide">Account Blocked</p>
-                <p className="font-mono text-[11px] text-[#ebbbb4]/60 mt-0.5 leading-relaxed">
+                <p className="font-mono text-[11px] text-accent/60 mt-0.5 leading-relaxed">
                   You cannot add items to cart or place pre-orders while your account is blocked.
                 </p>
               </div>
@@ -275,11 +275,11 @@ function AccountPageInner() {
               <p className="font-mono text-[10px] text-red-400/80 tracking-widest uppercase mb-2">Reason Block</p>
               {profile.block_reason ? (
                 <div
-                  className="font-mono text-[13px] text-[#e2e2e2] leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-[#e2e2e2] [&_p]:mb-2"
+                  className="font-mono text-[13px] text-fg leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-fg [&_p]:mb-2"
                   dangerouslySetInnerHTML={{ __html: profile.block_reason }}
                 />
               ) : (
-                <p className="font-mono text-[12px] text-[#ebbbb4]/40 italic">
+                <p className="font-mono text-[12px] text-accent/40 italic">
                   No reason was provided. Please contact support for more information.
                 </p>
               )}
@@ -293,7 +293,7 @@ function AccountPageInner() {
             <span className="material-symbols-outlined text-yellow-400 text-[18px] flex-shrink-0 mt-0.5">mark_email_unread</span>
             <div>
               <p className="font-mono text-[11px] text-yellow-400 tracking-wide">Verify your email address</p>
-              <p className="font-mono text-[10px] text-[#ebbbb4]/50 mt-0.5 leading-relaxed">
+              <p className="font-mono text-[10px] text-accent/50 mt-0.5 leading-relaxed">
                 Check your inbox and click the confirmation link to activate all account features.
               </p>
             </div>
@@ -301,13 +301,13 @@ function AccountPageInner() {
         )}
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 border-b border-[#603e39]/30 overflow-x-auto overflow-y-hidden scrollbar-x-5">
+        <div className="flex items-center gap-1 border-b border-line/30 overflow-x-auto overflow-y-hidden scrollbar-x-5">
           {TABS.map(t => (
             <button
               key={t.value}
               onClick={() => setTab(t.value)}
               className={`flex items-center gap-1.5 px-4 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
-                tab === t.value ? "text-primary border-primary" : "text-[#ebbbb4]/40 border-transparent hover:text-[#e2e2e2]"
+                tab === t.value ? "text-primary border-primary" : "text-accent/40 border-transparent hover:text-fg"
               }`}
             >
               <span className="material-symbols-outlined text-[13px]">{t.icon}</span>
@@ -323,7 +323,7 @@ function AccountPageInner() {
         {tab === "info" && (
           <div className="space-y-4">
             {/* Personal info */}
-            <div className="bg-[#131313] border border-[#603e39]/30 p-6 space-y-4">
+            <div className="bg-canvas border border-line/30 p-6 space-y-4">
               <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Personal Information</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -337,7 +337,7 @@ function AccountPageInner() {
                 <div className="sm:col-span-2">
                   <label className={LABEL}>Email</label>
                   <input value={profile.email} disabled placeholder="—" className={`${INPUT} opacity-50 cursor-not-allowed`} />
-                  <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-1">Email cannot be changed here.</p>
+                  <p className="font-mono text-[10px] text-accent/30 mt-1">Email cannot be changed here.</p>
                 </div>
                 <div className="sm:col-span-2">
                   <label className={LABEL}>Facebook Link <span className="text-primary">*</span></label>
@@ -354,7 +354,7 @@ function AccountPageInner() {
             </div>
 
             {/* Change password */}
-            <div className="bg-[#131313] border border-[#603e39]/30 p-6 space-y-4">
+            <div className="bg-canvas border border-line/30 p-6 space-y-4">
               <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Change Password</p>
               <form onSubmit={changePassword} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -396,7 +396,7 @@ function AccountPageInner() {
 
         {/* Tab: Billing */}
         {tab === "billing" && (
-          <div className="bg-[#131313] border border-[#603e39]/30 p-6 space-y-4">
+          <div className="bg-canvas border border-line/30 p-6 space-y-4">
             <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Billing Address</p>
             <AddressFields prefix="billing" profile={profile} set$={set$} />
           </div>
@@ -404,12 +404,12 @@ function AccountPageInner() {
 
         {/* Tab: Shipping */}
         {tab === "shipping" && (
-          <div className="bg-[#131313] border border-[#603e39]/30 p-6 space-y-4">
+          <div className="bg-canvas border border-line/30 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Shipping Address</p>
               <button
                 onClick={copyBillingToShipping}
-                className="font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors flex items-center gap-1"
+                className="font-mono text-[10px] text-accent/40 hover:text-primary transition-colors flex items-center gap-1"
               >
                 <span className="material-symbols-outlined text-[13px]">content_copy</span>
                 Copy from billing
@@ -423,24 +423,24 @@ function AccountPageInner() {
         {tab === "orders" && (
           <div className="space-y-2">
             {orders.length === 0 ? (
-              <div className="text-center py-16 font-mono text-[13px] text-[#ebbbb4]/30">No orders yet.</div>
+              <div className="text-center py-16 font-mono text-[13px] text-accent/30">No orders yet.</div>
             ) : (
               orders.map(order => (
-                <div key={order.id} className="bg-[#131313] border border-[#603e39]/30 overflow-hidden">
+                <div key={order.id} className="bg-canvas border border-line/30 overflow-hidden">
                   <div
-                    className="flex flex-wrap items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#1a1a1a] transition-colors"
+                    className="flex flex-wrap items-center gap-3 px-4 py-3 cursor-pointer hover:bg-panel transition-colors"
                     onClick={() => setExpanded(expanded === order.id ? null : order.id)}
                   >
-                    <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/30">
+                    <span className="material-symbols-outlined text-[14px] text-accent/30">
                       {expanded === order.id ? "expand_less" : "expand_more"}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-[11px] text-[#ebbbb4]/40">{formatDate(order.created_at)}</p>
+                      <p className="font-mono text-[11px] text-accent/40">{formatDate(order.created_at)}</p>
                       {order.items.length > 0 && (
                         <div className="flex items-center gap-3 mt-0.5 overflow-hidden">
                           {order.items.map((it, i) => (
                             <div key={i} className="flex items-center gap-1.5 flex-shrink-0 min-w-0">
-                              <span className="font-mono text-[10px] text-[#ebbbb4]/30 truncate max-w-[160px]">
+                              <span className="font-mono text-[10px] text-accent/30 truncate max-w-[160px]">
                                 {it.product} ×{it.qty}
                               </span>
                             </div>
@@ -449,37 +449,37 @@ function AccountPageInner() {
                       )}
                     </div>
                     <OrderTotalInline order={order} />
-                    <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-[#ebbbb4]/40"}`}>
+                    <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-accent/40"}`}>
                       {order.status}
                     </span>
                   </div>
                   {expanded === order.id && (
-                    <div className="border-t border-[#603e39]/30 px-4 py-4 bg-[#0e0e0e] space-y-3">
+                    <div className="border-t border-line/30 px-4 py-4 bg-deep space-y-3">
                       {order.delivery_method && (
-                        <p className="font-mono text-[11px] text-[#ebbbb4]/50">
-                          Delivery: <span className="text-[#e2e2e2]">{order.delivery_method}</span>
+                        <p className="font-mono text-[11px] text-accent/50">
+                          Delivery: <span className="text-fg">{order.delivery_method}</span>
                           {order.tracking_number && (() => {
                             const url = getTrackingUrl(order.delivery_method!, order.tracking_number!);
                             return url
                               ? <> · <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline">{order.tracking_number}</a></>
-                              : <> · <span className="text-[#e2e2e2]">{order.tracking_number}</span></>;
+                              : <> · <span className="text-fg">{order.tracking_number}</span></>;
                           })()}
                         </p>
                       )}
                       {order.delivery_method && order.delivery_method !== "Pickup" && (
-                        <p className="font-mono text-[11px] text-[#ebbbb4]/50">
-                          Shipping Fee: <span className="text-[#e2e2e2]">{order.shipping_fee != null ? `₱${order.shipping_fee.toLocaleString()}` : "TBA"}</span>
+                        <p className="font-mono text-[11px] text-accent/50">
+                          Shipping Fee: <span className="text-fg">{order.shipping_fee != null ? `₱${order.shipping_fee.toLocaleString()}` : "TBA"}</span>
                         </p>
                       )}
                       {order.payment_method && (
-                        <p className="font-mono text-[11px] text-[#ebbbb4]/50">
-                          Payment: <span className="text-[#e2e2e2]">{order.payment_method}</span>
+                        <p className="font-mono text-[11px] text-accent/50">
+                          Payment: <span className="text-fg">{order.payment_method}</span>
                         </p>
                       )}
                       <table className="w-full text-[12px] mt-2">
                         <tbody>
                           {order.items.map((item, i) => (
-                            <tr key={i} className="border-b border-[#603e39]/10">
+                            <tr key={i} className="border-b border-line/10">
                               <td className="py-1.5 pr-2 w-[30px]">
                                 {item.slug ? (
                                   <Link href={`/product/${item.slug}`}>
@@ -489,7 +489,7 @@ function AccountPageInner() {
                                   <ItemThumb src={item.image} alt={item.product} />
                                 )}
                               </td>
-                              <td className="py-1.5 font-mono text-[#e2e2e2]">
+                              <td className="py-1.5 font-mono text-fg">
                                 {item.slug ? (
                                   <Link href={`/product/${item.slug}`} className="hover:text-primary hover:underline underline-offset-2 transition-colors">
                                     {item.product}
@@ -498,7 +498,7 @@ function AccountPageInner() {
                                   item.product
                                 )}
                               </td>
-                              <td className="py-1.5 text-center font-mono text-[#ebbbb4]/50 w-10">×{item.qty}</td>
+                              <td className="py-1.5 text-center font-mono text-accent/50 w-10">×{item.qty}</td>
                               <td className="py-1.5 text-right font-mono text-primary">₱{item.subtotal.toLocaleString()}</td>
                             </tr>
                           ))}
@@ -506,18 +506,18 @@ function AccountPageInner() {
                       </table>
                       {order.discount > 0 && (
                         <div className="flex justify-between font-mono text-[11px]">
-                          <span className="text-[#ebbbb4]/50">Discount</span>
+                          <span className="text-accent/50">Discount</span>
                           <span className="text-green-400">−₱{order.discount.toLocaleString()}</span>
                         </div>
                       )}
                       {(order.down_payment ?? 0) > 0 && order.status !== "completed" && (
                         <div className="flex justify-between font-mono text-[11px]">
-                          <span className="text-[#ebbbb4]/50">Down Payment</span>
+                          <span className="text-accent/50">Down Payment</span>
                           <span className="text-blue-400">₱{(order.down_payment ?? 0).toLocaleString()}</span>
                         </div>
                       )}
-                      <div className="flex justify-between font-mono text-[12px] pt-1 border-t border-[#603e39]/20">
-                        <span className="text-[#ebbbb4]/50">
+                      <div className="flex justify-between font-mono text-[12px] pt-1 border-t border-line/20">
+                        <span className="text-accent/50">
                           {(order.down_payment ?? 0) > 0 && order.status !== "completed" ? "Remaining Balance" : "Total"}
                         </span>
                         <span className="text-primary font-bold">
@@ -528,10 +528,10 @@ function AccountPageInner() {
                         </span>
                       </div>
                       {order.notes?.length > 0 && (
-                        <div className="pt-2 border-t border-[#603e39]/20 space-y-1.5">
-                          <p className="font-mono text-[10px] uppercase tracking-widest text-[#ebbbb4]/40">Notes</p>
+                        <div className="pt-2 border-t border-line/20 space-y-1.5">
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-accent/40">Notes</p>
                           {order.notes.map((note, i) => (
-                            <p key={i} className="font-mono text-[11px] text-[#ebbbb4]/60 leading-relaxed">{note}</p>
+                            <p key={i} className="font-mono text-[11px] text-accent/60 leading-relaxed">{note}</p>
                           ))}
                         </div>
                       )}

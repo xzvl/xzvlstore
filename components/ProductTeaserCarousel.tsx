@@ -131,7 +131,7 @@ export default function ProductTeaserCarousel({
       {/* Prev arrow */}
       <button
         onClick={goPrev}
-        className="absolute left-0 top-[40%] -translate-y-1/2 -translate-x-5 z-10 w-10 h-10 bg-[#1a1a1a] border border-[#603e39]/40 hidden md:flex items-center justify-center text-[#e2e2e2]/50 hover:border-primary hover:text-primary transition-all"
+        className="absolute left-0 top-[40%] -translate-y-1/2 -translate-x-5 z-10 w-10 h-10 bg-panel border border-line/40 hidden md:flex items-center justify-center text-fg/50 hover:border-primary hover:text-primary transition-all"
         aria-label="Previous"
       >
         <span className="material-symbols-outlined text-[18px]">chevron_left</span>
@@ -140,7 +140,7 @@ export default function ProductTeaserCarousel({
       {/* Next arrow */}
       <button
         onClick={goNext}
-        className="absolute right-0 top-[40%] -translate-y-1/2 translate-x-5 z-10 w-10 h-10 bg-[#1a1a1a] border border-[#603e39]/40 hidden md:flex items-center justify-center text-[#e2e2e2]/50 hover:border-primary hover:text-primary transition-all"
+        className="absolute right-0 top-[40%] -translate-y-1/2 translate-x-5 z-10 w-10 h-10 bg-panel border border-line/40 hidden md:flex items-center justify-center text-fg/50 hover:border-primary hover:text-primary transition-all"
         aria-label="Next"
       >
         <span className="material-symbols-outlined text-[18px]">chevron_right</span>
@@ -186,7 +186,7 @@ export default function ProductTeaserCarousel({
             className={`transition-all duration-300 ${
               i === dotIdx
                 ? "w-8 h-[3px] bg-primary"
-                : "w-3 h-[3px] bg-[#603e39]/60 hover:bg-[#603e39]"
+                : "w-3 h-[3px] bg-line/60 hover:bg-line"
             }`}
           />
         ))}
@@ -209,7 +209,7 @@ function CarouselCard({ product, kind }: { product: StoreProduct; kind: Kind }) 
   return (
     <Link
       href={href}
-      className="group block relative overflow-hidden border border-[#603e39]/30 hover:border-primary/60 transition-all"
+      className="group block relative overflow-hidden border border-line/30 hover:border-primary/60 transition-all"
       style={{ aspectRatio: "3/3" }}
     >
       {img ? (
@@ -224,8 +224,8 @@ function CarouselCard({ product, kind }: { product: StoreProduct; kind: Kind }) 
           }}
         />
       ) : (
-        <div className="absolute inset-0 bg-[#1a1a1a] flex items-center justify-center">
-          <span className="material-symbols-outlined text-[48px] text-[#603e39]/30">sports_esports</span>
+        <div className="absolute inset-0 bg-panel flex items-center justify-center">
+          <span className="material-symbols-outlined text-[48px] text-line/30">sports_esports</span>
         </div>
       )}
       {/* Gradient overlay */}
@@ -239,7 +239,7 @@ function CarouselCard({ product, kind }: { product: StoreProduct; kind: Kind }) 
         <p className="font-inter font-bold text-[12px] md:text-[13px] text-white leading-tight line-clamp-2">
           {product.name}
         </p>
-        <p className="font-mono text-[11px] md:text-[12px] text-[#ebbbb4]/80 mt-1">
+        <p className="font-mono text-[11px] md:text-[12px] text-white/70 mt-1">
           ₱{(product.sale_price ?? product.price).toLocaleString()}
         </p>
       </div>

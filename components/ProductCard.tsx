@@ -54,9 +54,9 @@ export default function ProductCard({
   }
 
   return (
-    <div className="group flex flex-col bg-[#1a1a1a] border border-[#603e39]/25 hover:border-primary/40 transition-all duration-200">
+    <div className="group flex flex-col bg-panel border border-line/25 hover:border-primary/40 transition-all duration-200">
       {/* Image area */}
-      <Link href={`/product/${product.slug}`} className="block relative aspect-square bg-[#131313] overflow-hidden">
+      <Link href={`/product/${product.slug}`} className="block relative aspect-square bg-canvas overflow-hidden">
         {mainImage ? (
           <Image
             src={sizedImageUrl(mainImage, "thumbnail") ?? mainImage}
@@ -69,8 +69,8 @@ export default function ProductCard({
             }}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a]">
-            <span className="material-symbols-outlined text-[48px] text-[#603e39]/30">sports_esports</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-panel">
+            <span className="material-symbols-outlined text-[48px] text-line/30">sports_esports</span>
           </div>
         )}
         {hoverImage && (
@@ -96,7 +96,7 @@ export default function ProductCard({
           </span>
         )}
         {product.sale_price && (
-          <span className="absolute top-2 right-2 bg-[#1a1a1a] border border-primary/50 px-1.5 py-0.5 font-mono text-[9px] text-primary tracking-widest uppercase">
+          <span className="absolute top-2 right-2 bg-panel border border-primary/50 px-1.5 py-0.5 font-mono text-[9px] text-primary tracking-widest uppercase">
             Sale
           </span>
         )}
@@ -105,7 +105,7 @@ export default function ProductCard({
       {/* Info */}
       <div className="flex flex-col gap-2 p-3 flex-1">
         <Link href={`/product/${product.slug}`} className="block">
-          <h3 className="font-inter font-bold text-[12px] leading-snug text-[#e2e2e2] line-clamp-2 hover:text-primary transition-colors">
+          <h3 className="font-inter font-bold text-[12px] leading-snug text-fg line-clamp-2 hover:text-primary transition-colors">
             {product.name}
           </h3>
         </Link>
@@ -116,12 +116,12 @@ export default function ProductCard({
               <span className="font-mono text-[14px] font-bold text-primary">
                 ₱{product.sale_price.toLocaleString()}
               </span>
-              <span className="font-mono text-[11px] text-[#e2e2e2]/30 line-through">
+              <span className="font-mono text-[11px] text-fg/30 line-through">
                 ₱{product.price.toLocaleString()}
               </span>
             </>
           ) : (
-            <span className="font-mono text-[14px] text-[#e2e2e2]">
+            <span className="font-mono text-[14px] text-fg">
               ₱{product.price.toLocaleString()}
             </span>
           )}
@@ -130,7 +130,7 @@ export default function ProductCard({
         {product.sneak_peek ? (
           <button
             disabled
-            className="w-full py-2 font-mono text-[10px] tracking-widest uppercase border border-[#603e39]/30 text-[#e2e2e2]/30 cursor-not-allowed"
+            className="w-full py-2 font-mono text-[10px] tracking-widest uppercase border border-line/30 text-fg/30 cursor-not-allowed"
           >
             {sneakPeekLabel}
           </button>
@@ -143,7 +143,7 @@ export default function ProductCard({
                 ? "bg-transparent border border-red-500/60 text-red-400"
                 : adding
                 ? "bg-primary text-white"
-                : "bg-transparent border border-[#603e39]/50 text-[#e2e2e2]/60 hover:border-primary hover:text-primary"
+                : "bg-transparent border border-line/50 text-fg/60 hover:border-primary hover:text-primary"
             }`}
           >
             {isBlocked ? "Account Blocked" : stockLimited ? "Limit Reached" : adding ? "Added!" : product.pre_order ? "Pre-Order" : "Add to Cart"}

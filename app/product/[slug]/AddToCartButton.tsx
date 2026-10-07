@@ -120,7 +120,7 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
       <div className="flex flex-col gap-3">
         <button
           disabled
-          className="w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase bg-[#1a1a1a] border border-[#603e39]/50 text-[#e2e2e2]/30 cursor-not-allowed flex items-center justify-center gap-3"
+          className="w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase bg-panel border border-line/50 text-fg/30 cursor-not-allowed flex items-center justify-center gap-3"
         >
           <span className="material-symbols-outlined text-[18px]">block</span>
           Currently Unavailable
@@ -134,7 +134,7 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
       <div className="flex flex-col gap-3">
         <button
           disabled
-          className="w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase bg-[#1a1a1a] border border-red-500/40 text-red-400/70 cursor-not-allowed flex items-center justify-center gap-3"
+          className="w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase bg-panel border border-red-500/40 text-red-400/70 cursor-not-allowed flex items-center justify-center gap-3"
         >
           <span className="material-symbols-outlined text-[18px]">gpp_bad</span>
           Account Blocked
@@ -148,7 +148,7 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
       <div className="flex flex-col gap-3">
         <button
           disabled
-          className="w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase bg-[#1a1a1a] border border-[#603e39]/50 text-[#e2e2e2]/30 cursor-not-allowed flex items-center justify-center gap-3"
+          className="w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase bg-panel border border-line/50 text-fg/30 cursor-not-allowed flex items-center justify-center gap-3"
         >
           <span className="material-symbols-outlined text-[18px]">block</span>
           Currently Unavailable
@@ -162,19 +162,19 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
       {/* Qty selector */}
       {!isPreOrder && (
         <div className="flex items-center gap-0">
-          <span className="font-mono text-[10px] tracking-widest uppercase text-[#ebbbb4]/40 w-16">Qty</span>
-          <div className="flex items-center border border-[#603e39]/50">
+          <span className="font-mono text-[10px] tracking-widest uppercase text-accent/40 w-16">Qty</span>
+          <div className="flex items-center border border-line/50">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="w-10 h-10 flex items-center justify-center text-[#e2e2e2]/50 hover:text-primary transition-colors"
+              className="w-10 h-10 flex items-center justify-center text-fg/50 hover:text-primary transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">remove</span>
             </button>
-            <span className="w-10 text-center font-mono text-[14px] text-[#e2e2e2]">{qty}</span>
+            <span className="w-10 text-center font-mono text-[14px] text-fg">{qty}</span>
             <button
               onClick={handleIncrement}
               disabled={remaining != null && qty >= remaining}
-              className="w-10 h-10 flex items-center justify-center text-[#e2e2e2]/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-10 h-10 flex items-center justify-center text-fg/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
             </button>
@@ -184,7 +184,7 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
 
       {/* Purchase history note */}
       {purchasedInWindow > 0 && (
-        <p className="font-mono text-[10px] text-[#ebbbb4]/40 tracking-wide">
+        <p className="font-mono text-[10px] text-accent/40 tracking-wide">
           You&apos;ve purchased {purchasedInWindow} of this in the last 7 days.
         </p>
       )}
@@ -196,7 +196,7 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
 
       {/* Limit warning when cart already has max */}
       {!error && atStockLimit && binding && (
-        <p className="font-mono text-[11px] text-[#ebbbb4]/50 tracking-wide">
+        <p className="font-mono text-[11px] text-accent/50 tracking-wide">
           {binding.type === "purchase"
             ? `Purchase limit reached — max ${binding.cap} per customer`
             : `Max stock reached — ${binding.cap} already in cart`}
@@ -209,7 +209,7 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
         disabled={atStockLimit}
         className={`w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed ${
           added
-            ? "bg-[#1a1a1a] border border-primary text-primary"
+            ? "bg-panel border border-primary text-primary"
             : "bg-primary text-white hover:brightness-110 active:scale-[0.98]"
         }`}
       >

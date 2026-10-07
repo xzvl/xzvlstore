@@ -54,10 +54,10 @@ const EMPTY_ADDRESS: AddressForm = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const inputClass = (err = false) =>
-  `w-full bg-[#1f1f1f] border ${err ? "border-primary" : "border-[#603e39]"} text-[#e2e2e2] font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/25`;
+  `w-full bg-panel border ${err ? "border-primary" : "border-line"} text-fg font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/25`;
 
 const labelClass =
-  "block font-mono text-[11px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-2";
+  "block font-mono text-[11px] tracking-[0.15em] uppercase text-accent/60 mb-2";
 
 const formatAddress = (a: AddressForm) =>
   [a.address_1, a.address_2, a.city, a.state, a.postcode, a.region].filter(Boolean).join(", ");
@@ -378,7 +378,7 @@ export default function CheckoutPage() {
     return (
       <>
         <Header />
-        <main className="bg-[#131313] min-h-screen flex items-center justify-center px-4">
+        <main className="bg-canvas min-h-screen flex items-center justify-center px-4">
           <div className="text-center max-w-md animate-fade-up">
             <span className="material-symbols-outlined text-[64px] text-primary mb-6 block">
               check_circle
@@ -386,15 +386,15 @@ export default function CheckoutPage() {
             <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-3">
               Order Received
             </p>
-            <h1 className="font-inter font-black text-[32px] uppercase text-[#e2e2e2] mb-4">
+            <h1 className="font-inter font-black text-[32px] uppercase text-fg mb-4">
               Thank You!
             </h1>
             {orderNumber && (
-              <p className="font-mono text-[13px] text-[#ebbbb4]/60 mb-2">
+              <p className="font-mono text-[13px] text-accent/60 mb-2">
                 Order #{String(orderNumber).padStart(5, "0")}
               </p>
             )}
-            <p className="font-mono text-[12px] text-[#ebbbb4]/50 leading-relaxed mb-8">
+            <p className="font-mono text-[12px] text-accent/50 leading-relaxed mb-8">
               Your order has been placed. We&apos;ll reach out via email or phone
               to confirm your order and arrange payment.
             </p>
@@ -408,7 +408,7 @@ export default function CheckoutPage() {
               {userEmail && (
                 <Link
                   href="/account"
-                  className="inline-flex items-center gap-3 px-8 py-4 border border-[#603e39] text-[#ebbbb4]/60 font-mono text-[11px] tracking-[0.2em] uppercase hover:border-primary hover:text-primary transition-all"
+                  className="inline-flex items-center gap-3 px-8 py-4 border border-line text-accent/60 font-mono text-[11px] tracking-[0.2em] uppercase hover:border-primary hover:text-primary transition-all"
                 >
                   View Orders
                 </Link>
@@ -427,9 +427,9 @@ export default function CheckoutPage() {
     return (
       <>
         <Header />
-        <main className="bg-[#131313] min-h-screen flex items-center justify-center px-4">
+        <main className="bg-canvas min-h-screen flex items-center justify-center px-4">
           <div className="text-center">
-            <p className="font-inter font-bold text-[20px] text-[#e2e2e2]/60 uppercase mb-4">
+            <p className="font-inter font-bold text-[20px] text-fg/60 uppercase mb-4">
               Your cart is empty
             </p>
             <Link
@@ -450,7 +450,7 @@ export default function CheckoutPage() {
   return (
     <>
       <Header />
-      <main className="bg-[#131313] min-h-screen">
+      <main className="bg-canvas min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 md:px-16 py-12">
 
           {/* Title */}
@@ -458,7 +458,7 @@ export default function CheckoutPage() {
             <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-primary mb-1.5">
               // Checkout
             </p>
-            <h1 className="font-inter font-black text-[32px] md:text-[40px] uppercase leading-none text-[#e2e2e2]">
+            <h1 className="font-inter font-black text-[32px] md:text-[40px] uppercase leading-none text-fg">
               Complete Your Order
             </h1>
           </div>
@@ -467,17 +467,17 @@ export default function CheckoutPage() {
 
           {/* Auth banner */}
           {!userEmail ? (
-            <div className="mb-8 border border-[#603e39]/40 bg-[#1a1a1a] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="mb-8 border border-line/40 bg-panel p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
                 <span className="material-symbols-outlined text-primary text-[22px] flex-shrink-0 mt-0.5">account_circle</span>
                 <div>
-                  <p className="font-mono text-[12px] text-[#e2e2e2] tracking-wide mb-1">Have an account?</p>
+                  <p className="font-mono text-[12px] text-fg tracking-wide mb-1">Have an account?</p>
                   <div className="flex flex-col gap-1">
-                    <p className="font-mono text-[10px] text-[#ebbbb4]/50 flex items-center gap-1.5">
+                    <p className="font-mono text-[10px] text-accent/50 flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-[11px] text-primary/60">receipt_long</span>
                       Track your orders in one place
                     </p>
-                    <p className="font-mono text-[10px] text-[#ebbbb4]/50 flex items-center gap-1.5">
+                    <p className="font-mono text-[10px] text-accent/50 flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-[11px] text-primary/60">edit_note</span>
                       Auto-fill this form from your saved info
                     </p>
@@ -493,26 +493,26 @@ export default function CheckoutPage() {
                 </Link>
                 <Link
                   href="/auth/signup?redirect=/checkout"
-                  className="font-mono text-[11px] text-[#ebbbb4]/50 hover:text-primary transition-colors"
+                  className="font-mono text-[11px] text-accent/50 hover:text-primary transition-colors"
                 >
                   Create Account
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="mb-8 border border-[#603e39]/40 bg-[#1a1a1a] px-5 py-4 flex items-center justify-between gap-4">
+            <div className="mb-8 border border-line/40 bg-panel px-5 py-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span className={`material-symbols-outlined text-[18px] ${autoFilled ? "text-green-400" : "text-primary"}`}>
                   {autoFilled ? "check_circle" : "account_circle"}
                 </span>
                 <div>
-                  <p className="font-mono text-[11px] text-[#e2e2e2]">
+                  <p className="font-mono text-[11px] text-fg">
                     {autoFilled ? "Form auto-filled from your account" : "Signed in"}
                   </p>
-                  <p className="font-mono text-[10px] text-[#ebbbb4]/40 mt-0.5">{userEmail}</p>
+                  <p className="font-mono text-[10px] text-accent/40 mt-0.5">{userEmail}</p>
                 </div>
               </div>
-              <Link href="/account" className="font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors flex items-center gap-1">
+              <Link href="/account" className="font-mono text-[10px] text-accent/40 hover:text-primary transition-colors flex items-center gap-1">
                 <span className="material-symbols-outlined text-[13px]">open_in_new</span>
                 My Account
               </Link>
@@ -526,8 +526,8 @@ export default function CheckoutPage() {
               <div className="lg:col-span-2 space-y-6">
 
                 {/* Contact */}
-                <div className="border border-[#603e39]/25 p-6">
-                  <h2 className="font-inter font-bold text-[14px] uppercase text-[#e2e2e2] mb-5 flex items-center gap-2">
+                <div className="border border-line/25 p-6">
+                  <h2 className="font-inter font-bold text-[14px] uppercase text-fg mb-5 flex items-center gap-2">
                     <span className="font-mono text-primary text-[10px]">01 /</span>
                     Contact Information
                   </h2>
@@ -595,8 +595,8 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Billing address */}
-                <div className="border border-[#603e39]/25 p-6">
-                  <h2 className="font-inter font-bold text-[14px] uppercase text-[#e2e2e2] mb-5 flex items-center gap-2">
+                <div className="border border-line/25 p-6">
+                  <h2 className="font-inter font-bold text-[14px] uppercase text-fg mb-5 flex items-center gap-2">
                     <span className="font-mono text-primary text-[10px]">02 /</span>
                     Billing Address
                   </h2>
@@ -612,9 +612,9 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Shipping address */}
-                <div className="border border-[#603e39]/25 p-6">
+                <div className="border border-line/25 p-6">
                   <div className="flex items-center justify-between mb-5">
-                    <h2 className="font-inter font-bold text-[14px] uppercase text-[#e2e2e2] flex items-center gap-2">
+                    <h2 className="font-inter font-bold text-[14px] uppercase text-fg flex items-center gap-2">
                       <span className="font-mono text-primary text-[10px]">03 /</span>
                       Shipping Address
                     </h2>
@@ -622,10 +622,10 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setField("ship_to_different", !form.ship_to_different)}
-                      className="flex items-center gap-2 font-mono text-[11px] tracking-wide text-[#ebbbb4]/60 hover:text-primary transition-colors"
+                      className="flex items-center gap-2 font-mono text-[11px] tracking-wide text-accent/60 hover:text-primary transition-colors"
                     >
-                      <div className={`w-8 h-4 rounded-full border transition-colors relative ${form.ship_to_different ? "bg-primary/20 border-primary" : "bg-[#1f1f1f] border-[#603e39]"}`}>
-                        <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${form.ship_to_different ? "left-4 bg-primary" : "left-0.5 bg-[#603e39]"}`} />
+                      <div className={`w-8 h-4 rounded-full border transition-colors relative ${form.ship_to_different ? "bg-primary/20 border-primary" : "bg-panel border-line"}`}>
+                        <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${form.ship_to_different ? "left-4 bg-primary" : "left-0.5 bg-line"}`} />
                       </div>
                       Different address
                     </button>
@@ -642,9 +642,9 @@ export default function CheckoutPage() {
                       }}
                     />
                   ) : (
-                    <div className="flex items-center gap-3 py-3 px-4 bg-[#1a1a1a] border border-[#603e39]/20">
+                    <div className="flex items-center gap-3 py-3 px-4 bg-panel border border-line/20">
                       <span className="material-symbols-outlined text-[16px] text-primary/60">check_circle</span>
-                      <p className="font-mono text-[11px] text-[#ebbbb4]/50">
+                      <p className="font-mono text-[11px] text-accent/50">
                         Same as billing address
                       </p>
                     </div>
@@ -652,8 +652,8 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Payment method */}
-                <div className="border border-[#603e39]/25 p-6">
-                  <h2 className="font-inter font-bold text-[14px] uppercase text-[#e2e2e2] mb-5 flex items-center gap-2">
+                <div className="border border-line/25 p-6">
+                  <h2 className="font-inter font-bold text-[14px] uppercase text-fg mb-5 flex items-center gap-2">
                     <span className="font-mono text-primary text-[10px]">04 /</span>
                     Payment Method
                   </h2>
@@ -666,7 +666,7 @@ export default function CheckoutPage() {
                         className={`py-3 px-4 border font-mono text-[12px] tracking-wide text-left transition-all ${
                           form.payment_method === pm.value
                             ? "border-primary text-primary bg-primary/5"
-                            : "border-[#603e39]/40 text-[#e2e2e2]/50 hover:border-[#603e39]"
+                            : "border-line/40 text-fg/50 hover:border-line"
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -674,7 +674,7 @@ export default function CheckoutPage() {
                             className={`w-3 h-3 rounded-full border flex-shrink-0 ${
                               form.payment_method === pm.value
                                 ? "border-primary bg-primary"
-                                : "border-[#603e39]"
+                                : "border-line"
                             }`}
                           />
                           {pm.label}
@@ -682,7 +682,7 @@ export default function CheckoutPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-4 leading-relaxed">
+                  <p className="font-mono text-[10px] text-accent/30 mt-4 leading-relaxed">
                     Payment instructions will be sent after your order is confirmed.
                   </p>
                 </div>
@@ -697,15 +697,15 @@ export default function CheckoutPage() {
 
               {/* ── Right: order summary ── */}
               <div>
-                <div className="sticky top-20 bg-[#1a1a1a] border border-[#603e39]/25 p-5 space-y-4">
-                  <h2 className="font-inter font-bold text-[14px] uppercase text-[#e2e2e2]">
+                <div className="sticky top-20 bg-panel border border-line/25 p-5 space-y-4">
+                  <h2 className="font-inter font-bold text-[14px] uppercase text-fg">
                     Order Summary
                   </h2>
 
                   <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                     {items.map((item) => (
                       <div key={item.id} className="flex items-center gap-3">
-                        <div className="w-12 h-12 shrink-0 bg-[#131313] border border-[#603e39]/20 relative overflow-hidden">
+                        <div className="w-12 h-12 shrink-0 bg-canvas border border-line/20 relative overflow-hidden">
                           <Image
                             src={item.image}
                             alt={item.name}
@@ -715,29 +715,29 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-inter text-[11px] text-[#e2e2e2] leading-snug line-clamp-1">
+                          <p className="font-inter text-[11px] text-fg leading-snug line-clamp-1">
                             {item.name}
                           </p>
-                          <p className="font-mono text-[10px] text-[#ebbbb4]/40 mt-0.5">
+                          <p className="font-mono text-[10px] text-accent/40 mt-0.5">
                             × {item.qty}
                           </p>
                         </div>
-                        <span className="font-mono text-[12px] text-[#e2e2e2] shrink-0">
+                        <span className="font-mono text-[12px] text-fg shrink-0">
                           ₱{((item.sale_price ?? item.price) * item.qty).toLocaleString()}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="h-px bg-[#603e39]/30" />
+                  <div className="h-px bg-line/30" />
 
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[12px] text-[#ebbbb4]/50">Shipping</span>
-                    <span className="font-mono text-[11px] text-[#ebbbb4]/40 italic">TBA</span>
+                    <span className="font-mono text-[12px] text-accent/50">Shipping</span>
+                    <span className="font-mono text-[11px] text-accent/40 italic">TBA</span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[12px] uppercase text-[#e2e2e2]">Est. Total</span>
+                    <span className="font-mono text-[12px] uppercase text-fg">Est. Total</span>
                     <span className="font-inter font-black text-[20px] text-primary">
                       ₱{total.toLocaleString()}
                     </span>
@@ -765,7 +765,7 @@ export default function CheckoutPage() {
 
                   <Link
                     href="/cart"
-                    className="flex items-center justify-center w-full py-2.5 border border-[#603e39]/40 font-mono text-[10px] tracking-widest uppercase text-[#e2e2e2]/30 hover:text-primary hover:border-primary transition-all"
+                    className="flex items-center justify-center w-full py-2.5 border border-line/40 font-mono text-[10px] tracking-widest uppercase text-fg/30 hover:text-primary hover:border-primary transition-all"
                   >
                     ← Back to Cart
                   </Link>

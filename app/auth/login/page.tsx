@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase-client";
 import { stripHtml } from "@/lib/strip-html";
 
-const INPUT = "w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
+const INPUT = "w-full bg-panel border border-line text-fg font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
 
 function LoginPageInner() {
   const router = useRouter();
@@ -60,18 +60,18 @@ function LoginPageInner() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-deep flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <p className="font-mono text-[10px] tracking-[0.3em] text-primary uppercase mb-1">xzvl.store</p>
-            <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2] tracking-tight">Sign In</h1>
+            <h1 className="font-inter font-black text-[28px] uppercase text-fg tracking-tight">Sign In</h1>
           </Link>
         </div>
 
         {/* Card */}
-        <div className="bg-[#131313] border border-[#603e39]/50 p-8 space-y-5">
+        <div className="bg-canvas border border-line/50 p-8 space-y-5">
           {/* OAuth */}
           <div className="space-y-3">
             <button
@@ -89,15 +89,15 @@ function LoginPageInner() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-[#603e39]/30" />
-            <span className="font-mono text-[10px] text-[#ebbbb4]/30 uppercase">or</span>
-            <div className="flex-1 h-px bg-[#603e39]/30" />
+            <div className="flex-1 h-px bg-line/30" />
+            <span className="font-mono text-[10px] text-accent/30 uppercase">or</span>
+            <div className="flex-1 h-px bg-line/30" />
           </div>
 
           {/* Email form */}
           <form onSubmit={signIn} className="space-y-4">
             <div>
-              <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5">Email</label>
+              <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5">Email</label>
               <input
                 type="email"
                 value={email}
@@ -109,8 +109,8 @@ function LoginPageInner() {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60">Password</label>
-                <Link href="/auth/forgot-password" className="font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors">
+                <label className="font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60">Password</label>
+                <Link href="/auth/forgot-password" className="font-mono text-[10px] text-accent/40 hover:text-primary transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -129,14 +129,14 @@ function LoginPageInner() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-white font-mono text-[11px] tracking-widest uppercase hover:bg-[#c00] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-primary text-white font-mono text-[11px] tracking-widest uppercase hover:brightness-110 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading && <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>}
               {loading ? "Signing in…" : "Sign In"}
             </button>
           </form>
 
-          <p className="text-center font-mono text-[11px] text-[#ebbbb4]/40">
+          <p className="text-center font-mono text-[11px] text-accent/40">
             No account?{" "}
             <Link href="/auth/signup" className="text-primary hover:underline">Create one</Link>
           </p>
