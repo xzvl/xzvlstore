@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import type { Order } from "@/lib/supabase";
 import { fullAddress } from "./page";
 
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
+const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5";
 
 export type ExportFormat = "xlsx" | "csv";
 export type ExportMode = "orders" | "products";
@@ -178,24 +178,24 @@ export function ExportOrdersModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md bg-[#131313] border border-[#603e39]/60 shadow-2xl"
+        className="w-full max-w-md bg-canvas border border-line/60 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#603e39]/30">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line/30">
           <div>
             <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Orders // Export</p>
-            <h2 className="font-inter font-black text-[18px] uppercase text-[#e2e2e2]">Export Orders</h2>
+            <h2 className="font-inter font-black text-[18px] uppercase text-fg">Export Orders</h2>
           </div>
-          <button onClick={onClose} className="text-[#ebbbb4]/30 hover:text-primary transition-colors">
+          <button onClick={onClose} className="text-accent/30 hover:text-primary transition-colors">
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
 
         {/* Modal body */}
         <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-          <p className="font-mono text-[11px] text-[#ebbbb4]/40">
-            Exports the <span className="text-[#e2e2e2]">{orders.length}</span> order{orders.length === 1 ? "" : "s"} matching your current filters.
+          <p className="font-mono text-[11px] text-accent/40">
+            Exports the <span className="text-fg">{orders.length}</span> order{orders.length === 1 ? "" : "s"} matching your current filters.
           </p>
           {productFilter !== "all" && (
             <p className="font-mono text-[11px] text-primary/80 flex items-start gap-1.5">
@@ -216,7 +216,7 @@ export function ExportOrdersModal({
                   className={`px-4 py-2.5 font-mono text-[11px] tracking-widest uppercase border transition-colors ${
                     format === f
                       ? "border-primary text-primary bg-primary/10"
-                      : "border-[#603e39] text-[#ebbbb4]/50 hover:text-[#e2e2e2]"
+                      : "border-line text-accent/50 hover:text-fg"
                   }`}
                 >
                   {f === "xlsx" ? "Excel (.xlsx)" : "CSV (.csv)"}
@@ -233,13 +233,13 @@ export function ExportOrdersModal({
                 type="button"
                 onClick={() => setMode("orders")}
                 className={`w-full text-left px-4 py-3 border transition-colors ${
-                  mode === "orders" ? "border-primary bg-primary/10" : "border-[#603e39] hover:bg-[#1a1a1a]"
+                  mode === "orders" ? "border-primary bg-primary/10" : "border-line hover:bg-panel"
                 }`}
               >
-                <p className={`font-mono text-[12px] uppercase tracking-widest ${mode === "orders" ? "text-primary" : "text-[#e2e2e2]"}`}>
+                <p className={`font-mono text-[12px] uppercase tracking-widest ${mode === "orders" ? "text-primary" : "text-fg"}`}>
                   Order List
                 </p>
-                <p className="font-mono text-[10px] text-[#ebbbb4]/40 mt-0.5">
+                <p className="font-mono text-[10px] text-accent/40 mt-0.5">
                   One row per order — customer, shipping &amp; order details.
                 </p>
               </button>
@@ -247,13 +247,13 @@ export function ExportOrdersModal({
                 type="button"
                 onClick={() => setMode("products")}
                 className={`w-full text-left px-4 py-3 border transition-colors ${
-                  mode === "products" ? "border-primary bg-primary/10" : "border-[#603e39] hover:bg-[#1a1a1a]"
+                  mode === "products" ? "border-primary bg-primary/10" : "border-line hover:bg-panel"
                 }`}
               >
-                <p className={`font-mono text-[12px] uppercase tracking-widest ${mode === "products" ? "text-primary" : "text-[#e2e2e2]"}`}>
+                <p className={`font-mono text-[12px] uppercase tracking-widest ${mode === "products" ? "text-primary" : "text-fg"}`}>
                   Product Summary
                 </p>
-                <p className="font-mono text-[10px] text-[#ebbbb4]/40 mt-0.5">
+                <p className="font-mono text-[10px] text-accent/40 mt-0.5">
                   Totals combined across all orders, one row per product.
                 </p>
               </button>
@@ -265,7 +265,7 @@ export function ExportOrdersModal({
             <label className={LABEL}>Columns to Include</label>
             <div className="grid grid-cols-2 gap-2">
               {fieldsForMode(mode).map((f) => (
-                <label key={f.key} className="flex items-center gap-2 font-mono text-[11px] text-[#e2e2e2] cursor-pointer">
+                <label key={f.key} className="flex items-center gap-2 font-mono text-[11px] text-fg cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selected.includes(f.key)}
@@ -283,8 +283,8 @@ export function ExportOrdersModal({
         </div>
 
         {/* Modal footer */}
-        <div className="px-6 py-4 border-t border-[#603e39]/30 flex items-center justify-end gap-3">
-          <button onClick={onClose} className="font-mono text-[11px] text-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors px-4 py-2">
+        <div className="px-6 py-4 border-t border-line/30 flex items-center justify-end gap-3">
+          <button onClick={onClose} className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors px-4 py-2">
             Cancel
           </button>
           <button

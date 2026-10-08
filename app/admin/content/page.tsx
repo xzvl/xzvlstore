@@ -11,10 +11,12 @@ import ImageOptimizationTab from "./_ImageOptimizationTab";
 import PosTab from "./_PosTab";
 import MaintenanceTab from "./_MaintenanceTab";
 import ColorsTab from "./_ColorsTab";
+import PaymentTab from "./_PaymentTab";
 
 const TABS = [
   { key: "branding", label: "Branding", icon: "image" },
   { key: "pos", label: "Point of Sale", icon: "point_of_sale" },
+  { key: "payment", label: "Payment", icon: "payments" },
   { key: "header", label: "Header", icon: "web_asset" },
   { key: "hero", label: "Hero", icon: "slideshow" },
   { key: "footer", label: "Footer", icon: "vertical_align_bottom" },
@@ -57,7 +59,7 @@ function ClearCacheButton() {
         onClick={clearCache}
         disabled={clearing}
         title="Purge the cached storefront pages (Vercel) so they re-fetch the latest data from Supabase"
-        className="flex items-center gap-2 px-4 py-2 border border-[#603e39]/60 text-[#ebbbb4]/60 font-mono text-[10px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 border border-line/60 text-accent/60 font-mono text-[10px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
       >
         <span className={`material-symbols-outlined text-[14px] ${clearing ? "animate-spin" : ""}`}>
           {clearing ? "progress_activity" : "cleaning_services"}
@@ -89,7 +91,7 @@ export default function AdminContentPage() {
 
   if (!content) {
     return (
-      <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-8">
+      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading…
       </div>
@@ -101,8 +103,8 @@ export default function AdminContentPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">ADMIN // SITE CONTENT</p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Site Content</h1>
-          <p className="font-mono text-[11px] text-[#ebbbb4]/40 mt-1">
+          <h1 className="font-inter font-black text-[28px] uppercase text-fg">Site Content</h1>
+          <p className="font-mono text-[11px] text-accent/40 mt-1">
             Edit the storefront&apos;s logo, menus, homepage hero, footer and colors. Saving refreshes the live pages automatically.
           </p>
         </div>
@@ -111,7 +113,7 @@ export default function AdminContentPage() {
           <Link
             href="/"
             target="_blank"
-            className="flex items-center gap-2 px-4 py-2 border border-[#603e39]/60 text-[#ebbbb4]/60 font-mono text-[10px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-line/60 text-accent/60 font-mono text-[10px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-[14px]">open_in_new</span>
             Preview Site
@@ -120,7 +122,7 @@ export default function AdminContentPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 items-start">
-        <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible w-full lg:w-48 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-[#603e39]/30 pb-2 lg:pb-0 lg:pr-4 scrollbar-none">
+        <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible w-full lg:w-48 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-line/30 pb-2 lg:pb-0 lg:pr-4 scrollbar-none">
           {TABS.map((t) => (
             <button
               key={t.key}
@@ -129,7 +131,7 @@ export default function AdminContentPage() {
               className={`flex items-center gap-2 px-3 py-2.5 font-mono text-[11px] tracking-widest uppercase transition-colors whitespace-nowrap flex-shrink-0 lg:w-full border-l-2 ${
                 active === t.key
                   ? "text-primary border-primary bg-primary/5"
-                  : "text-[#ebbbb4]/50 border-transparent hover:text-[#e2e2e2] hover:bg-[#1a1a1a]"
+                  : "text-accent/50 border-transparent hover:text-fg hover:bg-panel"
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
@@ -153,6 +155,9 @@ export default function AdminContentPage() {
           )}
           {active === "pos" && (
             <PosTab initial={content.pos} onSaved={(pos) => setContent((c) => c && { ...c, pos })} />
+          )}
+          {active === "payment" && (
+            <PaymentTab initial={content.payment} onSaved={(payment) => setContent((c) => c && { ...c, payment })} />
           )}
           {active === "images" && <ImageOptimizationTab />}
           {active === "colors" && (

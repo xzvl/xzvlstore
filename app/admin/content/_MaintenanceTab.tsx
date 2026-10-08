@@ -23,7 +23,7 @@ export default function MaintenanceTab({
       {forced && (
         <div className="flex items-start gap-3 border border-primary bg-primary/10 p-4">
           <span className="material-symbols-outlined text-[18px] text-primary">lock</span>
-          <p className="font-mono text-[11px] text-[#e2e2e2] leading-relaxed">
+          <p className="font-mono text-[11px] text-fg leading-relaxed">
             <span className="text-primary font-bold">Forced on by environment variable.</span> MAINTENANCE_MODE=true is
             set on the server, so the storefront shows the maintenance screen regardless of the switch below. Remove it
             (or set it to false) and redeploy to hand control back to this toggle. You can still edit the page content.
@@ -35,13 +35,13 @@ export default function MaintenanceTab({
         <p className={CARD_TITLE}>Maintenance Mode</p>
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="font-mono text-[12px] text-[#e2e2e2]">
+            <p className="font-mono text-[12px] text-fg">
               Currently{" "}
               <span className={initial.enabled ? "text-primary font-bold" : "text-green-400 font-bold"}>
                 {initial.enabled ? "ON — storefront is hidden" : "OFF — storefront is live"}
               </span>
             </p>
-            <p className="font-mono text-[11px] text-[#ebbbb4]/40 mt-1">
+            <p className="font-mono text-[11px] text-accent/40 mt-1">
               When on, every storefront page shows the maintenance screen below. The admin panel stays accessible.
               Changes take effect after saving.
             </p>
@@ -55,16 +55,16 @@ export default function MaintenanceTab({
           >
             <span
               className={`relative w-12 h-6 border transition-colors ${
-                value.enabled ? "bg-primary/20 border-primary" : "bg-[#1f1f1f] border-[#603e39]"
+                value.enabled ? "bg-primary/20 border-primary" : "bg-fg/[0.05] border-line"
               }`}
             >
               <span
                 className={`absolute top-0.5 w-[18px] h-[18px] transition-all ${
-                  value.enabled ? "left-[26px] bg-primary" : "left-0.5 bg-[#ebbbb4]/40"
+                  value.enabled ? "left-[26px] bg-primary" : "left-0.5 bg-accent/40"
                 }`}
               />
             </span>
-            <span className={value.enabled ? "text-primary" : "text-[#ebbbb4]/50"}>{value.enabled ? "On" : "Off"}</span>
+            <span className={value.enabled ? "text-primary" : "text-accent/50"}>{value.enabled ? "On" : "Off"}</span>
           </button>
         </div>
       </div>
@@ -83,7 +83,7 @@ export default function MaintenanceTab({
           <label className={LABEL}>Message</label>
           <textarea value={value.message} onChange={(e) => set("message", e.target.value)} rows={4} className={INPUT} />
         </div>
-        <label className="flex items-center gap-2 font-mono text-[11px] text-[#ebbbb4]/70 cursor-pointer w-fit">
+        <label className="flex items-center gap-2 font-mono text-[11px] text-accent/70 cursor-pointer w-fit">
           <input
             type="checkbox"
             checked={value.showSocialLinks}
@@ -96,7 +96,7 @@ export default function MaintenanceTab({
 
       <div className={CARD}>
         <p className={CARD_TITLE}>Image</p>
-        <p className="font-mono text-[11px] text-[#ebbbb4]/40">
+        <p className="font-mono text-[11px] text-accent/40">
           Optional image shown above the title. Leave empty to show a construction icon instead.
         </p>
         <ImageUploader label="Maintenance image" value={value.image} onChange={(url) => set("image", url)} />

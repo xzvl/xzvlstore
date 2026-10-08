@@ -7,8 +7,8 @@ import Link from "next/link";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
-const INPUT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
+const INPUT = "w-full bg-deep border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
+const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5";
 
 type FormState = {
   first_name: string;
@@ -62,7 +62,7 @@ function AddressBlock({
 }) {
   const f = (field: string) => `${prefix}_${field}` as keyof FormState;
   return (
-    <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-3">
+    <div className="bg-panel border border-line/30 p-5 space-y-3">
       <div className="flex items-center justify-between">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">{title}</p>
         {extra}
@@ -187,7 +187,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-12">
+      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-12">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading…
       </div>
@@ -199,14 +199,14 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Link href="/admin/customers" className="inline-flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors mb-3">
+          <Link href="/admin/customers" className="inline-flex items-center gap-1 font-mono text-[10px] text-accent/40 hover:text-primary transition-colors mb-3">
             <span className="material-symbols-outlined text-[13px]">arrow_back</span>
             Back to Customers
           </Link>
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
             ADMIN // CUSTOMERS / {isNew ? "NEW" : "EDIT"}
           </p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">
+          <h1 className="font-inter font-black text-[28px] uppercase text-fg">
             {isNew ? "New Customer" : `${form.first_name} ${form.last_name}`.trim() || "Edit Customer"}
           </h1>
         </div>
@@ -224,7 +224,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
       </div>
 
       {/* Personal info */}
-      <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-4">
+      <div className="bg-panel border border-line/30 p-5 space-y-4">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Personal Information</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
@@ -259,7 +259,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#ebbbb4]/30 hover:text-primary transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-accent/30 hover:text-primary transition-colors"
                 >
                   <span className="material-symbols-outlined text-[16px]">
                     {showPassword ? "visibility_off" : "visibility"}
@@ -272,7 +272,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
       </div>
 
       {/* Account Status */}
-      <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-4">
+      <div className="bg-panel border border-line/30 p-5 space-y-4">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Account Status</p>
         <button
           type="button"
@@ -280,16 +280,16 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
           className={`w-full flex items-center justify-between px-4 py-3 border transition-colors ${
             form.is_blocked
               ? "border-red-500/50 bg-red-500/10"
-              : "border-[#603e39]/50 bg-[#0e0e0e] hover:border-[#ebbbb4]/30"
+              : "border-line/50 bg-deep hover:border-accent/30"
           }`}
         >
           <div>
-            <p className="font-mono text-[11px] tracking-widest uppercase text-left text-[#e2e2e2]">Block Account</p>
-            <p className="font-mono text-[10px] text-[#ebbbb4]/40 text-left mt-0.5">
+            <p className="font-mono text-[11px] tracking-widest uppercase text-left text-fg">Block Account</p>
+            <p className="font-mono text-[10px] text-accent/40 text-left mt-0.5">
               Blocked customers cannot sign in or place orders
             </p>
           </div>
-          <div className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${form.is_blocked ? "bg-red-500" : "bg-[#603e39]/40"}`}>
+          <div className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${form.is_blocked ? "bg-red-500" : "bg-line/40"}`}>
             <span
               className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-white transition-transform"
               style={{ transform: `translateX(${form.is_blocked ? "0.125rem" : "-1.125rem"})` }}
@@ -319,7 +319,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
             <button
               type="button"
               onClick={copyBillingToShipping}
-              className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors"
+              className="flex items-center gap-1 font-mono text-[10px] text-accent/40 hover:text-primary transition-colors"
             >
               <span className="material-symbols-outlined text-[12px]">content_copy</span>
               Same as billing
@@ -329,7 +329,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
       </div>
 
       {/* Social Media */}
-      <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-3">
+      <div className="bg-panel border border-line/30 p-5 space-y-3">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Social Media</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[

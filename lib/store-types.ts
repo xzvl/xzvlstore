@@ -6,6 +6,8 @@ export type StoreProduct = {
   sale_price: number | null;
   pre_order: boolean;
   pre_order_note?: string | null;
+  down_payment_required?: boolean;
+  down_payment_price?: number | null;
   /** Announced but not purchasable yet — never addable to cart or orderable. */
   sneak_peek?: boolean;
   sneak_peek_note?: string | null;
@@ -22,3 +24,12 @@ export type StoreProduct = {
   tag_ids?: string[];
   description?: string | null;
 };
+
+/** Per-unit down payment a pre-order product requires upfront, or 0 when none. */
+export function downPaymentPerUnit(p: {
+  pre_order?: boolean;
+  down_payment_required?: boolean;
+  down_payment_price?: number | null;
+}): number {
+  return p.pre_order && p.down_payment_required ? Math.max(0, Number(p.down_payment_price) || 0) : 0;
+}

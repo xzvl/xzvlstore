@@ -195,7 +195,7 @@ export default function ImageOptimizationTab() {
 
   if (!rows) {
     return (
-      <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-8">
+      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading images…
       </div>
@@ -208,7 +208,7 @@ export default function ImageOptimizationTab() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className={CARD_TITLE}>Image Optimization</p>
-            <p className="font-mono text-[11px] text-[#ebbbb4]/40 mt-1">
+            <p className="font-mono text-[11px] text-accent/40 mt-1">
               Backfills WebP + 4 size variants (small/thumbnail/medium/large) for images uploaded before the
               optimization pipeline existed. &quot;Optimized&quot; means the original is WebP and all 4 sizes exist.
             </p>
@@ -222,7 +222,7 @@ export default function ImageOptimizationTab() {
                 className={`px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase border transition-colors capitalize ${
                   filter === f
                     ? "border-primary/60 bg-primary/10 text-primary"
-                    : "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70"
+                    : "border-line/40 text-accent/40 hover:border-accent/30 hover:text-accent/70"
                 }`}
               >
                 {f}
@@ -233,11 +233,11 @@ export default function ImageOptimizationTab() {
 
         {running && progress && (
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between font-mono text-[10px] text-[#ebbbb4]/50">
+            <div className="flex items-center justify-between font-mono text-[10px] text-accent/50">
               <span>Optimizing {progress.done} / {progress.total}…</span>
               <span>{Math.round((progress.done / progress.total) * 100)}%</span>
             </div>
-            <div className="h-1 w-full bg-[#1f1f1f] overflow-hidden">
+            <div className="h-1 w-full bg-fg/[0.05] overflow-hidden">
               <div
                 className="h-full bg-primary transition-all duration-300 ease-out"
                 style={{ width: `${(progress.done / progress.total) * 100}%` }}
@@ -247,11 +247,11 @@ export default function ImageOptimizationTab() {
         )}
 
         {summary && (
-          <div className="border border-[#603e39]/40 bg-[#0e0e0e] px-4 py-3 space-y-1">
-            <p className="font-mono text-[11px] text-[#e2e2e2]">
+          <div className="border border-line/40 bg-deep px-4 py-3 space-y-1">
+            <p className="font-mono text-[11px] text-fg">
               <span className="text-green-400">{summary.optimized} optimized</span>
               {" · "}
-              <span className="text-[#ebbbb4]/50">{summary.skipped} skipped</span>
+              <span className="text-accent/50">{summary.skipped} skipped</span>
               {summary.error > 0 && <> · <span className="text-primary">{summary.error} failed</span></>}
             </p>
             {summary.errors.map((e, i) => (
@@ -260,14 +260,14 @@ export default function ImageOptimizationTab() {
           </div>
         )}
 
-        <div className="flex items-center justify-between border-b border-[#603e39]/30 pb-2">
-          <label className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase text-[#ebbbb4]/60 cursor-pointer">
+        <div className="flex items-center justify-between border-b border-line/30 pb-2">
+          <label className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase text-accent/60 cursor-pointer">
             <input
               type="checkbox"
               checked={allFilteredSelected}
               onChange={toggleSelectAll}
               disabled={running}
-              style={{ accentColor: "#ed0d11" }}
+              style={{ accentColor: "rgb(var(--c-primary))" }}
               className="w-3.5 h-3.5"
             />
             Select All ({filteredRows.length})
@@ -285,7 +285,7 @@ export default function ImageOptimizationTab() {
 
         <div className="space-y-1.5 max-h-[520px] overflow-y-auto">
           {filteredRows.length === 0 ? (
-            <p className="font-mono text-[11px] text-[#ebbbb4]/30 py-6 text-center">No images match this filter.</p>
+            <p className="font-mono text-[11px] text-accent/30 py-6 text-center">No images match this filter.</p>
           ) : (
             filteredRows.map((row) => {
               const isProcessing = processing.has(row.base);
@@ -299,7 +299,7 @@ export default function ImageOptimizationTab() {
                       ? "border-green-400/50 bg-green-400/5"
                       : rowError
                       ? "border-primary/40 bg-primary/5"
-                      : "border-[#603e39]/25 bg-[#0e0e0e]"
+                      : "border-line/25 bg-deep"
                   }`}
                 >
                   {isProcessing && (
@@ -310,10 +310,10 @@ export default function ImageOptimizationTab() {
                     checked={selected.has(row.base)}
                     onChange={() => toggleRow(row.base)}
                     disabled={running}
-                    style={{ accentColor: "#ed0d11" }}
+                    style={{ accentColor: "rgb(var(--c-primary))" }}
                     className="w-3.5 h-3.5 flex-shrink-0"
                   />
-                  <div className="relative w-10 h-10 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
+                  <div className="relative w-10 h-10 flex-shrink-0 bg-deep border border-line/20 overflow-hidden">
                     {row.originalUrl ? (
                       <Image
                         src={sizedImageUrl(row.originalUrl, "thumbnail") ?? row.originalUrl}
@@ -327,7 +327,7 @@ export default function ImageOptimizationTab() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[16px] text-[#ebbbb4]/20">broken_image</span>
+                        <span className="material-symbols-outlined text-[16px] text-accent/20">broken_image</span>
                       </div>
                     )}
                     {isProcessing && (
@@ -337,8 +337,8 @@ export default function ImageOptimizationTab() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-mono text-[11px] text-[#e2e2e2] truncate">{row.base}</p>
-                    <p className="font-mono text-[10px] text-[#ebbbb4]/30">
+                    <p className="font-mono text-[11px] text-fg truncate">{row.base}</p>
+                    <p className="font-mono text-[10px] text-accent/30">
                       {rowError ? <span className="text-primary">{rowError}</span> : formatBytes(row.sizeBytes)}
                     </p>
                   </div>
@@ -346,7 +346,7 @@ export default function ImageOptimizationTab() {
                     className={`px-1.5 py-0.5 font-mono text-[9px] tracking-widest uppercase border flex-shrink-0 transition-colors duration-700 ${
                       row.originalExt === "webp"
                         ? `border-green-400/40 text-green-400 ${isJustDone ? "bg-green-400/20" : ""}`
-                        : "border-[#603e39]/40 text-[#ebbbb4]/40"
+                        : "border-line/40 text-accent/40"
                     }`}
                   >
                     {row.originalExt ?? "—"}
@@ -359,7 +359,7 @@ export default function ImageOptimizationTab() {
                         className={`w-5 h-5 flex items-center justify-center font-mono text-[9px] border transition-colors duration-700 ${
                           row[p.key]
                             ? `border-green-400/40 text-green-400 ${isJustDone ? "bg-green-400/20" : ""}`
-                            : "border-[#603e39]/30 text-[#ebbbb4]/20"
+                            : "border-line/30 text-accent/20"
                         }`}
                       >
                         {p.label}
@@ -376,7 +376,7 @@ export default function ImageOptimizationTab() {
                         check_circle
                       </span>
                     ) : (
-                      <span className="material-symbols-outlined text-[18px] text-[#ebbbb4]/15">radio_button_unchecked</span>
+                      <span className="material-symbols-outlined text-[18px] text-accent/15">radio_button_unchecked</span>
                     )}
                   </span>
                 </div>
@@ -392,15 +392,15 @@ export default function ImageOptimizationTab() {
           onClick={() => setShowPopup(false)}
         >
           <div
-            className="w-full max-w-sm bg-[#1a1a1a] border border-[#603e39]/40 p-5 space-y-4"
+            className="w-full max-w-sm bg-panel border border-line/40 p-5 space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div>
               <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-1">Before optimizing</p>
-              <p className="font-mono text-[12px] text-[#e2e2e2]">
+              <p className="font-mono text-[12px] text-fg">
                 Delete the original jpg/png/other-format files once their WebP replacement is ready?
               </p>
-              <p className="font-mono text-[10px] text-[#ebbbb4]/40 mt-1.5">
+              <p className="font-mono text-[10px] text-accent/40 mt-1.5">
                 Keeping them uses more storage but is safer; deleting frees up space immediately.
               </p>
             </div>
@@ -408,7 +408,7 @@ export default function ImageOptimizationTab() {
               <button
                 type="button"
                 onClick={() => runOptimize(false)}
-                className="w-full py-2.5 border border-[#603e39]/60 text-[#e2e2e2] font-mono text-[11px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
+                className="w-full py-2.5 border border-line/60 text-fg font-mono text-[11px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
               >
                 Keep Originals
               </button>
@@ -422,7 +422,7 @@ export default function ImageOptimizationTab() {
               <button
                 type="button"
                 onClick={() => setShowPopup(false)}
-                className="w-full py-2 text-[#ebbbb4]/40 font-mono text-[10px] tracking-widest uppercase hover:text-[#e2e2e2] transition-colors"
+                className="w-full py-2 text-accent/40 font-mono text-[10px] tracking-widest uppercase hover:text-fg transition-colors"
               >
                 Cancel
               </button>

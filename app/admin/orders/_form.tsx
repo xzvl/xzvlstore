@@ -107,9 +107,9 @@ const EMPTY_FORM: FormState = {
   notes: [],
 };
 
-export const INPUT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
-export const SELECT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors";
-export const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
+export const INPUT = "w-full bg-deep border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
+export const SELECT = "w-full bg-deep border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors";
+export const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5";
 
 // ─── Customer Search Combobox ─────────────────────────────────────────────────
 
@@ -161,42 +161,42 @@ function CustomerSearch({
   return (
     <div ref={ref} className="relative">
       {selected ? (
-        <div className="flex items-center justify-between gap-3 bg-[#0e0e0e] border border-primary/40 px-4 py-2.5">
+        <div className="flex items-center justify-between gap-3 bg-deep border border-primary/40 px-4 py-2.5">
           <div className="flex items-center gap-2 min-w-0">
             <span className="material-symbols-outlined text-primary text-[14px] flex-shrink-0">person</span>
             <div className="min-w-0">
-              <p className="font-mono text-[12px] text-[#e2e2e2] truncate">
+              <p className="font-mono text-[12px] text-fg truncate">
                 {selected.first_name} {selected.last_name}
               </p>
-              <p className="font-mono text-[10px] text-[#ebbbb4]/40 truncate">{selected.email}</p>
+              <p className="font-mono text-[10px] text-accent/40 truncate">{selected.email}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={handleClear}
-            className="flex-shrink-0 text-[#ebbbb4]/30 hover:text-primary transition-colors"
+            className="flex-shrink-0 text-accent/30 hover:text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]">close</span>
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2 bg-[#0e0e0e] border border-[#603e39] focus-within:border-primary transition-colors px-4">
-          <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[16px] flex-shrink-0">search</span>
+        <div className="flex items-center gap-2 bg-deep border border-line focus-within:border-primary transition-colors px-4">
+          <span className="material-symbols-outlined text-accent/30 text-[16px] flex-shrink-0">search</span>
           <input
             type="text"
             placeholder="Search by name or email…"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
             onFocus={() => setOpen(true)}
-            className="flex-1 bg-transparent text-[#e2e2e2] font-mono text-[13px] py-2.5 focus:outline-none placeholder:text-[#ebbbb4]/20"
+            className="flex-1 bg-transparent text-fg font-mono text-[13px] py-2.5 focus:outline-none placeholder:text-accent/20"
           />
         </div>
       )}
 
       {open && !selected && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-[#161616] border border-[#603e39] max-h-[220px] overflow-y-auto shadow-xl shadow-black/60">
+        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-panel border border-line max-h-[220px] overflow-y-auto shadow-xl shadow-black/60">
           {filtered.length === 0 ? (
-            <div className="px-4 py-5 text-center font-mono text-[11px] text-[#ebbbb4]/30">
+            <div className="px-4 py-5 text-center font-mono text-[11px] text-accent/30">
               No customers found.
             </div>
           ) : (
@@ -205,16 +205,16 @@ function CustomerSearch({
                 key={c.id}
                 type="button"
                 onClick={() => handleSelect(c)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[#2a2a2a] transition-colors border-b border-[#603e39]/20"
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-fg/[0.08] transition-colors border-b border-line/20"
               >
                 <div className="min-w-0">
-                  <p className="font-mono text-[12px] text-[#e2e2e2] truncate">
+                  <p className="font-mono text-[12px] text-fg truncate">
                     {c.first_name} {c.last_name}
                   </p>
-                  <p className="font-mono text-[10px] text-[#ebbbb4]/40 truncate">{c.email}</p>
+                  <p className="font-mono text-[10px] text-accent/40 truncate">{c.email}</p>
                 </div>
                 {c.billing_city && (
-                  <span className="flex-shrink-0 font-mono text-[10px] text-[#ebbbb4]/30">{c.billing_city}</span>
+                  <span className="flex-shrink-0 font-mono text-[10px] text-accent/30">{c.billing_city}</span>
                 )}
               </button>
             ))
@@ -242,7 +242,7 @@ function AddressSection({
 }) {
   const f = (field: string) => `${prefix}_${field}` as keyof FormState;
   return (
-    <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-3">
+    <div className="bg-panel border border-line/30 p-5 space-y-3">
       <div className="flex items-center justify-between">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">{label}</p>
         {extra}
@@ -357,12 +357,12 @@ export function ProductCombobox({
         placeholder="Search product…"
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => { setQuery(""); setOpen(true); }}
-        className="w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20"
+        className="w-full bg-deep border border-line text-fg font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20"
       />
       {open && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-[#161616] border border-[#603e39] max-h-[200px] overflow-y-auto shadow-xl shadow-black/60">
+        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-panel border border-line max-h-[200px] overflow-y-auto shadow-xl shadow-black/60">
           {filtered.length === 0 ? (
-            <div className="px-3 py-4 font-mono text-[11px] text-[#ebbbb4]/30 text-center">No products found.</div>
+            <div className="px-3 py-4 font-mono text-[11px] text-accent/30 text-center">No products found.</div>
           ) : (
             filtered.map((p) => (
               <button
@@ -370,12 +370,12 @@ export function ProductCombobox({
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => { onChange(p.id); setQuery(""); setOpen(false); }}
-                className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left border-b border-[#603e39]/10 transition-colors ${
-                  p.id === value ? "bg-primary/10 text-primary" : "text-[#e2e2e2] hover:bg-[#222]"
+                className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left border-b border-line/10 transition-colors ${
+                  p.id === value ? "bg-primary/10 text-primary" : "text-fg hover:bg-fg/[0.06]"
                 }`}
               >
                 <span className="font-mono text-[12px] truncate">{p.name}</span>
-                <span className="font-mono text-[11px] text-[#ebbbb4]/40 flex-shrink-0">
+                <span className="font-mono text-[11px] text-accent/40 flex-shrink-0">
                   ₱{(p.sale_price ?? p.price).toLocaleString()}
                 </span>
               </button>
@@ -615,7 +615,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-12">
+      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-12">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading…
       </div>
@@ -627,14 +627,14 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Link href="/admin/orders" className="inline-flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors mb-3">
+          <Link href="/admin/orders" className="inline-flex items-center gap-1 font-mono text-[10px] text-accent/40 hover:text-primary transition-colors mb-3">
             <span className="material-symbols-outlined text-[13px]">arrow_back</span>
             Back to Orders
           </Link>
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
             ADMIN // ORDERS / {orderId ? "EDIT" : "NEW"}
           </p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">
+          <h1 className="font-inter font-black text-[28px] uppercase text-fg">
             {orderId ? "Edit Order" : "New Order"}
           </h1>
         </div>
@@ -652,7 +652,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       </div>
 
       {/* Customer selector */}
-      <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-4">
+      <div className="bg-panel border border-line/30 p-5 space-y-4">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Customer</p>
 
         <div>
@@ -662,7 +662,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             selectedId={form.customer_id}
             onSelect={handleCustomerSelect}
           />
-          <p className="mt-1.5 font-mono text-[10px] text-[#ebbbb4]/30">
+          <p className="mt-1.5 font-mono text-[10px] text-accent/30">
             Selecting a customer will auto-fill contact and address fields.
           </p>
         </div>
@@ -705,19 +705,19 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
                 type="button"
                 onClick={copyShippingAddress}
                 title="Copy shipping address"
-                className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors"
+                className="flex items-center gap-1 font-mono text-[10px] text-accent/40 hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[12px]">
                   {shippingCopied ? "check" : "content_copy"}
                 </span>
                 {shippingCopied ? "Copied!" : "Copy"}
               </button>
-              <span className="w-px h-3 bg-[#603e39]/40" />
+              <span className="w-px h-3 bg-line/40" />
               <button
                 type="button"
                 onClick={copyBillingToShipping}
                 title="Fill with billing address"
-                className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/40 hover:text-primary transition-colors"
+                className="flex items-center gap-1 font-mono text-[10px] text-accent/40 hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[12px]">content_paste</span>
                 Same as billing
@@ -728,7 +728,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       </div>
 
       {/* Order Details */}
-      <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-4">
+      <div className="bg-panel border border-line/30 p-5 space-y-4">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Order Details</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
@@ -813,10 +813,10 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       </div>
 
       {/* Items */}
-      <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5">
+      <div className="bg-panel border border-line/30 p-5">
         <div className="flex items-center justify-between mb-4">
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Items</p>
-          <button type="button" onClick={addItem} className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/50 hover:text-primary transition-colors">
+          <button type="button" onClick={addItem} className="flex items-center gap-1 font-mono text-[10px] text-accent/50 hover:text-primary transition-colors">
             <span className="material-symbols-outlined text-[13px]">add</span>
             Add item
           </button>
@@ -824,7 +824,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
 
         <div className="hidden md:grid grid-cols-[1fr_70px_110px_110px_32px] gap-3 mb-2">
           {["Product", "Qty", "Unit Price (₱)", "Subtotal", ""].map((h, i) => (
-            <p key={i} className="font-mono text-[10px] uppercase tracking-widest text-[#ebbbb4]/40">{h}</p>
+            <p key={i} className="font-mono text-[10px] uppercase tracking-widest text-accent/40">{h}</p>
           ))}
         </div>
 
@@ -832,25 +832,25 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
           {form.items.map((item, i) => (
             <div key={i} className="relative" style={{ zIndex: form.items.length - i }}>
               {/* Mobile layout */}
-              <div className="md:hidden bg-[#0e0e0e] border border-[#603e39]/40 p-3 space-y-2">
+              <div className="md:hidden bg-deep border border-line/40 p-3 space-y-2">
                 <ProductCombobox value={item.product_id} onChange={(id) => selectProduct(i, id)} products={products} fallbackLabel={item.product} />
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
-                    <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Qty</p>
+                    <p className="font-mono text-[9px] text-accent/40 uppercase tracking-widest mb-1">Qty</p>
                     <input value={item.qty} onChange={(e) => setItem(i, "qty", e.target.value)} type="number" min="1"
-                      className="w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors text-center" />
+                      className="w-full bg-deep border border-line text-fg font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors text-center" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Unit (₱)</p>
+                    <p className="font-mono text-[9px] text-accent/40 uppercase tracking-widest mb-1">Unit (₱)</p>
                     <input value={item.unit_price} onChange={(e) => setItem(i, "unit_price", e.target.value)} type="number" min="0" placeholder="0"
-                      className="w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors" />
+                      className="w-full bg-deep border border-line text-fg font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Subtotal</p>
+                    <p className="font-mono text-[9px] text-accent/40 uppercase tracking-widest mb-1">Subtotal</p>
                     <p className="font-mono text-[13px] text-primary font-bold px-1 py-1.5">₱{(parseFloat(item.subtotal) || 0).toLocaleString()}</p>
                   </div>
                   <button type="button" onClick={() => removeItem(i)} disabled={form.items.length === 1}
-                    className="flex-shrink-0 text-[#ebbbb4]/30 hover:text-primary transition-colors disabled:opacity-20 mt-4">
+                    className="flex-shrink-0 text-accent/30 hover:text-primary transition-colors disabled:opacity-20 mt-4">
                     <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 </div>
@@ -859,14 +859,14 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
               <div className="hidden md:grid grid-cols-[1fr_70px_110px_110px_32px] gap-3 items-center">
                 <ProductCombobox value={item.product_id} onChange={(id) => selectProduct(i, id)} products={products} fallbackLabel={item.product} />
                 <input value={item.qty} onChange={(e) => setItem(i, "qty", e.target.value)} type="number" min="1"
-                  className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors text-center" />
+                  className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors text-center" />
                 <input value={item.unit_price} onChange={(e) => setItem(i, "unit_price", e.target.value)} type="number" min="0" placeholder="0"
-                  className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors" />
+                  className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors" />
                 <div className="font-mono text-[13px] text-primary font-bold px-1">
                   ₱{(parseFloat(item.subtotal) || 0).toLocaleString()}
                 </div>
                 <button type="button" onClick={() => removeItem(i)} disabled={form.items.length === 1}
-                  className="text-[#ebbbb4]/30 hover:text-primary transition-colors disabled:opacity-20">
+                  className="text-accent/30 hover:text-primary transition-colors disabled:opacity-20">
                   <span className="material-symbols-outlined text-[16px]">close</span>
                 </button>
               </div>
@@ -874,39 +874,39 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
           ))}
         </div>
 
-        <div className="mt-6 pt-4 border-t border-[#603e39]/20 space-y-2 max-w-xs ml-auto">
+        <div className="mt-6 pt-4 border-t border-line/20 space-y-2 max-w-xs ml-auto">
           <div className="flex justify-between font-mono text-[12px]">
-            <span className="text-[#ebbbb4]/50">Subtotal</span>
-            <span className="text-[#e2e2e2]">₱{itemsSubtotal.toLocaleString()}</span>
+            <span className="text-accent/50">Subtotal</span>
+            <span className="text-fg">₱{itemsSubtotal.toLocaleString()}</span>
           </div>
           {discountAmt > 0 && (
             <div className="flex justify-between font-mono text-[12px]">
-              <span className="text-[#ebbbb4]/50">Discount</span>
+              <span className="text-accent/50">Discount</span>
               <span className="text-green-400">−₱{discountAmt.toLocaleString()}</span>
             </div>
           )}
-          <div className="flex justify-between items-baseline pt-2 border-t border-[#603e39]/20">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#ebbbb4]/50">Total</span>
+          <div className="flex justify-between items-baseline pt-2 border-t border-line/20">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-accent/50">Total</span>
             <span className="font-inter font-black text-[22px] text-primary">₱{total.toLocaleString()}</span>
           </div>
         </div>
       </div>
 
       {/* Notes */}
-      <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5 space-y-3">
+      <div className="bg-panel border border-line/30 p-5 space-y-3">
         <div className="flex items-center justify-between">
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Order Notes</p>
           <button
             type="button"
             onClick={() => setForm((f) => ({ ...f, notes: [...f.notes, ""] }))}
-            className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/50 hover:text-primary transition-colors"
+            className="flex items-center gap-1 font-mono text-[10px] text-accent/50 hover:text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-[13px]">add</span>
             Add note
           </button>
         </div>
         {form.notes.length === 0 ? (
-          <p className="font-mono text-[11px] text-[#ebbbb4]/30 italic">No notes yet.</p>
+          <p className="font-mono text-[11px] text-accent/30 italic">No notes yet.</p>
         ) : (
           <div className="space-y-2">
             {form.notes.map((note, i) => (
@@ -920,12 +920,12 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
                   })}
                   rows={2}
                   placeholder={`Note ${i + 1}…`}
-                  className="flex-1 bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors resize-y placeholder:text-[#ebbbb4]/20"
+                  className="flex-1 bg-deep border border-line text-fg font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors resize-y placeholder:text-accent/20"
                 />
                 <button
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, notes: f.notes.filter((_, idx) => idx !== i) }))}
-                  className="flex-shrink-0 text-[#ebbbb4]/30 hover:text-primary transition-colors mt-1"
+                  className="flex-shrink-0 text-accent/30 hover:text-primary transition-colors mt-1"
                 >
                   <span className="material-symbols-outlined text-[16px]">close</span>
                 </button>

@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { supabase } from "@/lib/supabase";
 import { adjustStock } from "@/lib/stock";
 import { getPurchasedQtyMap, PURCHASE_LIMIT_WINDOW_DAYS } from "@/lib/purchase-limit";
+import { downPaymentPerUnit } from "@/lib/store-types";
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
@@ -342,6 +343,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Pre-order products that require a down payment put the whole order on
+    // hold until the admin verifies the payment screenshot. Decided here from
+    // the product rows, never from what the client sent.
+    let orderStatus = status || "pre-order";
+    const orderNotes: string[] = [];
+    if (!isCheckout && orderedIds.length > 0) {
+      const { data: dpProducts } = await supabase
+        .from("products")
+        .select("id, pre_order, down_payment_required, down_payment_price")
+        .in("id", orderedIds)
+        .eq("down_payment_required", true);
+      const requiredDp = (dpProducts ?? []).reduce((sum, p) => {
+        const perUnit = downPaymentPerUnit(p);
+        const qty = items.filter((it) => it.product_id === p.id).reduce((s, it) => s + (Number(it.qty) || 0), 0);
+        return sum + perUnit * qty;
+      }, 0);
+      if (requiredDp > 0) {
+        orderStatus = "hold pre-order";
+        orderNotes.push(
+          `Required down payment: ₱${requiredDp.toLocaleString()}${payment_method ? ` via ${payment_method}` : ""}. Awaiting payment screenshot on Facebook.`
+        );
+      }
+    }
+
     const date = new Date().toLocaleDateString("en-PH", {
       year: "numeric",
       month: "long",
@@ -368,7 +393,8 @@ export async function POST(req: NextRequest) {
       supabase.from("orders").insert({
         name, email, phone, location,
         facebook: facebook?.trim() || null,
-        status: status || "pre-order",
+        status: orderStatus,
+        notes: orderNotes,
         estimated_total: estimatedTotal,
         items,
         payment_method: payment_method || null,

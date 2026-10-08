@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AdminShell from "./AdminShell";
+import ForceDarkMode from "@/components/admin/ForceDarkMode";
 
 export const metadata: Metadata = {
   title: {
@@ -9,10 +10,11 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  // .admin-theme pins the built-in dark palette, so the storefront's light mode
-  // and custom Colors never restyle the admin panel.
+  // .admin-theme pins the Dark Mode palette from /admin/content → Colors, so the
+  // storefront's light mode never restyles the admin panel.
   return (
-    <div className="admin-theme min-h-screen bg-[#0e0e0e] text-[#e2e2e2]">
+    <div className="admin-theme min-h-screen bg-deep text-fg">
+      <ForceDarkMode />
       <AdminShell>{children}</AdminShell>
     </div>
   );

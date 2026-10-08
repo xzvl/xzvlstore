@@ -87,6 +87,10 @@ export type DbProduct = {
   social_image: string | null;
   pre_order: boolean;
   pre_order_note: string | null;
+  /** Pre-order only: customer must pay a down payment upfront (order is saved as "hold pre-order"). */
+  down_payment_required: boolean;
+  /** Down payment per unit, when required. */
+  down_payment_price: number | null;
   sneak_peek: boolean;
   sneak_peek_note: string | null;
   taxable: boolean;

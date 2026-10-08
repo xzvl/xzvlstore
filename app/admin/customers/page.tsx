@@ -22,7 +22,7 @@ type Customer = {
 };
 
 const PROVIDER_COLORS: Record<string, string> = {
-  email: "text-[#ebbbb4]/50 border-[#603e39]/50",
+  email: "text-accent/50 border-line/50",
   google: "text-blue-400 border-blue-400/40",
   facebook: "text-blue-500 border-blue-500/40",
 };
@@ -51,7 +51,7 @@ function SocialIcons({ c }: { c: Customer }) {
           rel="noopener noreferrer"
           title={s.title}
           onClick={(e) => e.stopPropagation()}
-          className="text-[#ebbbb4]/40 hover:text-primary transition-colors"
+          className="text-accent/40 hover:text-primary transition-colors"
         >
           <span className="material-symbols-outlined !text-[14px]">{s.icon}</span>
         </a>
@@ -114,7 +114,7 @@ export default function CustomersPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-1">ADMIN // CUSTOMERS</p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Customers</h1>
+          <h1 className="font-inter font-black text-[28px] uppercase text-fg">Customers</h1>
         </div>
         <Link
           href="/admin/customers/new"
@@ -127,23 +127,23 @@ export default function CustomersPage() {
 
       {/* Search + count */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#603e39]/40 focus-within:border-primary px-4 py-2.5 transition-colors flex-1 max-w-xs">
-          <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[16px]">search</span>
+        <div className="flex items-center gap-2 bg-panel border border-line/40 focus-within:border-primary px-4 py-2.5 transition-colors flex-1 max-w-xs">
+          <span className="material-symbols-outlined text-accent/30 text-[16px]">search</span>
           <input
             type="text"
             placeholder="Search by name, email, or city…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-[#e2e2e2] font-mono text-[12px] focus:outline-none placeholder:text-[#ebbbb4]/20"
+            className="flex-1 bg-transparent text-fg font-mono text-[12px] focus:outline-none placeholder:text-accent/20"
           />
           {search && (
-            <button onClick={() => setSearch("")} className="text-[#ebbbb4]/30 hover:text-primary transition-colors">
+            <button onClick={() => setSearch("")} className="text-accent/30 hover:text-primary transition-colors">
               <span className="material-symbols-outlined text-[14px]">close</span>
             </button>
           )}
         </div>
         {!loading && (
-          <span className="font-mono text-[11px] text-[#ebbbb4]/30">
+          <span className="font-mono text-[11px] text-accent/30">
             {filtered.length} {filtered.length === 1 ? "customer" : "customers"}
           </span>
         )}
@@ -151,14 +151,14 @@ export default function CustomersPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-12">
+        <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-12">
           <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
           Loading…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-[#1a1a1a] border border-[#603e39]/20 p-12 text-center">
-          <span className="material-symbols-outlined text-[32px] text-[#ebbbb4]/20 block mb-3">group</span>
-          <p className="font-mono text-[12px] text-[#ebbbb4]/30">
+        <div className="bg-panel border border-line/20 p-12 text-center">
+          <span className="material-symbols-outlined text-[32px] text-accent/20 block mb-3">group</span>
+          <p className="font-mono text-[12px] text-accent/30">
             {search ? "No customers match your search." : "No customers yet."}
           </p>
         </div>
@@ -167,7 +167,7 @@ export default function CustomersPage() {
           {/* ── Mobile cards (hidden on md+) ── */}
           <div className="md:hidden space-y-2">
             {filtered.map(c => (
-              <div key={c.id} className="bg-[#1a1a1a] border border-[#603e39]/20">
+              <div key={c.id} className="bg-panel border border-line/20">
                 <div className="flex gap-3 p-3">
                   {/* Initial circle */}
                   <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
@@ -178,7 +178,7 @@ export default function CustomersPage() {
                   <div className="flex-1 min-w-0 space-y-1">
                     {/* Row 1: Name | provider */}
                     <div className="flex items-center gap-2">
-                      <p className="font-inter font-semibold text-[13px] text-[#e2e2e2] truncate">
+                      <p className="font-inter font-semibold text-[13px] text-fg truncate">
                         {[c.first_name, c.last_name].filter(Boolean).join(" ") || "—"}
                       </p>
                       <SocialIcons c={c} />
@@ -193,11 +193,11 @@ export default function CustomersPage() {
                     </div>
 
                     {/* Row 2: email | phone */}
-                    <p className="font-mono text-[11px] text-[#ebbbb4]/50 flex flex-wrap items-center gap-x-1.5">
+                    <p className="font-mono text-[11px] text-accent/50 flex flex-wrap items-center gap-x-1.5">
                       <span className="truncate">{c.email}</span>
                       {c.billing_phone && (
                         <>
-                          <span className="text-[#603e39]/60">|</span>
+                          <span className="text-line/60">|</span>
                           <span className="flex-shrink-0">{c.billing_phone}</span>
                         </>
                       )}
@@ -205,21 +205,21 @@ export default function CustomersPage() {
 
                     {/* Row 3: location | pencil | trash */}
                     <div className="flex items-center gap-2">
-                      <p className="font-mono text-[11px] text-[#ebbbb4]/40 flex-1 truncate">
+                      <p className="font-mono text-[11px] text-accent/40 flex-1 truncate">
                         {[c.billing_city, c.billing_state].filter(Boolean).join(", ") || "—"}
                       </p>
-                      <Link href={`/admin/customers/${c.id}`} className="text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0" title="Edit">
+                      <Link href={`/admin/customers/${c.id}`} className="text-accent/30 hover:text-primary transition-colors flex-shrink-0" title="Edit">
                         <span className="material-symbols-outlined text-[16px]">edit</span>
                       </Link>
                       <button
                         onClick={() => handleToggleBlock(c)}
                         disabled={blockingId === c.id}
-                        className={`transition-colors flex-shrink-0 disabled:opacity-40 ${c.is_blocked ? "text-red-400 hover:text-green-400" : "text-[#ebbbb4]/30 hover:text-red-400"}`}
+                        className={`transition-colors flex-shrink-0 disabled:opacity-40 ${c.is_blocked ? "text-red-400 hover:text-green-400" : "text-accent/30 hover:text-red-400"}`}
                         title={c.is_blocked ? "Unblock" : "Block"}
                       >
                         <span className="material-symbols-outlined text-[16px]">{c.is_blocked ? "lock_open" : "block"}</span>
                       </button>
-                      <button onClick={() => setConfirmId(confirmId === c.id ? null : c.id)} className="text-[#ebbbb4]/30 hover:text-red-400 transition-colors flex-shrink-0" title="Delete">
+                      <button onClick={() => setConfirmId(confirmId === c.id ? null : c.id)} className="text-accent/30 hover:text-red-400 transition-colors flex-shrink-0" title="Delete">
                         <span className="material-symbols-outlined text-[16px]">delete</span>
                       </button>
                     </div>
@@ -228,12 +228,12 @@ export default function CustomersPage() {
 
                 {/* Delete confirmation */}
                 {confirmId === c.id && (
-                  <div className="border-t border-red-900/30 bg-[#1f1212] px-4 py-3">
+                  <div className="border-t border-red-900/30 bg-primary/[0.06] px-4 py-3">
                     <p className="font-mono text-[11px] text-red-300 mb-2">
                       Delete <span className="text-white">{[c.first_name, c.last_name].filter(Boolean).join(" ") || c.email}</span>? Cannot be undone.
                     </p>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors">Cancel</button>
+                      <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors">Cancel</button>
                       <button onClick={() => handleDelete(c.id)} disabled={deletingId === c.id} className="flex items-center gap-1.5 px-3 py-1 bg-red-600/20 border border-red-600/50 text-red-400 font-mono text-[11px] uppercase tracking-widest hover:bg-red-600/30 transition-colors disabled:opacity-50">
                         {deletingId === c.id ? <span className="material-symbols-outlined animate-spin text-[13px]">progress_activity</span> : <span className="material-symbols-outlined text-[13px]">delete</span>}
                         {deletingId === c.id ? "Deleting…" : "Delete"}
@@ -249,9 +249,9 @@ export default function CustomersPage() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#603e39]/40">
+              <tr className="border-b border-line/40">
                 {["", "Name", "Email", "Provider", "Location", "Phone", ""].map((h, i) => (
-                  <th key={i} className="text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3 whitespace-nowrap">
+                  <th key={i} className="text-left font-mono text-[10px] tracking-[0.15em] uppercase text-accent/40 px-3 py-3 whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -260,7 +260,7 @@ export default function CustomersPage() {
             <tbody>
               {filtered.map(c => (
                 <Fragment key={c.id}>
-                  <tr className="border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors">
+                  <tr className="border-b border-line/15 hover:bg-panel transition-colors">
                     {/* Avatar */}
                     <td className="px-3 py-3 w-10">
                       <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -271,7 +271,7 @@ export default function CustomersPage() {
                     {/* Name */}
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1.5">
-                        <p className="font-inter font-semibold text-[13px] text-[#e2e2e2] whitespace-nowrap">
+                        <p className="font-inter font-semibold text-[13px] text-fg whitespace-nowrap">
                           {[c.first_name, c.last_name].filter(Boolean).join(" ") || "—"}
                         </p>
                         <SocialIcons c={c} />
@@ -281,13 +281,13 @@ export default function CustomersPage() {
                           </span>
                         )}
                       </div>
-                      <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-0.5">
+                      <p className="font-mono text-[10px] text-accent/30 mt-0.5">
                         {new Date(c.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Manila" })}
                       </p>
                     </td>
 
                     {/* Email */}
-                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/70 whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[12px] text-accent/70 whitespace-nowrap">
                       {c.email}
                     </td>
 
@@ -299,12 +299,12 @@ export default function CustomersPage() {
                     </td>
 
                     {/* Location */}
-                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/50 whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[12px] text-accent/50 whitespace-nowrap">
                       {[c.billing_city, c.billing_state].filter(Boolean).join(", ") || "—"}
                     </td>
 
                     {/* Phone */}
-                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/50 whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[12px] text-accent/50 whitespace-nowrap">
                       {c.billing_phone || "—"}
                     </td>
 
@@ -313,7 +313,7 @@ export default function CustomersPage() {
                       <div className="flex items-center gap-1 justify-end">
                         <Link
                           href={`/admin/customers/${c.id}`}
-                          className="p-1.5 text-[#ebbbb4]/30 hover:text-primary transition-colors"
+                          className="p-1.5 text-accent/30 hover:text-primary transition-colors"
                           title="Edit"
                         >
                           <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -321,14 +321,14 @@ export default function CustomersPage() {
                         <button
                           onClick={() => handleToggleBlock(c)}
                           disabled={blockingId === c.id}
-                          className={`p-1.5 transition-colors disabled:opacity-40 ${c.is_blocked ? "text-red-400 hover:text-green-400" : "text-[#ebbbb4]/30 hover:text-red-400"}`}
+                          className={`p-1.5 transition-colors disabled:opacity-40 ${c.is_blocked ? "text-red-400 hover:text-green-400" : "text-accent/30 hover:text-red-400"}`}
                           title={c.is_blocked ? "Unblock" : "Block"}
                         >
                           <span className="material-symbols-outlined text-[16px]">{c.is_blocked ? "lock_open" : "block"}</span>
                         </button>
                         <button
                           onClick={() => setConfirmId(confirmId === c.id ? null : c.id)}
-                          className="p-1.5 text-[#ebbbb4]/30 hover:text-red-400 transition-colors"
+                          className="p-1.5 text-accent/30 hover:text-red-400 transition-colors"
                           title="Delete"
                         >
                           <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -339,7 +339,7 @@ export default function CustomersPage() {
 
                   {/* Delete confirmation row */}
                   {confirmId === c.id && (
-                    <tr className="border-b border-[#603e39]/15 bg-[#1f1212]">
+                    <tr className="border-b border-line/15 bg-primary/[0.06]">
                       <td colSpan={7} className="px-5 py-3">
                         <div className="flex items-center justify-between gap-4">
                           <p className="font-mono text-[11px] text-red-300">
@@ -348,7 +348,7 @@ export default function CustomersPage() {
                           <div className="flex items-center gap-3 flex-shrink-0">
                             <button
                               onClick={() => setConfirmId(null)}
-                              className="font-mono text-[11px] text-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors"
+                              className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors"
                             >
                               Cancel
                             </button>

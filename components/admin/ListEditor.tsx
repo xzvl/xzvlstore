@@ -32,14 +32,14 @@ export default function ListEditor<T>({
   };
 
   const iconBtn =
-    "w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed";
+    "w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed";
 
   return (
     <div className="space-y-3">
       {items.map((item, i) => (
-        <div key={i} className="border border-[#603e39]/30 bg-[#131313] p-4">
+        <div key={i} className="border border-line/30 bg-canvas p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest">
+            <span className="font-mono text-[10px] text-accent/50 uppercase tracking-widest">
               {itemLabel} {i + 1}
             </span>
             <div className="flex items-center gap-1.5">
@@ -47,7 +47,7 @@ export default function ListEditor<T>({
                 type="button"
                 onClick={() => move(i, -1)}
                 disabled={i === 0}
-                className={`${iconBtn} hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2]`}
+                className={`${iconBtn} hover:border-accent/50 hover:text-fg`}
                 title="Move up"
               >
                 <span className="material-symbols-outlined text-[14px]">arrow_upward</span>
@@ -56,7 +56,7 @@ export default function ListEditor<T>({
                 type="button"
                 onClick={() => move(i, 1)}
                 disabled={i === items.length - 1}
-                className={`${iconBtn} hover:border-[#ebbbb4]/50 hover:text-[#e2e2e2]`}
+                className={`${iconBtn} hover:border-accent/50 hover:text-fg`}
                 title="Move down"
               >
                 <span className="material-symbols-outlined text-[14px]">arrow_downward</span>
@@ -79,7 +79,7 @@ export default function ListEditor<T>({
       <button
         type="button"
         onClick={add}
-        className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#603e39]/50 text-[#ebbbb4]/50 font-mono text-[10px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
+        className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-line/50 text-accent/50 font-mono text-[10px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
       >
         <span className="material-symbols-outlined text-[14px]">add</span>
         Add {itemLabel}

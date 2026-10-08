@@ -4,7 +4,7 @@
 
 /* Theme colors as "r g b" channels (see lib/theme.ts). These are the built-in
    dark palette; the root layout overrides them per mode with the palettes from
-   /admin/content → Colors. The admin panel always uses the built-in dark one. */
+   /admin/content → Colors. The admin panel (.admin-theme) always uses the dark one. */
 :root,
 .admin-theme {
   color-scheme: dark;

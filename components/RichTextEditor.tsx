@@ -7,7 +7,7 @@ import { useEffect } from "react";
 const btnBase =
   "px-2 py-1 font-mono text-[11px] border border-transparent transition-colors";
 const btnActive = "border-primary text-primary bg-primary/10";
-const btnIdle = "text-[#ebbbb4]/50 hover:text-[#e2e2e2] hover:border-[#603e39]/60";
+const btnIdle = "text-accent/50 hover:text-fg hover:border-line/60";
 
 export default function RichTextEditor({
   value,
@@ -22,7 +22,7 @@ export default function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-[120px] px-4 py-3 text-[#e2e2e2] font-mono text-[13px] leading-relaxed focus:outline-none prose prose-invert prose-sm max-w-none",
+          "min-h-[120px] px-4 py-3 text-fg font-mono text-[13px] leading-relaxed focus:outline-none prose prose-invert prose-sm max-w-none",
       },
     },
     onUpdate({ editor }) {
@@ -58,19 +58,19 @@ export default function RichTextEditor({
   );
 
   return (
-    <div className="border border-[#603e39] focus-within:border-primary transition-colors bg-[#1f1f1f]">
+    <div className="border border-line focus-within:border-primary transition-colors bg-fg/[0.05]">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-[#603e39]/50">
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-line/50">
         {btn(editor.isActive("bold"), () => editor.chain().focus().toggleBold().run(), "B")}
         {btn(editor.isActive("italic"), () => editor.chain().focus().toggleItalic().run(), "I")}
         {btn(editor.isActive("strike"), () => editor.chain().focus().toggleStrike().run(), "S")}
-        <span className="w-px h-4 bg-[#603e39]/40 mx-1" />
+        <span className="w-px h-4 bg-line/40 mx-1" />
         {btn(editor.isActive("heading", { level: 2 }), () => editor.chain().focus().toggleHeading({ level: 2 }).run(), "H2")}
         {btn(editor.isActive("heading", { level: 3 }), () => editor.chain().focus().toggleHeading({ level: 3 }).run(), "H3")}
-        <span className="w-px h-4 bg-[#603e39]/40 mx-1" />
+        <span className="w-px h-4 bg-line/40 mx-1" />
         {btn(editor.isActive("bulletList"), () => editor.chain().focus().toggleBulletList().run(), "• List")}
         {btn(editor.isActive("orderedList"), () => editor.chain().focus().toggleOrderedList().run(), "1. List")}
-        <span className="w-px h-4 bg-[#603e39]/40 mx-1" />
+        <span className="w-px h-4 bg-line/40 mx-1" />
         {btn(false, () => editor.chain().focus().clearNodes().unsetAllMarks().run(), "Clear")}
       </div>
       <EditorContent editor={editor} />

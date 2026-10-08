@@ -101,9 +101,9 @@ function QuickEditModal({
     setSaving(false);
   };
 
-  const label = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 mb-1";
+  const label = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/40 mb-1";
   const field =
-    "w-full bg-[#0e0e0e] border border-[#603e39]/40 text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors";
+    "w-full bg-deep border border-line/40 text-fg font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors";
 
   return (
     <div
@@ -111,18 +111,18 @@ function QuickEditModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#1a1a1a] border border-[#603e39]/40"
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-panel border border-line/40"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#603e39]/30 px-5 py-3">
+        <div className="flex items-center justify-between border-b border-line/30 px-5 py-3">
           <div>
             <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Quick Edit</p>
-            <p className="font-mono text-[11px] text-[#ebbbb4]/40">{product.sku ?? "No SKU"}</p>
+            <p className="font-mono text-[11px] text-accent/40">{product.sku ?? "No SKU"}</p>
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center text-[#ebbbb4]/40 hover:text-primary transition-colors"
+            className="w-7 h-7 flex items-center justify-center text-accent/40 hover:text-primary transition-colors"
             title="Close"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
@@ -132,7 +132,7 @@ function QuickEditModal({
         <div className="p-5 space-y-4">
           {/* Image + name */}
           <div className="flex gap-4">
-            <div className="relative w-24 h-24 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
+            <div className="relative w-24 h-24 flex-shrink-0 bg-deep border border-line/20 overflow-hidden">
               {img ? (
                 <Image
                   src={sizedImageUrl(img, "small") ?? img}
@@ -146,7 +146,7 @@ function QuickEditModal({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[24px] text-[#ebbbb4]/20">image</span>
+                  <span className="material-symbols-outlined text-[24px] text-accent/20">image</span>
                 </div>
               )}
             </div>
@@ -190,7 +190,7 @@ function QuickEditModal({
             </div>
             <div>
               <span className={label}>Profit / unit</span>
-              <p className={`font-mono text-[12px] font-bold px-3 py-2 border border-[#603e39]/20 bg-[#0e0e0e] ${unitProfit >= 0 ? "text-green-400" : "text-primary"}`}>
+              <p className={`font-mono text-[12px] font-bold px-3 py-2 border border-line/20 bg-deep ${unitProfit >= 0 ? "text-green-400" : "text-primary"}`}>
                 {num(cost) > 0 ? peso(unitProfit) : "—"}
               </p>
             </div>
@@ -244,10 +244,10 @@ function QuickEditModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-[#603e39]/30 px-5 py-3">
+        <div className="flex items-center justify-end gap-2 border-t border-line/30 px-5 py-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 font-mono text-[11px] tracking-widest uppercase text-[#ebbbb4]/40 hover:text-[#e2e2e2] transition-colors"
+            className="px-4 py-2 font-mono text-[11px] tracking-widest uppercase text-accent/40 hover:text-fg transition-colors"
           >
             Cancel
           </button>
@@ -512,8 +512,8 @@ function AdminProductsPageInner() {
       title={sort !== null ? "Clear the column sort to reorder" : "Drag to reorder"}
       className={`w-7 h-7 flex items-center justify-center flex-shrink-0 select-none transition-colors ${
         canReorder
-          ? "cursor-move text-[#ebbbb4]/40 hover:text-primary"
-          : "cursor-not-allowed text-[#ebbbb4]/15"
+          ? "cursor-move text-accent/40 hover:text-primary"
+          : "cursor-not-allowed text-accent/15"
       }`}
     >
       <span className="material-symbols-outlined text-[18px] pointer-events-none">open_with</span>
@@ -524,7 +524,7 @@ function AdminProductsPageInner() {
   const profit = (p: DbProduct) => (p.sale_price ?? p.price) - p.cost;
   const thumb = thumbOf;
 
-  const thBase = "text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3 whitespace-nowrap";
+  const thBase = "text-left font-mono text-[10px] tracking-[0.15em] uppercase text-accent/40 px-3 py-3 whitespace-nowrap";
 
   const toggleSort = (key: SortKey) =>
     setSort((prev) =>
@@ -536,7 +536,7 @@ function AdminProductsPageInner() {
   const SortTh = ({ label, sortKey }: { label: string; sortKey: SortKey }) => {
     const active = sort?.key === sortKey;
     return (
-      <th onClick={() => toggleSort(sortKey)} className={`${thBase} cursor-pointer hover:text-[#ebbbb4]/70 select-none transition-colors`}>
+      <th onClick={() => toggleSort(sortKey)} className={`${thBase} cursor-pointer hover:text-accent/70 select-none transition-colors`}>
         <span className="flex items-center gap-1">
           {label}
           <span className={`material-symbols-outlined text-[11px] transition-opacity ${active ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-50"}`}>
@@ -555,7 +555,7 @@ function AdminProductsPageInner() {
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">
             ADMIN // PRODUCTS
           </p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Products</h1>
+          <h1 className="font-inter font-black text-[28px] uppercase text-fg">Products</h1>
         </div>
         <Link
           href="/admin/products/new"
@@ -568,17 +568,17 @@ function AdminProductsPageInner() {
 
       {/* Search + totals */}
       <div className="flex flex-col sm:flex-row sm:items-stretch gap-2 sm:gap-3">
-        <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#603e39]/40 focus-within:border-primary px-4 py-2.5 transition-colors w-full sm:flex-1 sm:max-w-xs">
-          <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[16px]">search</span>
+        <div className="flex items-center gap-2 bg-panel border border-line/40 focus-within:border-primary px-4 py-2.5 transition-colors w-full sm:flex-1 sm:max-w-xs">
+          <span className="material-symbols-outlined text-accent/30 text-[16px]">search</span>
           <input
             type="text"
             placeholder="Search by name or SKU…"
             value={q}
             onChange={(e) => setParam("q", e.target.value, "")}
-            className="flex-1 bg-transparent text-[#e2e2e2] font-mono text-[12px] focus:outline-none placeholder:text-[#ebbbb4]/20"
+            className="flex-1 bg-transparent text-fg font-mono text-[12px] focus:outline-none placeholder:text-accent/20"
           />
           {q && (
-            <button onClick={() => setParam("q", "", "")} className="text-[#ebbbb4]/30 hover:text-primary transition-colors">
+            <button onClick={() => setParam("q", "", "")} className="text-accent/30 hover:text-primary transition-colors">
               <span className="material-symbols-outlined text-[14px]">close</span>
             </button>
           )}
@@ -586,28 +586,28 @@ function AdminProductsPageInner() {
 
         <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
           <div
-            className="flex items-center gap-2.5 bg-[#1a1a1a] border border-[#603e39]/40 px-4 py-2"
+            className="flex items-center gap-2.5 bg-panel border border-line/40 px-4 py-2"
             title={`Retail value of stock on hand across the ${displayed.length} listed product${displayed.length === 1 ? "" : "s"}`}
           >
-            <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[18px]">inventory_2</span>
+            <span className="material-symbols-outlined text-accent/30 text-[18px]">inventory_2</span>
             <div className="leading-tight">
-              <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 whitespace-nowrap">Est. Total</p>
-              <p className="font-mono text-[14px] font-bold text-[#e2e2e2] whitespace-nowrap">{peso(totals.value)}</p>
+              <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-accent/40 whitespace-nowrap">Est. Total</p>
+              <p className="font-mono text-[14px] font-bold text-fg whitespace-nowrap">{peso(totals.value)}</p>
             </div>
           </div>
 
           <div
-            className="flex items-center gap-2.5 bg-[#1a1a1a] border border-[#603e39]/40 px-4 py-2"
+            className="flex items-center gap-2.5 bg-panel border border-line/40 px-4 py-2"
             title={
               totals.noCost > 0
                 ? `${totals.noCost} listed product${totals.noCost === 1 ? " has" : "s have"} no cost recorded and ${totals.noCost === 1 ? "is" : "are"} excluded`
                 : "Profit on stock on hand across the listed products"
             }
           >
-            <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[18px]">trending_up</span>
+            <span className="material-symbols-outlined text-accent/30 text-[18px]">trending_up</span>
             <div className="leading-tight">
-              <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 whitespace-nowrap">
-                Total Profit{totals.noCost > 0 && <span className="text-[#ebbbb4]/25">*</span>}
+              <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-accent/40 whitespace-nowrap">
+                Total Profit{totals.noCost > 0 && <span className="text-accent/25">*</span>}
               </p>
               <p className={`font-mono text-[14px] font-bold whitespace-nowrap ${totals.profit >= 0 ? "text-green-400" : "text-primary"}`}>
                 {peso(totals.profit)}
@@ -622,7 +622,7 @@ function AdminProductsPageInner() {
         <select
           value={visibility}
           onChange={(e) => setParam("visibility", e.target.value, "active")}
-          className="bg-[#0e0e0e] border border-[#603e39]/40 text-[#ebbbb4]/60 font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+          className="bg-deep border border-line/40 text-accent/60 font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
         >
           <option value="all">All Products</option>
           <option value="active">Active</option>
@@ -632,7 +632,7 @@ function AdminProductsPageInner() {
         <select
           value={categoryFilter}
           onChange={(e) => setParam("category", e.target.value, "all")}
-          className="bg-[#0e0e0e] border border-[#603e39]/40 text-[#ebbbb4]/60 font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+          className="bg-deep border border-line/40 text-accent/60 font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
         >
           <option value="all">All Categories</option>
           {categories.map((c) => (
@@ -643,7 +643,7 @@ function AdminProductsPageInner() {
         <select
           value={brandFilter}
           onChange={(e) => setParam("brand", e.target.value, "all")}
-          className="bg-[#0e0e0e] border border-[#603e39]/40 text-[#ebbbb4]/60 font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+          className="bg-deep border border-line/40 text-accent/60 font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
         >
           <option value="all">All Brands</option>
           {brands.map((b) => (
@@ -656,7 +656,7 @@ function AdminProductsPageInner() {
           className={`px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase border transition-colors ${
             preorderFilter
               ? "border-orange-400/60 bg-orange-400/10 text-orange-400"
-              : "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70"
+              : "border-line/40 text-accent/40 hover:border-accent/30 hover:text-accent/70"
           }`}
         >
           Pre-Order
@@ -667,7 +667,7 @@ function AdminProductsPageInner() {
           className={`px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase border transition-colors ${
             sneakPeekFilter
               ? "border-sky-400/60 bg-sky-400/10 text-sky-400"
-              : "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70"
+              : "border-line/40 text-accent/40 hover:border-accent/30 hover:text-accent/70"
           }`}
         >
           Sneak Peek
@@ -678,7 +678,7 @@ function AdminProductsPageInner() {
           className={`px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase border transition-colors ${
             taxableFilter
               ? "border-primary bg-primary/10 text-primary"
-              : "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70"
+              : "border-line/40 text-accent/40 hover:border-accent/30 hover:text-accent/70"
           }`}
         >
           Taxable
@@ -691,7 +691,7 @@ function AdminProductsPageInner() {
               setSort(null);
               router.replace(pathname, { scroll: false });
             }}
-            className="flex items-center gap-1 font-mono text-[10px] tracking-widest uppercase text-[#ebbbb4]/30 hover:text-primary transition-colors"
+            className="flex items-center gap-1 font-mono text-[10px] tracking-widest uppercase text-accent/30 hover:text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-[12px]">close</span>
             Clear
@@ -703,19 +703,19 @@ function AdminProductsPageInner() {
         )}
 
         {/* Count */}
-        <span className="ml-auto font-mono text-[10px] text-[#ebbbb4]/30">
+        <span className="ml-auto font-mono text-[10px] text-accent/30">
           {displayed.length} / {products.length}
         </span>
       </div>
 
       {/* Product list */}
       {loading ? (
-        <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-10">
+        <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-10">
           <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
           Loading products…
         </div>
       ) : displayed.length === 0 ? (
-        <div className="text-center py-12 font-mono text-[12px] text-[#ebbbb4]/30">
+        <div className="text-center py-12 font-mono text-[12px] text-accent/30">
           {isFiltered ? "No products match the current filters." : "No products yet."}
         </div>
       ) : (
@@ -730,17 +730,17 @@ function AdminProductsPageInner() {
                   data-product-row
                   onDragOver={drop.onDragOver}
                   onDrop={drop.onDrop}
-                  className={`flex gap-2 bg-[#1a1a1a] border border-[#603e39]/30 p-3 ${
+                  className={`flex gap-2 bg-panel border border-line/30 p-3 ${
                     p.status === "inactive" ? "opacity-40" : ""
                   } ${drop.dragging ? "!opacity-30" : ""} ${
-                    drop.indicator === "above" ? "shadow-[inset_0_2px_0_0_#ed0d11]" : drop.indicator === "below" ? "shadow-[inset_0_-2px_0_0_#ed0d11]" : ""
+                    drop.indicator === "above" ? "shadow-[inset_0_2px_0_0_rgb(var(--c-primary))]" : drop.indicator === "below" ? "shadow-[inset_0_-2px_0_0_rgb(var(--c-primary))]" : ""
                   }`}
                 >
                   {/* Move handle */}
                   <div className="flex items-center -ml-1">{renderHandle(p)}</div>
 
                   {/* Left: image */}
-                  <div className="relative w-16 h-16 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
+                  <div className="relative w-16 h-16 flex-shrink-0 bg-deep border border-line/20 overflow-hidden">
                     {thumb(p) ? (
                       <Image
                         src={sizedImageUrl(thumb(p), "small") ?? thumb(p)!}
@@ -755,7 +755,7 @@ function AdminProductsPageInner() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[20px] text-[#ebbbb4]/20">image</span>
+                        <span className="material-symbols-outlined text-[20px] text-accent/20">image</span>
                       </div>
                     )}
                   </div>
@@ -764,7 +764,7 @@ function AdminProductsPageInner() {
                   <div className="flex-1 min-w-0 space-y-1.5">
                     {/* Row 1: name + badges */}
                     <div className="flex items-start gap-2 flex-wrap">
-                      <ProductTitleLink p={p} className="font-inter font-bold text-[13px] text-[#e2e2e2] leading-tight truncate" />
+                      <ProductTitleLink p={p} className="font-inter font-bold text-[13px] text-fg leading-tight truncate" />
                       {p.pre_order && (
                         <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400 flex-shrink-0">
                           pre-order
@@ -776,16 +776,16 @@ function AdminProductsPageInner() {
                         </span>
                       )}
                       {p.status === "inactive" && (
-                        <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-[#ebbbb4]/20 bg-[#ebbbb4]/5 text-[#ebbbb4]/40 flex-shrink-0">
+                        <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-accent/20 bg-accent/5 text-accent/40 flex-shrink-0">
                           inactive
                         </span>
                       )}
                     </div>
 
                     {/* Row 2: brand | Stocks */}
-                    <p className="font-mono text-[11px] text-[#ebbbb4]/50">
+                    <p className="font-mono text-[11px] text-accent/50">
                       <span>{p.brand_id && brandMap[p.brand_id] ? brandMap[p.brand_id] : "—"}</span>
-                      <span className="mx-1.5 text-[#603e39]/60">|</span>
+                      <span className="mx-1.5 text-line/60">|</span>
                       <span>
                         Stocks:{" "}
                         <span className={`font-bold ${p.stock === 0 ? "text-primary" : p.stock <= 5 ? "text-yellow-400" : "text-green-400"}`}>
@@ -795,19 +795,19 @@ function AdminProductsPageInner() {
                     </p>
 
                     {/* Row 3: Price | Cost | Profit */}
-                    <p className="font-mono text-[11px] text-[#ebbbb4]/50 flex flex-wrap gap-x-3">
+                    <p className="font-mono text-[11px] text-accent/50 flex flex-wrap gap-x-3">
                       <span>
                         Price:{" "}
-                        <span className="text-[#e2e2e2] font-bold">
+                        <span className="text-fg font-bold">
                           ₱{(p.sale_price ?? p.price).toLocaleString()}
                         </span>
                         {p.sale_price && (
-                          <span className="line-through text-[#ebbbb4]/30 ml-1">₱{p.price.toLocaleString()}</span>
+                          <span className="line-through text-accent/30 ml-1">₱{p.price.toLocaleString()}</span>
                         )}
                       </span>
                       <span>
                         Cost:{" "}
-                        <span className="text-[#e2e2e2]">
+                        <span className="text-fg">
                           {p.cost > 0 ? `₱${p.cost.toLocaleString()}` : "—"}
                         </span>
                       </span>
@@ -821,19 +821,19 @@ function AdminProductsPageInner() {
 
                     {/* Row 4: actions */}
                     <div className="flex items-center gap-1.5 pt-0.5">
-                      <button onClick={() => setQuickEdit(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Quick edit">
+                      <button onClick={() => setQuickEdit(p)} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-primary hover:text-primary transition-colors" title="Quick edit">
                         <span className="material-symbols-outlined text-[13px]">bolt</span>
                       </button>
-                      <Link href={`/admin/products/${p.id}`} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Edit">
+                      <Link href={`/admin/products/${p.id}`} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-primary hover:text-primary transition-colors" title="Edit">
                         <span className="material-symbols-outlined text-[13px]">edit</span>
                       </Link>
-                      <button onClick={() => handleDuplicate(p)} disabled={duplicating === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors disabled:opacity-40" title="Duplicate">
+                      <button onClick={() => handleDuplicate(p)} disabled={duplicating === p.id} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-primary hover:text-primary transition-colors disabled:opacity-40" title="Duplicate">
                         <span className="material-symbols-outlined text-[13px]">{duplicating === p.id ? "progress_activity" : "content_copy"}</span>
                       </button>
-                      <button onClick={() => toggleStatus(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-blue-400 hover:text-blue-400 transition-colors" title={p.status === "active" ? "Disable" : "Enable"}>
+                      <button onClick={() => toggleStatus(p)} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-blue-400 hover:text-blue-400 transition-colors" title={p.status === "active" ? "Disable" : "Enable"}>
                         <span className="material-symbols-outlined text-[13px]">{p.status === "active" ? "visibility_off" : "visibility"}</span>
                       </button>
-                      <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
+                      <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
                         <span className="material-symbols-outlined text-[13px]">delete</span>
                       </button>
                     </div>
@@ -847,7 +847,7 @@ function AdminProductsPageInner() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full border-collapse min-w-[900px]">
               <thead>
-                <tr className="border-b border-[#603e39]/40 group">
+                <tr className="border-b border-line/40 group">
                   <th className={`${thBase} w-8 px-1`}></th>
                   <th className={thBase}>Image</th>
                   <SortTh label="Name" sortKey="name" />
@@ -869,13 +869,13 @@ function AdminProductsPageInner() {
                       data-product-row
                       onDragOver={drop.onDragOver}
                       onDrop={drop.onDrop}
-                      className={`border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors ${p.status === "inactive" ? "opacity-40" : ""} ${drop.dragging ? "!opacity-30" : ""} ${
-                        drop.indicator === "above" ? "[&>td]:shadow-[inset_0_2px_0_0_#ed0d11]" : drop.indicator === "below" ? "[&>td]:shadow-[inset_0_-2px_0_0_#ed0d11]" : ""
+                      className={`border-b border-line/15 hover:bg-panel transition-colors ${p.status === "inactive" ? "opacity-40" : ""} ${drop.dragging ? "!opacity-30" : ""} ${
+                        drop.indicator === "above" ? "[&>td]:shadow-[inset_0_2px_0_0_rgb(var(--c-primary))]" : drop.indicator === "below" ? "[&>td]:shadow-[inset_0_-2px_0_0_rgb(var(--c-primary))]" : ""
                       }`}
                     >
                       <td className="pl-2 pr-0 py-3 w-8">{renderHandle(p)}</td>
                       <td className="px-3 py-3">
-                        <div className="w-10 h-10 relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
+                        <div className="w-10 h-10 relative bg-deep border border-line/20 overflow-hidden flex-shrink-0">
                           {thumb(p) ? (
                             <Image
                               src={sizedImageUrl(thumb(p), "small") ?? thumb(p)!}
@@ -890,20 +890,20 @@ function AdminProductsPageInner() {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/20">image</span>
+                              <span className="material-symbols-outlined text-[14px] text-accent/20">image</span>
                             </div>
                           )}
                         </div>
                       </td>
                       <td className="px-3 py-3">
-                        <ProductTitleLink p={p} className="font-inter font-bold text-[13px] text-[#e2e2e2] leading-tight max-w-[180px] truncate" />
+                        <ProductTitleLink p={p} className="font-inter font-bold text-[13px] text-fg leading-tight max-w-[180px] truncate" />
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {p.pre_order && <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400">pre-order</span>}
                           {p.sneak_peek && <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-sky-400/30 bg-sky-400/10 text-sky-400">sneak peek</span>}
-                          {p.status === "inactive" && <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-[#ebbbb4]/20 bg-[#ebbbb4]/5 text-[#ebbbb4]/40">inactive</span>}
+                          {p.status === "inactive" && <span className="font-mono text-[9px] tracking-widest uppercase px-1.5 py-px border border-accent/20 bg-accent/5 text-accent/40">inactive</span>}
                         </div>
                       </td>
-                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">{p.sku ?? <span className="text-[#ebbbb4]/20">—</span>}</td>
+                      <td className="px-3 py-3 font-mono text-[12px] text-accent/60 whitespace-nowrap">{p.sku ?? <span className="text-accent/20">—</span>}</td>
                       <td className="px-3 py-3">
                         <span className={`font-mono text-[12px] font-bold ${p.stock === 0 ? "text-primary" : p.stock <= 5 ? "text-yellow-400" : "text-green-400"}`}>{p.stock}</span>
                       </td>
@@ -911,36 +911,36 @@ function AdminProductsPageInner() {
                         {p.sale_price ? (
                           <div className="flex flex-col leading-tight">
                             <span className="font-mono text-[12px] font-bold text-primary">₱{p.sale_price.toLocaleString()}</span>
-                            <span className="font-mono text-[10px] text-[#ebbbb4]/40 line-through">₱{p.price.toLocaleString()}</span>
+                            <span className="font-mono text-[10px] text-accent/40 line-through">₱{p.price.toLocaleString()}</span>
                           </div>
                         ) : (
-                          <span className="font-mono text-[12px] text-[#e2e2e2]">₱{p.price.toLocaleString()}</span>
+                          <span className="font-mono text-[12px] text-fg">₱{p.price.toLocaleString()}</span>
                         )}
                       </td>
-                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">{p.cost > 0 ? `₱${p.cost.toLocaleString()}` : <span className="text-[#ebbbb4]/20">—</span>}</td>
+                      <td className="px-3 py-3 font-mono text-[12px] text-accent/60 whitespace-nowrap">{p.cost > 0 ? `₱${p.cost.toLocaleString()}` : <span className="text-accent/20">—</span>}</td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         {p.cost > 0 ? (
                           <span className={`font-mono text-[12px] font-bold ${profit(p) >= 0 ? "text-green-400" : "text-primary"}`}>₱{profit(p).toLocaleString()}</span>
                         ) : (
-                          <span className="font-mono text-[12px] text-[#ebbbb4]/20">—</span>
+                          <span className="font-mono text-[12px] text-accent/20">—</span>
                         )}
                       </td>
-                      <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 max-w-[120px] truncate">{p.brand_id && brandMap[p.brand_id] ? brandMap[p.brand_id] : <span className="text-[#ebbbb4]/20">—</span>}</td>
+                      <td className="px-3 py-3 font-mono text-[12px] text-accent/60 max-w-[120px] truncate">{p.brand_id && brandMap[p.brand_id] ? brandMap[p.brand_id] : <span className="text-accent/20">—</span>}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1.5">
-                          <button onClick={() => setQuickEdit(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Quick edit">
+                          <button onClick={() => setQuickEdit(p)} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-primary hover:text-primary transition-colors" title="Quick edit">
                             <span className="material-symbols-outlined text-[13px]">bolt</span>
                           </button>
-                          <Link href={`/admin/products/${p.id}`} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors" title="Edit">
+                          <Link href={`/admin/products/${p.id}`} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-primary hover:text-primary transition-colors" title="Edit">
                             <span className="material-symbols-outlined text-[13px]">edit</span>
                           </Link>
-                          <button onClick={() => handleDuplicate(p)} disabled={duplicating === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors disabled:opacity-40" title="Duplicate">
+                          <button onClick={() => handleDuplicate(p)} disabled={duplicating === p.id} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-primary hover:text-primary transition-colors disabled:opacity-40" title="Duplicate">
                             <span className="material-symbols-outlined text-[13px]">{duplicating === p.id ? "progress_activity" : "content_copy"}</span>
                           </button>
-                          <button onClick={() => toggleStatus(p)} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-blue-400 hover:text-blue-400 transition-colors" title={p.status === "active" ? "Disable" : "Enable"}>
+                          <button onClick={() => toggleStatus(p)} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-blue-400 hover:text-blue-400 transition-colors" title={p.status === "active" ? "Disable" : "Enable"}>
                             <span className="material-symbols-outlined text-[13px]">{p.status === "active" ? "visibility_off" : "visibility"}</span>
                           </button>
-                          <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} className="w-7 h-7 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
+                          <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
                             <span className="material-symbols-outlined text-[13px]">delete</span>
                           </button>
                         </div>
@@ -972,7 +972,7 @@ function AdminProductsPageInner() {
 export default function AdminProductsPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-10">
+      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-10">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading products…
       </div>

@@ -432,6 +432,73 @@ function validateMaintenance(raw: unknown): Validation<MaintenanceContent> {
   return { ok: true, value: normalizeMaintenance(raw) };
 }
 
+// ─── Payment ────────────────────────────────────────────────────────────────
+// Payment methods offered at /checkout and on the pre-order form. The default
+// method is the one shown first on the pre-order form when a product requires
+// a down payment. Only enabled methods are shown on the storefront.
+
+export type PaymentMethod = {
+  id: string;
+  enabled: boolean;
+  isDefault: boolean;
+  /** e.g. "GCash", "BDO", "Maya". Also stored as the order's payment_method. */
+  company: string;
+  accountNumber: string;
+  accountName: string;
+  /** Uploaded QR code image. Empty = none. */
+  qrCode: string;
+};
+
+export type PaymentContent = { methods: PaymentMethod[] };
+
+export const DEFAULT_PAYMENT: PaymentContent = { methods: [] };
+
+const MAX_PAYMENT_METHODS = 20;
+
+export const newPaymentMethodId = () => `pm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+
+function normalizePayment(raw: unknown): PaymentContent {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const methods: PaymentMethod[] = Array.isArray(o.methods)
+    ? o.methods.flatMap((m, i) => {
+        const r = (m && typeof m === "object" ? m : {}) as Record<string, unknown>;
+        const company = str(r.company, "").trim();
+        if (!company) return [];
+        const qr = str(r.qrCode, "").trim();
+        return [{
+          id: str(r.id, "").trim() || `pm-${i}`,
+          enabled: r.enabled !== false,
+          isDefault: r.isDefault === true,
+          company,
+          accountNumber: str(r.accountNumber, "").trim(),
+          accountName: str(r.accountName, "").trim(),
+          qrCode: isImageUrl(qr) ? qr : "",
+        }];
+      })
+    : [];
+  // At most one default — keep the first one flagged.
+  const firstDefault = methods.findIndex((m) => m.isDefault);
+  return { methods: methods.map((m, i) => ({ ...m, isDefault: i === firstDefault })) };
+}
+
+function validatePayment(raw: unknown): Validation<PaymentContent> {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  if (!Array.isArray(o.methods)) return { ok: false, error: "Payment methods must be a list." };
+  if (o.methods.length > MAX_PAYMENT_METHODS) return { ok: false, error: `At most ${MAX_PAYMENT_METHODS} payment methods.` };
+  for (let i = 0; i < o.methods.length; i++) {
+    const r = (o.methods[i] && typeof o.methods[i] === "object" ? o.methods[i] : {}) as Record<string, unknown>;
+    if (!str(r.company, "").trim()) return { ok: false, error: `Payment method ${i + 1}: company is required.` };
+    if (!isImageUrl(str(r.qrCode, "").trim())) return { ok: false, error: `Payment method ${i + 1}: QR code must be an uploaded image.` };
+  }
+  return { ok: true, value: normalizePayment(raw) };
+}
+
+/** Enabled methods, with the default one first. */
+export function activePaymentMethods(payment: PaymentContent): PaymentMethod[] {
+  const enabled = payment.methods.filter((m) => m.enabled);
+  return [...enabled.filter((m) => m.isDefault), ...enabled.filter((m) => !m.isDefault)];
+}
+
 // ─── Colors ─────────────────────────────────────────────────────────────────
 // One palette per mode. The root layout turns these into CSS variables
 // (lib/theme.ts), which the Tailwind theme tokens (primary, fg, canvas…) read,
@@ -522,6 +589,7 @@ export type SiteContent = {
   footer: FooterContent;
   pos: PosContent;
   maintenance: MaintenanceContent;
+  payment: PaymentContent;
   colors: ColorsContent;
 };
 
@@ -532,6 +600,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   footer: DEFAULT_FOOTER,
   pos: DEFAULT_POS,
   maintenance: DEFAULT_MAINTENANCE,
+  payment: DEFAULT_PAYMENT,
   colors: DEFAULT_COLORS,
 };
 
@@ -546,6 +615,7 @@ export const NORMALIZERS: { [K in keyof SiteContent]: (raw: unknown) => SiteCont
   footer: normalizeFooter,
   pos: normalizePos,
   maintenance: normalizeMaintenance,
+  payment: normalizePayment,
   colors: normalizeColors,
 };
 
@@ -556,6 +626,7 @@ const VALIDATORS: { [K in keyof SiteContent]: (raw: unknown) => Validation<SiteC
   footer: validateFooter,
   pos: validatePos,
   maintenance: validateMaintenance,
+  payment: validatePayment,
   colors: validateColors,
 };
 

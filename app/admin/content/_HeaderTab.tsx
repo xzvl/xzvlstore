@@ -19,7 +19,7 @@ export default function HeaderTab({
     <div className="space-y-6">
       <div className={CARD}>
         <p className={CARD_TITLE}>Navigation Links</p>
-        <p className="font-mono text-[11px] text-[#ebbbb4]/40">
+        <p className="font-mono text-[11px] text-accent/40">
           The menu in the site header (also the mobile menu). Use the arrows to change the order.
         </p>
         <ListEditor<NavLink>

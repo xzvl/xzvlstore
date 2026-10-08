@@ -9,6 +9,10 @@ import { useCart } from "@/lib/cart-context";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlockedBanner from "@/components/BlockedBanner";
+import PaymentMethodPicker from "@/components/PaymentMethodPicker";
+import { useSiteContent } from "@/components/SiteContentProvider";
+import { activePaymentMethods } from "@/lib/site-content";
+import { downPaymentPerUnit } from "@/lib/store-types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -245,6 +249,12 @@ function ProductRowInput({
 
 // ─── Order Summary ────────────────────────────────────────────────────────────
 
+const requiredDownPayment = (rows: ProductRow[], products: Product[]) =>
+  rows.reduce((sum, row) => {
+    const p = products.find((x) => x.id === row.productId);
+    return sum + (p ? downPaymentPerUnit(p) * row.qty : 0);
+  }, 0);
+
 function OrderSummary({ rows, onProductClick, products }: {
   rows: ProductRow[];
   onProductClick: (product: Product, qty: number) => void;
@@ -257,6 +267,7 @@ function OrderSummary({ rows, onProductClick, products }: {
     const p = products.find((p) => p.id === row.productId);
     return sum + (p ? (p.sale_price ?? p.price) * row.qty : 0);
   }, 0);
+  const downPaymentTotal = requiredDownPayment(rows, products);
 
   return (
     <div className="space-y-3">
@@ -275,6 +286,11 @@ function OrderSummary({ rows, onProductClick, products }: {
                   {p.name}<span className="text-accent/60 font-normal"> × {row.qty}</span>
                 </p>
                 <p className="font-mono text-[11px] text-accent/50 mt-0.5">₱{unitPrice.toLocaleString()} each</p>
+                {downPaymentPerUnit(p) > 0 && (
+                  <p className="font-mono text-[10px] text-orange-400/80 mt-0.5">
+                    Down payment ₱{downPaymentPerUnit(p).toLocaleString()} each
+                  </p>
+                )}
               </div>
               <div className="flex-shrink-0 text-right">
                 <p className="font-mono text-[13px] text-primary font-bold">₱{(unitPrice * row.qty).toLocaleString()}</p>
@@ -307,6 +323,18 @@ function OrderSummary({ rows, onProductClick, products }: {
           </div>
           <span className="font-inter font-black text-[22px] text-primary">₱{estimatedTotal.toLocaleString()}</span>
         </div>
+        {downPaymentTotal > 0 && (
+          <>
+            <div className="h-px bg-line/30" />
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-mono text-[12px] tracking-widest text-orange-400 uppercase">Down Payment Due Now</span>
+                <p className="font-mono text-[10px] text-accent/40 mt-0.5">Deducted from your total — remaining balance paid on release</p>
+              </div>
+              <span className="font-inter font-black text-[22px] text-orange-400">₱{downPaymentTotal.toLocaleString()}</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -429,7 +457,12 @@ export default function PreOrderPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submittedProducts, setSubmittedProducts] = useState<Product[]>([]);
+  const [submittedDownPayment, setSubmittedDownPayment] = useState(0);
   const [error, setError] = useState("");
+
+  // Only the default payment method is offered for down payments (falls back to
+  // the first enabled one if the default is disabled).
+  const selectedPaymentMethod = activePaymentMethods(useSiteContent().payment)[0] ?? null;
 
   useEffect(() => {
     // Fetch products
@@ -520,6 +553,7 @@ export default function PreOrderPage() {
 
   // Only show products with pre_order flag active
   const preOrderProducts = products.filter((p) => p.pre_order === true);
+  const downPaymentDue = requiredDownPayment(rows, preOrderProducts);
 
   const setContact$ = (field: keyof ContactForm, value: string) =>
     setContact((prev) => ({ ...prev, [field]: value }));
@@ -574,13 +608,17 @@ export default function PreOrderPage() {
       const res = await fetch("/api/pre-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...contact, items: orderItems, estimatedTotal, billing, shipping, order_type: "pre-order", customer_id: userId }),
+        body: JSON.stringify({
+          ...contact, items: orderItems, estimatedTotal, billing, shipping, order_type: "pre-order", customer_id: userId,
+          payment_method: downPaymentDue > 0 ? selectedPaymentMethod?.company : undefined,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to submit order.");
       }
       setSubmittedProducts(filledRows.map((r) => preOrderProducts.find((p) => p.id === r.productId)!));
+      setSubmittedDownPayment(downPaymentDue);
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -606,6 +644,27 @@ export default function PreOrderPage() {
                 <span className="text-primary">{contact.email || contact.phone}</span> to confirm the details.
               </p>
             </div>
+
+            {submittedDownPayment > 0 && (
+              <div className="w-full border border-orange-400/40 bg-orange-400/5 px-4 py-4 text-left space-y-2">
+                <p className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase text-orange-400">
+                  <span className="material-symbols-outlined text-[16px]">pending</span>
+                  On Hold — Down Payment Needed
+                </p>
+                <p className="font-mono text-[12px] text-accent/70 leading-relaxed">
+                  Pay the down payment of <span className="text-fg font-bold">₱{submittedDownPayment.toLocaleString()}</span>
+                  {selectedPaymentMethod ? <> via <span className="text-fg">{selectedPaymentMethod.company}</span></> : null}, then send a{" "}
+                  <span className="text-fg/80">screenshot of your payment</span> to{" "}
+                  <a href="https://www.facebook.com/xzviel" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    facebook.com/xzviel
+                  </a>{" "}
+                  to confirm your pre-order.
+                </p>
+                {selectedPaymentMethod && (
+                  <PaymentMethodPicker methods={[selectedPaymentMethod]} value={selectedPaymentMethod.id} onChange={() => {}} />
+                )}
+              </div>
+            )}
 
             {/* Per-product pre-order notes */}
             {submittedProducts.some((p) => p.pre_order_note) && (
@@ -798,6 +857,24 @@ export default function PreOrderPage() {
             </section>
           )}
 
+          {/* ── Down Payment ── */}
+          {downPaymentDue > 0 && (
+            <section className="animate-fade-up relative" style={{ animationDelay: "320ms" }}>
+              {sectionTitle("SECTION_04", "Down Payment")}
+              <p className="font-mono text-[12px] text-accent/60 leading-relaxed mb-4">
+                This pre-order requires a down payment of <span className="text-orange-400 font-bold">₱{downPaymentDue.toLocaleString()}</span>. Your
+                pre-order is put on hold until we receive it.
+              </p>
+              {selectedPaymentMethod ? (
+                <PaymentMethodPicker methods={[selectedPaymentMethod]} value={selectedPaymentMethod.id} onChange={() => {}} />
+              ) : (
+                <p className="border border-line/40 bg-panel px-4 py-3 font-mono text-[12px] text-accent/50">
+                  Message us on Facebook for the payment details.
+                </p>
+              )}
+            </section>
+          )}
+
           {error && (
             <p className="flex items-center gap-2 font-mono text-[13px] text-error">
               <span className="material-symbols-outlined text-[16px]">error</span>{error}
@@ -822,8 +899,13 @@ export default function PreOrderPage() {
               <p className="font-mono text-[11px] tracking-widest uppercase text-orange-400/70">Important</p>
               <p className="font-mono text-[12px] text-accent/50 leading-relaxed">
                 After submitting, please take a{" "}
-                <span className="text-fg/80">screenshot of the confirmation/thank you message</span>{" "}
-                and send it to our official Facebook page{" "}
+                <span className="text-fg/80">screenshot of the confirmation/thank you message</span>
+                {downPaymentDue > 0 && (
+                  <>
+                    {" "}and a <span className="text-fg/80">screenshot of your down payment</span>
+                  </>
+                )}{" "}
+                and send {downPaymentDue > 0 ? "them" : "it"} to our official Facebook page{" "}
                 <a
                   href="https://www.facebook.com/xzviel"
                   target="_blank"
@@ -844,7 +926,9 @@ export default function PreOrderPage() {
               {submitting ? "Submitting…" : "Submit Pre-Order"}
             </button>
             <p className="mt-3 font-mono text-[11px] text-accent/40">
-              We&apos;ll contact you to confirm your order and provide payment details.
+              {downPaymentDue > 0
+                ? "Your pre-order is placed on hold until we confirm your down payment."
+                : "We'll contact you to confirm your order and provide payment details."}
             </p>
           </div>
         </form>

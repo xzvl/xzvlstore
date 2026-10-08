@@ -23,16 +23,20 @@ export const channels = (hex: string) =>
 
 const paletteDecls = (p: Palette) => PALETTE_KEYS.map((k) => `${PALETTE_VARS[k]}:${channels(p[k])};`).join("");
 
-/** The storefront's two palettes as CSS, keyed off <html data-theme>. */
+/**
+ * The storefront's two palettes as CSS, keyed off <html data-theme>. The admin
+ * panel (.admin-theme) always uses the dark palette, whatever mode is active.
+ */
 export function themeCss(colors: ColorsContent): string {
-  return THEME_MODES.map(
-    (mode) => `:root[data-theme="${mode}"]{color-scheme:${mode};${paletteDecls(colors[mode])}}`
-  ).join("\n");
+  return [
+    ...THEME_MODES.map((mode) => `:root[data-theme="${mode}"]{color-scheme:${mode};${paletteDecls(colors[mode])}}`),
+    `:root .admin-theme{color-scheme:dark;${paletteDecls(colors.dark)}}`,
+  ].join("\n");
 }
 
 /**
  * Runs in <head> before first paint: applies the visitor's saved mode (from the
  * header toggle) so they never see a flash of the default mode, which the
- * server renders as <html data-theme>.
+ * server renders as <html data-theme>. /admin is always dark.
  */
-export const THEME_INIT_SCRIPT = `try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;
+export const THEME_INIT_SCRIPT = `try{var t=location.pathname.split("/")[1]==="admin"?"dark":localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;

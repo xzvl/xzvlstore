@@ -32,6 +32,10 @@ export async function PATCH(
   if (body.status !== undefined) updates.status = body.status;
   if (body.pre_order !== undefined) updates.pre_order = Boolean(body.pre_order);
   if (body.pre_order_note !== undefined) updates.pre_order_note = body.pre_order_note || null;
+  if (body.down_payment_required !== undefined) updates.down_payment_required = Boolean(body.down_payment_required);
+  if (body.down_payment_price !== undefined) updates.down_payment_price = body.down_payment_price ? Number(body.down_payment_price) : null;
+  // A down payment only applies to pre-orders.
+  if (updates.pre_order === false) updates.down_payment_required = false;
   if (body.sneak_peek !== undefined) updates.sneak_peek = Boolean(body.sneak_peek);
   if (body.sneak_peek_note !== undefined) updates.sneak_peek_note = body.sneak_peek_note || null;
   if (body.taxable !== undefined) updates.taxable = Boolean(body.taxable);

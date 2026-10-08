@@ -37,12 +37,12 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#131313] cyber-grid flex items-center justify-center px-4">
+    <main className="min-h-screen bg-canvas cyber-grid flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-2 uppercase">
           XZVL_STORE // ADMIN
         </p>
-        <h1 className="font-inter font-black text-[32px] uppercase text-[#e2e2e2] mb-8">
+        <h1 className="font-inter font-black text-[32px] uppercase text-fg mb-8">
           Sign In
         </h1>
 
@@ -51,7 +51,7 @@ export default function AdminLoginPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block font-mono text-[11px] tracking-[0.15em] uppercase text-[#ebbbb4]/70 mb-2">
+              <label className="block font-mono text-[11px] tracking-[0.15em] uppercase text-accent/70 mb-2">
                 Password
               </label>
               <input
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
-                className="w-full bg-[#1f1f1f] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                className="w-full bg-fg/[0.05] border border-line text-fg font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors"
                 placeholder="••••••••"
               />
             </div>

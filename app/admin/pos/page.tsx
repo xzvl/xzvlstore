@@ -17,12 +17,12 @@ const thumbOf = (p: DbProduct) => p.main_image ?? (p.image || null);
 const NAV_BTN =
   "flex flex-col items-center justify-center gap-0.5 w-full flex-shrink-0 py-2 px-1 font-mono text-[8px] tracking-wide uppercase border transition-colors";
 const NAV_BTN_ACTIVE = "border-primary bg-primary/10 text-primary";
-const NAV_BTN_INACTIVE = "border-[#603e39]/30 text-[#ebbbb4]/50 hover:border-[#603e39]/60 hover:text-[#e2e2e2]";
+const NAV_BTN_INACTIVE = "border-line/30 text-accent/50 hover:border-line/60 hover:text-fg";
 
 const CHIP =
   "px-1.5 sm:px-2 lg:px-2.5 py-0.5 sm:py-1 font-mono text-[8px] lg:text-[9px] tracking-widest uppercase border transition-colors flex-shrink-0";
 const CHIP_ACTIVE = "border-primary bg-primary/10 text-primary";
-const CHIP_INACTIVE = "border-[#603e39]/40 text-[#ebbbb4]/40 hover:border-[#ebbbb4]/30 hover:text-[#ebbbb4]/70";
+const CHIP_INACTIVE = "border-line/40 text-accent/40 hover:border-accent/30 hover:text-accent/70";
 
 // A product matches a filter/nav entry if the entry's taxonomy id shows up in
 // whichever field applies to its type — brand, category or tag.
@@ -187,7 +187,7 @@ export default function AdminPosPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-10">
+      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-10">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading…
       </div>
@@ -200,7 +200,7 @@ export default function AdminPosPage() {
         {/* Left: header + nav/grid — the cart sits beside this whole column, top-aligned with the header */}
         <div className="flex-1 min-w-0 space-y-2">
           {/* Header */}
-          <h1 className="font-inter font-black text-[22px] sm:text-[26px] lg:text-[28px] uppercase text-[#e2e2e2]">Point of Sale</h1>
+          <h1 className="font-inter font-black text-[22px] sm:text-[26px] lg:text-[28px] uppercase text-fg">Point of Sale</h1>
 
           <div className="flex flex-row gap-2 sm:gap-3 lg:gap-4 items-start">
             {/* Category side nav — desktop only; on tablet/mobile it becomes the chip row below */}
@@ -243,27 +243,27 @@ export default function AdminPosPage() {
               </div>
 
               <div className="flex flex-col md:flex-row gap-1 sm:gap-1.5 md:gap-2">
-                <div className="flex items-center gap-1 sm:gap-1.5 bg-[#1a1a1a] border border-[#603e39]/40 focus-within:border-primary px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5 lg:py-2 transition-colors flex-1">
-                  <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[12px] sm:text-[14px]">person</span>
+                <div className="flex items-center gap-1 sm:gap-1.5 bg-panel border border-line/40 focus-within:border-primary px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5 lg:py-2 transition-colors flex-1">
+                  <span className="material-symbols-outlined text-accent/30 text-[12px] sm:text-[14px]">person</span>
                   <input
                     type="text"
                     placeholder="Customer name (optional)…"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="flex-1 min-w-0 bg-transparent text-[#e2e2e2] font-mono text-[10px] sm:text-[11px] focus:outline-none placeholder:text-[#ebbbb4]/20"
+                    className="flex-1 min-w-0 bg-transparent text-fg font-mono text-[10px] sm:text-[11px] focus:outline-none placeholder:text-accent/20"
                   />
                 </div>
-                <div className="flex items-center gap-1 sm:gap-1.5 bg-[#1a1a1a] border border-[#603e39]/40 focus-within:border-primary px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5 lg:py-2 transition-colors flex-1">
-                  <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[12px] sm:text-[14px]">search</span>
+                <div className="flex items-center gap-1 sm:gap-1.5 bg-panel border border-line/40 focus-within:border-primary px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5 lg:py-2 transition-colors flex-1">
+                  <span className="material-symbols-outlined text-accent/30 text-[12px] sm:text-[14px]">search</span>
                   <input
                     type="text"
                     placeholder="Search product by name or SKU…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="flex-1 min-w-0 bg-transparent text-[#e2e2e2] font-mono text-[10px] sm:text-[11px] focus:outline-none placeholder:text-[#ebbbb4]/20"
+                    className="flex-1 min-w-0 bg-transparent text-fg font-mono text-[10px] sm:text-[11px] focus:outline-none placeholder:text-accent/20"
                   />
                   {search && (
-                    <button onClick={() => setSearch("")} className="text-[#ebbbb4]/30 hover:text-primary transition-colors">
+                    <button onClick={() => setSearch("")} className="text-accent/30 hover:text-primary transition-colors">
                       <span className="material-symbols-outlined text-[12px] sm:text-[13px]">close</span>
                     </button>
                   )}
@@ -282,7 +282,7 @@ export default function AdminPosPage() {
               </div>
     
               {filteredProducts.length === 0 ? (
-                <div className="text-center py-16 font-mono text-[12px] text-[#ebbbb4]/30">No products match the current filters.</div>
+                <div className="text-center py-16 font-mono text-[12px] text-accent/30">No products match the current filters.</div>
               ) : (
                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5 sm:gap-2.5 lg:gap-3">
                   {filteredProducts.map((p) => {
@@ -295,11 +295,11 @@ export default function AdminPosPage() {
                         key={p.id}
                         onClick={() => addToCart(p)}
                         disabled={outOfStock || atLimit}
-                        className={`group relative flex flex-col bg-[#1a1a1a] border text-left transition-colors ${
-                          line ? "border-primary/60" : "border-[#603e39]/30 hover:border-[#603e39]/60"
+                        className={`group relative flex flex-col bg-panel border text-left transition-colors ${
+                          line ? "border-primary/60" : "border-line/30 hover:border-line/60"
                         } ${outOfStock || atLimit ? "opacity-40 cursor-not-allowed" : ""}`}
                       >
-                        <div className="relative w-full aspect-square bg-[#111] border-b border-[#603e39]/20 overflow-hidden">
+                        <div className="relative w-full aspect-square bg-deep border-b border-line/20 overflow-hidden">
                           {thumb ? (
                             <Image
                               src={sizedImageUrl(thumb, "thumbnail") ?? thumb}
@@ -313,7 +313,7 @@ export default function AdminPosPage() {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <span className="material-symbols-outlined text-[28px] text-[#ebbbb4]/20">image</span>
+                              <span className="material-symbols-outlined text-[28px] text-accent/20">image</span>
                             </div>
                           )}
                           {line && (
@@ -328,10 +328,10 @@ export default function AdminPosPage() {
                           )}
                         </div>
                         <div className="p-1.5 sm:p-2 space-y-0.5">
-                          <p className="font-inter font-bold text-[9px] sm:text-[10px] lg:text-[11px] text-[#e2e2e2] leading-tight line-clamp-2 min-h-[22px] sm:min-h-[26px] lg:min-h-[28px]">{p.name}</p>
+                          <p className="font-inter font-bold text-[9px] sm:text-[10px] lg:text-[11px] text-fg leading-tight line-clamp-2 min-h-[22px] sm:min-h-[26px] lg:min-h-[28px]">{p.name}</p>
                           <div className="flex items-center gap-1 sm:gap-1.5">
                             <p className="font-mono text-[10px] sm:text-[11px] lg:text-[12px] font-bold text-primary">₱{unitPrice(p).toLocaleString()}</p>
-                            {p.sale_price && <p className="font-mono text-[9px] sm:text-[10px] text-[#ebbbb4]/30 line-through">₱{p.price.toLocaleString()}</p>}
+                            {p.sale_price && <p className="font-mono text-[9px] sm:text-[10px] text-accent/30 line-through">₱{p.price.toLocaleString()}</p>}
                           </div>
                         </div>
                       </button>
@@ -344,31 +344,31 @@ export default function AdminPosPage() {
         </div>
 
         {/* Cart — aligned with the header at the top, no gap above it */}
-        <aside className="w-[150px] sm:w-[220px] md:w-[260px] lg:w-[340px] flex-shrink-0 bg-[#1a1a1a] border border-[#603e39]/30 flex flex-col sticky top-2 sm:top-3 lg:top-4 max-h-[calc(100vh-4.5rem)] sm:max-h-[calc(100vh-5.5rem)] lg:max-h-[calc(100vh-7rem)]">
-          <div className="flex items-center justify-between px-2.5 sm:px-3 lg:px-4 py-2 sm:py-2.5 lg:py-3 border-b border-[#603e39]/30">
+        <aside className="w-[150px] sm:w-[220px] md:w-[260px] lg:w-[340px] flex-shrink-0 bg-panel border border-line/30 flex flex-col sticky top-2 sm:top-3 lg:top-4 max-h-[calc(100vh-4.5rem)] sm:max-h-[calc(100vh-5.5rem)] lg:max-h-[calc(100vh-7rem)]">
+          <div className="flex items-center justify-between px-2.5 sm:px-3 lg:px-4 py-2 sm:py-2.5 lg:py-3 border-b border-line/30">
             <p className="font-mono text-[9px] sm:text-[10px] tracking-[0.2em] text-primary uppercase flex items-center gap-1 sm:gap-1.5">
               <span className="material-symbols-outlined text-[13px] sm:text-[14px]">shopping_cart</span>
-              <span className="hidden sm:inline">Cart</span> {cart.length > 0 && <span className="text-[#ebbbb4]/40">({cart.length})</span>}
+              <span className="hidden sm:inline">Cart</span> {cart.length > 0 && <span className="text-accent/40">({cart.length})</span>}
             </p>
             {cart.length > 0 && (
-              <button onClick={clearCart} className="font-mono text-[9px] sm:text-[10px] text-[#ebbbb4]/30 hover:text-primary transition-colors">
+              <button onClick={clearCart} className="font-mono text-[9px] sm:text-[10px] text-accent/30 hover:text-primary transition-colors">
                 Clear
               </button>
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-[#603e39]/15 min-h-[90px] sm:min-h-[120px]">
+          <div className="flex-1 overflow-y-auto divide-y divide-line/15 min-h-[90px] sm:min-h-[120px]">
             {cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-6 sm:py-10 text-center px-2">
-                <span className="material-symbols-outlined text-[22px] sm:text-[28px] text-[#ebbbb4]/15">shopping_cart</span>
-                <p className="font-mono text-[9px] sm:text-[11px] text-[#ebbbb4]/30">Tap a product to add it to the cart.</p>
+                <span className="material-symbols-outlined text-[22px] sm:text-[28px] text-accent/15">shopping_cart</span>
+                <p className="font-mono text-[9px] sm:text-[11px] text-accent/30">Tap a product to add it to the cart.</p>
               </div>
             ) : (
               cart.map((l) => {
                 const thumb = thumbOf(l.product);
                 return (
                   <div key={l.product.id} className="flex flex-wrap items-center gap-1.5 sm:gap-2 lg:gap-2.5 px-2 sm:px-3 lg:px-4 py-2 sm:py-2.5 lg:py-3">
-                    <div className="relative w-7 h-7 sm:w-9 sm:h-9 lg:w-10 lg:h-10 flex-shrink-0 bg-[#111] border border-[#603e39]/20 overflow-hidden">
+                    <div className="relative w-7 h-7 sm:w-9 sm:h-9 lg:w-10 lg:h-10 flex-shrink-0 bg-deep border border-line/20 overflow-hidden">
                       {thumb ? (
                         <Image
                           src={sizedImageUrl(thumb, "small") ?? thumb}
@@ -382,31 +382,31 @@ export default function AdminPosPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[12px] text-[#ebbbb4]/20">image</span>
+                          <span className="material-symbols-outlined text-[12px] text-accent/20">image</span>
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-[60px]">
-                      <p className="font-inter font-bold text-[9px] sm:text-[10px] lg:text-[11px] text-[#e2e2e2] leading-tight truncate">{l.product.name}</p>
+                      <p className="font-inter font-bold text-[9px] sm:text-[10px] lg:text-[11px] text-fg leading-tight truncate">{l.product.name}</p>
                       <p className="font-mono text-[9px] sm:text-[10px] lg:text-[11px] text-primary font-bold">₱{unitPrice(l.product).toLocaleString()}</p>
                     </div>
                     <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0 ml-auto sm:ml-0">
                       <button
                         onClick={() => decQty(l.product.id)}
-                        className="w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/60 hover:border-primary hover:text-primary transition-colors"
+                        className="w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center border border-line/40 text-accent/60 hover:border-primary hover:text-primary transition-colors"
                       >
                         <span className="material-symbols-outlined text-[11px] lg:text-[13px]">remove</span>
                       </button>
-                      <span className="font-mono text-[10px] sm:text-[11px] lg:text-[12px] text-[#e2e2e2] w-4 sm:w-5 text-center">{l.qty}</span>
+                      <span className="font-mono text-[10px] sm:text-[11px] lg:text-[12px] text-fg w-4 sm:w-5 text-center">{l.qty}</span>
                       <button
                         onClick={() => incQty(l.product.id)}
                         disabled={l.qty >= l.product.stock}
-                        className="w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center border border-[#603e39]/40 text-[#ebbbb4]/60 hover:border-primary hover:text-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                        className="w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center border border-line/40 text-accent/60 hover:border-primary hover:text-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                       >
                         <span className="material-symbols-outlined text-[11px] lg:text-[13px]">add</span>
                       </button>
                     </div>
-                    <button onClick={() => removeItem(l.product.id)} className="flex-shrink-0 text-[#ebbbb4]/30 hover:text-primary transition-colors">
+                    <button onClick={() => removeItem(l.product.id)} className="flex-shrink-0 text-accent/30 hover:text-primary transition-colors">
                       <span className="material-symbols-outlined text-[14px] sm:text-[16px]">close</span>
                     </button>
                   </div>
@@ -415,14 +415,14 @@ export default function AdminPosPage() {
             )}
           </div>
 
-          <div className="border-t border-[#603e39]/30 p-2 sm:p-3 lg:p-4 space-y-2 sm:space-y-3">
+          <div className="border-t border-line/30 p-2 sm:p-3 lg:p-4 space-y-2 sm:space-y-3">
             <div className="flex justify-between items-baseline">
-              <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-[#ebbbb4]/50">Total</span>
+              <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-accent/50">Total</span>
               <span className="font-inter font-black text-[16px] sm:text-[19px] lg:text-[22px] text-primary">{peso(total)}</span>
             </div>
 
             <div>
-              <label className="block font-mono text-[9px] sm:text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1 sm:mb-1.5">Cash</label>
+              <label className="block font-mono text-[9px] sm:text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1 sm:mb-1.5">Cash</label>
               <div className="flex items-center gap-1 sm:gap-2">
                 <input
                   type="number"
@@ -431,13 +431,13 @@ export default function AdminPosPage() {
                   value={cash}
                   onChange={(e) => setCash(e.target.value)}
                   placeholder="0.00"
-                  className="flex-1 min-w-0 bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[11px] sm:text-[12px] lg:text-[13px] px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20"
+                  className="flex-1 min-w-0 bg-deep border border-line text-fg font-mono text-[11px] sm:text-[12px] lg:text-[13px] px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20"
                 />
                 <button
                   type="button"
                   onClick={() => setCash(total > 0 ? String(total) : "")}
                   disabled={total <= 0}
-                  className="flex-shrink-0 px-1.5 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 lg:py-2.5 font-mono text-[8px] sm:text-[9px] lg:text-[10px] tracking-widest uppercase border border-[#603e39]/40 text-[#ebbbb4]/50 hover:border-primary hover:text-primary transition-colors disabled:opacity-30"
+                  className="flex-shrink-0 px-1.5 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 lg:py-2.5 font-mono text-[8px] sm:text-[9px] lg:text-[10px] tracking-widest uppercase border border-line/40 text-accent/50 hover:border-primary hover:text-primary transition-colors disabled:opacity-30"
                 >
                   Exact
                 </button>
@@ -445,7 +445,7 @@ export default function AdminPosPage() {
             </div>
 
             <div className="flex justify-between font-mono text-[10px] sm:text-[11px] lg:text-[12px]">
-              <span className="text-[#ebbbb4]/50">Change</span>
+              <span className="text-accent/50">Change</span>
               <span className={`font-bold ${change < 0 ? "text-primary" : "text-green-400"}`}>{peso(Math.max(0, change))}</span>
             </div>
 

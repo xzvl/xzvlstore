@@ -8,6 +8,9 @@ import { supabaseClient } from "@/lib/supabase-client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlockedBanner from "@/components/BlockedBanner";
+import PaymentMethodPicker from "@/components/PaymentMethodPicker";
+import { useSiteContent } from "@/components/SiteContentProvider";
+import { activePaymentMethods } from "@/lib/site-content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,7 +87,7 @@ const validateFacebook = (v: string) => {
   return "";
 };
 
-const PAYMENT_METHODS = [
+const FALLBACK_PAYMENT_METHODS = [
   { value: "gcash", label: "GCash" },
   { value: "cash", label: "Cash (For Pickup Only)" },
   { value: "bank", label: "Bank Transfer" },
@@ -201,6 +204,9 @@ function AddressFields({
 
 export default function CheckoutPage() {
   const { items, total, clearCart, revalidateCart, isBlocked } = useCart();
+  // Methods from /admin/content → Payment; the built-in FALLBACK_PAYMENT_METHODS list is
+  // the fallback until any are configured.
+  const configuredMethods = activePaymentMethods(useSiteContent().payment);
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -216,7 +222,7 @@ export default function CheckoutPage() {
     email: "",
     phone: "",
     facebook: "",
-    payment_method: "gcash",
+    payment_method: configuredMethods[0]?.id ?? "gcash",
     billing: { ...EMPTY_ADDRESS },
     ship_to_different: false,
     shipping: { ...EMPTY_ADDRESS },
@@ -345,7 +351,7 @@ export default function CheckoutPage() {
           phone: form.phone,
           facebook: form.facebook,
           location: [form.billing.city, form.billing.state].filter(Boolean).join(", "),
-          payment_method: form.payment_method,
+          payment_method: configuredMethods.find((m) => m.id === form.payment_method)?.company ?? form.payment_method,
           status: "pending",
           order_type: "checkout",
           customer_id: userId,
@@ -657,34 +663,44 @@ export default function CheckoutPage() {
                     <span className="font-mono text-primary text-[10px]">04 /</span>
                     Payment Method
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {PAYMENT_METHODS.map((pm) => (
-                      <button
-                        key={pm.value}
-                        type="button"
-                        onClick={() => setField("payment_method", pm.value)}
-                        className={`py-3 px-4 border font-mono text-[12px] tracking-wide text-left transition-all ${
-                          form.payment_method === pm.value
-                            ? "border-primary text-primary bg-primary/5"
-                            : "border-line/40 text-fg/50 hover:border-line"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-3 h-3 rounded-full border flex-shrink-0 ${
+                  {configuredMethods.length > 0 ? (
+                    <PaymentMethodPicker
+                      methods={configuredMethods}
+                      value={form.payment_method}
+                      onChange={(id) => setField("payment_method", id)}
+                    />
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {FALLBACK_PAYMENT_METHODS.map((pm) => (
+                          <button
+                            key={pm.value}
+                            type="button"
+                            onClick={() => setField("payment_method", pm.value)}
+                            className={`py-3 px-4 border font-mono text-[12px] tracking-wide text-left transition-all ${
                               form.payment_method === pm.value
-                                ? "border-primary bg-primary"
-                                : "border-line"
+                                ? "border-primary text-primary bg-primary/5"
+                                : "border-line/40 text-fg/50 hover:border-line"
                             }`}
-                          />
-                          {pm.label}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="font-mono text-[10px] text-accent/30 mt-4 leading-relaxed">
-                    Payment instructions will be sent after your order is confirmed.
-                  </p>
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-3 h-3 rounded-full border flex-shrink-0 ${
+                                  form.payment_method === pm.value
+                                    ? "border-primary bg-primary"
+                                    : "border-line"
+                                }`}
+                              />
+                              {pm.label}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="font-mono text-[10px] text-accent/30 mt-4 leading-relaxed">
+                        Payment instructions will be sent after your order is confirmed.
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 {submitError && (

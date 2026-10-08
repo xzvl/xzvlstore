@@ -78,15 +78,15 @@ export default function MediaLibraryModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-3xl max-h-[85vh] flex flex-col bg-[#1a1a1a] border border-[#603e39]/40"
+        className="w-full max-w-3xl max-h-[85vh] flex flex-col bg-panel border border-line/40"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#603e39]/30 px-5 py-3 flex-shrink-0">
+        <div className="flex items-center justify-between border-b border-line/30 px-5 py-3 flex-shrink-0">
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
             Media Library{multiple ? " — Select Multiple" : ""}
           </p>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center text-[#ebbbb4]/40 hover:text-primary transition-colors" title="Close">
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center text-accent/40 hover:text-primary transition-colors" title="Close">
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
@@ -97,7 +97,7 @@ export default function MediaLibraryModal({
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-[#603e39]/50 hover:border-primary text-[#ebbbb4]/50 hover:text-primary font-mono text-[11px] tracking-widest uppercase transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-line/50 hover:border-primary text-accent/50 hover:text-primary font-mono text-[11px] tracking-widest uppercase transition-colors disabled:opacity-50"
           >
             {uploading ? (
               <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
@@ -124,12 +124,12 @@ export default function MediaLibraryModal({
           {loadError ? (
             <p className="font-mono text-[12px] text-primary py-8 text-center">Failed to load the media library.</p>
           ) : !rows ? (
-            <div className="flex items-center justify-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-12">
+            <div className="flex items-center justify-center gap-2 font-mono text-[12px] text-accent/40 py-12">
               <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
               Loading…
             </div>
           ) : rows.length === 0 ? (
-            <p className="font-mono text-[12px] text-[#ebbbb4]/30 py-12 text-center">No images yet — upload one above.</p>
+            <p className="font-mono text-[12px] text-accent/30 py-12 text-center">No images yet — upload one above.</p>
           ) : (
             <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))" }}>
               {rows.map((row) => {
@@ -140,8 +140,8 @@ export default function MediaLibraryModal({
                     key={row.base}
                     type="button"
                     onClick={() => pick(row.originalUrl!)}
-                    className={`relative w-[100px] h-[100px] bg-[#0e0e0e] border overflow-hidden transition-colors ${
-                      isSelected ? "border-primary" : "border-[#603e39]/30 hover:border-[#ebbbb4]/40"
+                    className={`relative w-[100px] h-[100px] bg-deep border overflow-hidden transition-colors ${
+                      isSelected ? "border-primary" : "border-line/30 hover:border-accent/40"
                     }`}
                   >
                     <Image
@@ -172,11 +172,11 @@ export default function MediaLibraryModal({
 
         {/* Footer */}
         {multiple && (
-          <div className="flex items-center justify-end gap-2 border-t border-[#603e39]/30 px-5 py-3 flex-shrink-0">
+          <div className="flex items-center justify-end gap-2 border-t border-line/30 px-5 py-3 flex-shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 font-mono text-[11px] tracking-widest uppercase text-[#ebbbb4]/40 hover:text-[#e2e2e2] transition-colors"
+              className="px-4 py-2 font-mono text-[11px] tracking-widest uppercase text-accent/40 hover:text-fg transition-colors"
             >
               Cancel
             </button>

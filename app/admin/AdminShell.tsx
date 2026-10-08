@@ -37,13 +37,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-[#0e0e0e] flex flex-col lg:flex-row">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-deep flex flex-col lg:flex-row">
       {/* Mobile top bar */}
-      <header className="lg:hidden border-b border-[#603e39]/30 bg-[#131313] px-4 py-3 flex items-center justify-between">
+      <header className="lg:hidden border-b border-line/30 bg-canvas px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setMenuOpen(o => !o)}
-            className="flex items-center justify-center text-[#ebbbb4]/60 hover:text-primary transition-colors"
+            className="flex items-center justify-center text-accent/60 hover:text-primary transition-colors"
             aria-label="Toggle menu"
           >
             <span className="material-symbols-outlined text-[22px]">
@@ -56,7 +56,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </div>
         <button
           onClick={logout}
-          className="font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors flex items-center gap-1"
+          className="font-mono text-[11px] text-accent/40 hover:text-primary transition-colors flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-[13px]">logout</span>
         </button>
@@ -69,14 +69,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             className="fixed inset-0 z-40 bg-black/60 lg:hidden"
             onClick={() => setMenuOpen(false)}
           />
-          <aside className="fixed top-0 left-0 z-50 h-full w-64 bg-[#131313] border-r border-[#603e39]/30 flex flex-col lg:hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#603e39]/30">
+          <aside className="fixed top-0 left-0 z-50 h-full w-64 bg-canvas border-r border-line/30 flex flex-col lg:hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-line/30">
               <span className="font-mono text-[11px] tracking-[0.2em] text-primary uppercase select-none">
                 XZVL_ADMIN
               </span>
               <button
                 onClick={() => setMenuOpen(false)}
-                className="text-[#ebbbb4]/50 hover:text-primary transition-colors"
+                className="text-accent/50 hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -92,7 +92,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                     className={`flex items-center gap-3 px-4 py-3 font-mono text-[11px] tracking-widest uppercase transition-colors border-l-2 ${
                       active
                         ? "text-primary border-primary bg-primary/5"
-                        : "text-[#ebbbb4]/50 border-transparent hover:text-[#e2e2e2] hover:bg-[#1a1a1a]"
+                        : "text-accent/50 border-transparent hover:text-fg hover:bg-panel"
                     }`}
                   >
                     <span className="material-symbols-outlined text-[16px]">{item.icon}</span>
@@ -101,19 +101,19 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 );
               })}
             </nav>
-            <div className="px-3 py-4 border-t border-[#603e39]/30 flex flex-col gap-1">
+            <div className="px-3 py-4 border-t border-line/30 flex flex-col gap-1">
               <Link
                 href="/"
                 target="_blank"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors border-l-2 border-transparent hover:bg-[#1a1a1a]"
+                className="flex items-center gap-3 px-4 py-3 font-mono text-[11px] text-accent/40 hover:text-primary transition-colors border-l-2 border-transparent hover:bg-panel"
               >
                 <span className="material-symbols-outlined text-[16px]">open_in_new</span>
                 View Store
               </Link>
               <button
                 onClick={logout}
-                className="flex items-center gap-3 px-4 py-3 font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors border-l-2 border-transparent hover:bg-[#1a1a1a] w-full text-left"
+                className="flex items-center gap-3 px-4 py-3 font-mono text-[11px] text-accent/40 hover:text-primary transition-colors border-l-2 border-transparent hover:bg-panel w-full text-left"
               >
                 <span className="material-symbols-outlined text-[16px]">logout</span>
                 Logout
@@ -124,8 +124,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       )}
 
       {/* Desktop left sidebar */}
-      <aside className={`hidden lg:flex lg:flex-col ${collapsed ? "w-16" : "w-56"} flex-shrink-0 lg:h-full bg-[#131313] border-r border-[#603e39]/30 transition-all duration-200`}>
-        <div className="flex items-center justify-between px-5 py-5 border-b border-[#603e39]/30">
+      <aside className={`hidden lg:flex lg:flex-col ${collapsed ? "w-16" : "w-56"} flex-shrink-0 lg:h-full bg-canvas border-r border-line/30 transition-all duration-200`}>
+        <div className="flex items-center justify-between px-5 py-5 border-b border-line/30">
           {!collapsed && (
             <span className="font-mono text-[11px] tracking-[0.2em] text-primary uppercase select-none">
               XZVL_ADMIN
@@ -133,7 +133,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           )}
           <button
             onClick={() => setCollapsed((c) => !c)}
-            className={`text-[#ebbbb4]/50 hover:text-primary transition-colors flex-shrink-0 ${collapsed ? "mx-auto" : ""}`}
+            className={`text-accent/50 hover:text-primary transition-colors flex-shrink-0 ${collapsed ? "mx-auto" : ""}`}
             title={collapsed ? "Expand menu" : "Collapse menu"}
             aria-label={collapsed ? "Expand menu" : "Collapse menu"}
           >
@@ -153,7 +153,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 className={`flex items-center gap-3 py-2.5 font-mono text-[11px] tracking-widest uppercase transition-colors border-l-2 ${collapsed ? "justify-center px-2" : "px-4"} ${
                   active
                     ? "text-primary border-primary bg-primary/5"
-                    : "text-[#ebbbb4]/50 border-transparent hover:text-[#e2e2e2] hover:bg-[#1a1a1a]"
+                    : "text-accent/50 border-transparent hover:text-fg hover:bg-panel"
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px]">{item.icon}</span>
@@ -162,12 +162,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             );
           })}
         </nav>
-        <div className="px-3 py-4 border-t border-[#603e39]/30 flex flex-col gap-1">
+        <div className="px-3 py-4 border-t border-line/30 flex flex-col gap-1">
           <Link
             href="/"
             target="_blank"
             title={collapsed ? "View Store" : undefined}
-            className={`flex items-center gap-3 py-2.5 font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors border-l-2 border-transparent hover:bg-[#1a1a1a] ${collapsed ? "justify-center px-2" : "px-4"}`}
+            className={`flex items-center gap-3 py-2.5 font-mono text-[11px] text-accent/40 hover:text-primary transition-colors border-l-2 border-transparent hover:bg-panel ${collapsed ? "justify-center px-2" : "px-4"}`}
           >
             <span className="material-symbols-outlined text-[16px]">open_in_new</span>
             {!collapsed && "View Store"}
@@ -175,7 +175,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <button
             onClick={logout}
             title={collapsed ? "Logout" : undefined}
-            className={`flex items-center gap-3 py-2.5 font-mono text-[11px] text-[#ebbbb4]/40 hover:text-primary transition-colors border-l-2 border-transparent hover:bg-[#1a1a1a] w-full text-left ${collapsed ? "justify-center px-2" : "px-4"}`}
+            className={`flex items-center gap-3 py-2.5 font-mono text-[11px] text-accent/40 hover:text-primary transition-colors border-l-2 border-transparent hover:bg-panel w-full text-left ${collapsed ? "justify-center px-2" : "px-4"}`}
           >
             <span className="material-symbols-outlined text-[16px]">logout</span>
             {!collapsed && "Logout"}

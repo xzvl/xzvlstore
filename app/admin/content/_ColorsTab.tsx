@@ -90,7 +90,7 @@ export default function ColorsTab({
     <div className="space-y-6">
       <div className={CARD}>
         <p className={CARD_TITLE}>Default Mode</p>
-        <p className="font-mono text-[11px] text-[#ebbbb4]/40">
+        <p className="font-mono text-[11px] text-accent/40">
           What visitors see first. They can switch with the sun/moon icon in the header, and their choice is remembered
           on that device.
         </p>
@@ -103,7 +103,7 @@ export default function ColorsTab({
               className={`flex items-center gap-2 px-4 py-2 border font-mono text-[11px] tracking-widest uppercase transition-colors ${
                 value.defaultMode === mode
                   ? "border-primary text-primary bg-primary/10"
-                  : "border-[#603e39] text-[#ebbbb4]/50 hover:text-[#e2e2e2]"
+                  : "border-line text-accent/50 hover:text-fg"
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">{MODE_META[mode].icon}</span>
@@ -123,7 +123,7 @@ export default function ColorsTab({
             <button
               type="button"
               onClick={() => set(mode, DEFAULT_COLORS[mode])}
-              className="flex items-center gap-1 font-mono text-[10px] tracking-widest uppercase text-[#ebbbb4]/50 hover:text-primary transition-colors"
+              className="flex items-center gap-1 font-mono text-[10px] tracking-widest uppercase text-accent/50 hover:text-primary transition-colors"
             >
               <span className="material-symbols-outlined text-[14px]">restart_alt</span>
               Reset to defaults
@@ -143,7 +143,7 @@ export default function ColorsTab({
                         type="color"
                         value={valid ? v : DEFAULT_COLORS[mode][key]}
                         onChange={(e) => setColor(mode, key, e.target.value)}
-                        className="w-11 h-11 p-1 bg-[#1f1f1f] border border-[#603e39] cursor-pointer flex-shrink-0"
+                        className="w-11 h-11 p-1 bg-fg/[0.05] border border-line cursor-pointer flex-shrink-0"
                         aria-label={`${MODE_META[mode].title} ${FIELDS[key].label} picker`}
                       />
                       <input
@@ -154,7 +154,7 @@ export default function ColorsTab({
                         className={`${INPUT} ${valid ? "" : "!border-primary"}`}
                       />
                     </div>
-                    <p className="font-mono text-[10px] text-[#ebbbb4]/30 mt-1">{FIELDS[key].hint}</p>
+                    <p className="font-mono text-[10px] text-accent/30 mt-1">{FIELDS[key].hint}</p>
                   </div>
                 );
               })}

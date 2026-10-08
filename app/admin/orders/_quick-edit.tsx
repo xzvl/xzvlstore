@@ -19,11 +19,11 @@ type ItemRow = {
   subtotal: string;
 };
 
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 mb-1";
+const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/40 mb-1";
 const FIELD =
-  "w-full bg-[#0e0e0e] border border-[#603e39]/40 text-[#e2e2e2] font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
+  "w-full bg-deep border border-line/40 text-fg font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
 const CELL =
-  "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors";
+  "w-full bg-deep border border-line text-fg font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors";
 
 const toRows = (order: Order): ItemRow[] =>
   (order.items ?? []).map((it) => ({
@@ -58,6 +58,7 @@ export function OrderQuickEditModal({
   const [deliveryMethod, setDeliveryMethod] = useState(order.delivery_method ?? "");
   const [shippingFee, setShippingFee] = useState(order.shipping_fee != null ? String(order.shipping_fee) : "");
   const [tracking, setTracking] = useState(order.tracking_number ?? "");
+  const [downPayment, setDownPayment] = useState(order.down_payment ? String(order.down_payment) : "");
   const [items, setItems] = useState<ItemRow[]>(() => toRows(order));
   const [notes, setNotes] = useState<string[]>(Array.isArray(order.notes) ? order.notes : []);
   const [saving, setSaving] = useState(false);
@@ -115,6 +116,7 @@ export function OrderQuickEditModal({
   const isPickup = deliveryMethod === "Pickup";
   const invalid =
     (!isPickup && shippingFee.trim() !== "" && !(Number(shippingFee) >= 0)) ||
+    (downPayment.trim() !== "" && !(Number(downPayment) >= 0)) ||
     items.length === 0 ||
     items.some((it) => !it.product.trim() || !(parseInt(it.qty) >= 1));
 
@@ -130,6 +132,7 @@ export function OrderQuickEditModal({
       delivery_method: deliveryMethod || null,
       shipping_fee: isPickup || shippingFee.trim() === "" ? null : Number(shippingFee),
       tracking_number: tracking.trim() || null,
+      down_payment: Number(downPayment) || 0,
       notes: notes.map((n) => n.trim()).filter(Boolean),
     };
     if (!paymentLinked && paymentDate) body.payment_date = fromPHLocal(paymentDate);
@@ -172,20 +175,20 @@ export function OrderQuickEditModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#1a1a1a] border border-[#603e39]/40"
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-panel border border-line/40"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#603e39]/30 px-5 py-3 sticky top-0 bg-[#1a1a1a] z-[60]">
+        <div className="flex items-center justify-between border-b border-line/30 px-5 py-3 sticky top-0 bg-panel z-[60]">
           <div className="min-w-0">
             <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Quick Edit</p>
-            <p className="font-mono text-[11px] text-[#ebbbb4]/40 truncate">
+            <p className="font-mono text-[11px] text-accent/40 truncate">
               {order.order_number != null ? `#${order.order_number} · ` : ""}{order.name}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center text-[#ebbbb4]/40 hover:text-primary transition-colors"
+            className="w-7 h-7 flex items-center justify-center text-accent/40 hover:text-primary transition-colors"
             title="Close"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
@@ -200,12 +203,8 @@ export function OrderQuickEditModal({
               <input id="qe-or" value={receipt} onChange={(e) => setReceipt(e.target.value)} placeholder="OR number" className={FIELD} />
             </div>
             <div>
-              <label className={LABEL} htmlFor="qe-status">Status</label>
-              <select id="qe-status" value={status} onChange={(e) => setStatus(e.target.value as OrderStatus)} className={FIELD}>
-                {ALL_STATUSES.map((s) => (
-                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                ))}
-              </select>
+              <label className={LABEL} htmlFor="qe-track">Tracking Number</label>
+              <input id="qe-track" value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="Waybill / tracking no." className={FIELD} />
             </div>
             <div>
               <label className={LABEL} htmlFor="qe-paydate">Payment Date &amp; Time</label>
@@ -224,7 +223,7 @@ export function OrderQuickEditModal({
                 {withCurrent(PAYMENT_METHODS, paymentMethod).map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
-            <div>
+            <div className={isPickup ? "sm:col-span-2" : ""}>
               <label className={LABEL} htmlFor="qe-delivery">Delivery Method</label>
               <select id="qe-delivery" value={deliveryMethod} onChange={(e) => setDeliveryMethod(e.target.value)} className={FIELD}>
                 <option value="">— Select —</option>
@@ -237,9 +236,17 @@ export function OrderQuickEditModal({
                 <input id="qe-ship" type="number" min="0" value={shippingFee} onChange={(e) => setShippingFee(e.target.value)} placeholder="TBA" className={FIELD} />
               </div>
             )}
-            <div className={isPickup ? "" : "sm:col-span-2"}>
-              <label className={LABEL} htmlFor="qe-track">Tracking Number</label>
-              <input id="qe-track" value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="Waybill / tracking no." className={FIELD} />
+            <div>
+              <label className={LABEL} htmlFor="qe-status">Status</label>
+              <select id="qe-status" value={status} onChange={(e) => setStatus(e.target.value as OrderStatus)} className={FIELD}>
+                {ALL_STATUSES.map((s) => (
+                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={LABEL} htmlFor="qe-dp">Down Payment (₱)</label>
+              <input id="qe-dp" type="number" min="0" value={downPayment} onChange={(e) => setDownPayment(e.target.value)} placeholder="0" className={FIELD} />
             </div>
           </div>
 
@@ -250,7 +257,7 @@ export function OrderQuickEditModal({
               <button
                 type="button"
                 onClick={() => setItems((prev) => [...prev, { product_id: "", product: "", qty: "1", unit_price: "", subtotal: "" }])}
-                className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/50 hover:text-primary transition-colors"
+                className="flex items-center gap-1 font-mono text-[10px] text-accent/50 hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[13px]">add</span>
                 Add item
@@ -258,7 +265,7 @@ export function OrderQuickEditModal({
             </div>
             <div className="space-y-2">
               {items.map((item, i) => (
-                <div key={i} className="relative bg-[#141414] border border-[#603e39]/30 p-3 space-y-2" style={{ zIndex: items.length - i }}>
+                <div key={i} className="relative bg-canvas border border-line/30 p-3 space-y-2" style={{ zIndex: items.length - i }}>
                   <ProductCombobox
                     value={item.product_id}
                     onChange={(id) => selectProduct(i, id)}
@@ -267,22 +274,22 @@ export function OrderQuickEditModal({
                   />
                   <div className="flex items-end gap-2">
                     <div className="w-16">
-                      <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Qty</p>
+                      <p className="font-mono text-[9px] text-accent/40 uppercase tracking-widest mb-1">Qty</p>
                       <input type="number" min="1" value={item.qty} onChange={(e) => setItem(i, "qty", e.target.value)} className={`${CELL} text-center`} />
                     </div>
                     <div className="flex-1">
-                      <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Unit (₱)</p>
+                      <p className="font-mono text-[9px] text-accent/40 uppercase tracking-widest mb-1">Unit (₱)</p>
                       <input type="number" min="0" placeholder="0" value={item.unit_price} onChange={(e) => setItem(i, "unit_price", e.target.value)} className={CELL} />
                     </div>
                     <div className="flex-1">
-                      <p className="font-mono text-[9px] text-[#ebbbb4]/40 uppercase tracking-widest mb-1">Subtotal</p>
+                      <p className="font-mono text-[9px] text-accent/40 uppercase tracking-widest mb-1">Subtotal</p>
                       <p className="font-mono text-[13px] text-primary font-bold py-1.5">₱{(parseFloat(item.subtotal) || 0).toLocaleString()}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
                       disabled={items.length === 1}
-                      className="flex-shrink-0 pb-2 text-[#ebbbb4]/30 hover:text-primary transition-colors disabled:opacity-20"
+                      className="flex-shrink-0 pb-2 text-accent/30 hover:text-primary transition-colors disabled:opacity-20"
                       title="Remove item"
                     >
                       <span className="material-symbols-outlined text-[16px]">close</span>
@@ -292,8 +299,8 @@ export function OrderQuickEditModal({
               ))}
             </div>
             {itemsChanged && (
-              <div className="flex justify-between items-baseline pt-3 mt-3 border-t border-[#603e39]/20">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-[#ebbbb4]/50">
+              <div className="flex justify-between items-baseline pt-3 mt-3 border-t border-line/20">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-accent/50">
                   New total{(order.discount ?? 0) > 0 ? " (after discount)" : ""}
                 </span>
                 <span className="font-inter font-black text-[18px] text-primary">₱{total.toLocaleString()}</span>
@@ -308,14 +315,14 @@ export function OrderQuickEditModal({
               <button
                 type="button"
                 onClick={() => setNotes((prev) => [...prev, ""])}
-                className="flex items-center gap-1 font-mono text-[10px] text-[#ebbbb4]/50 hover:text-primary transition-colors"
+                className="flex items-center gap-1 font-mono text-[10px] text-accent/50 hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[13px]">add</span>
                 Add note
               </button>
             </div>
             {notes.length === 0 ? (
-              <p className="font-mono text-[11px] text-[#ebbbb4]/30 italic">No notes yet.</p>
+              <p className="font-mono text-[11px] text-accent/30 italic">No notes yet.</p>
             ) : (
               <div className="space-y-2">
                 {notes.map((note, i) => (
@@ -330,7 +337,7 @@ export function OrderQuickEditModal({
                     <button
                       type="button"
                       onClick={() => setNotes((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="flex-shrink-0 text-[#ebbbb4]/30 hover:text-primary transition-colors mt-1"
+                      className="flex-shrink-0 text-accent/30 hover:text-primary transition-colors mt-1"
                       title="Remove note"
                     >
                       <span className="material-symbols-outlined text-[16px]">close</span>
@@ -345,10 +352,10 @@ export function OrderQuickEditModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-[#603e39]/30 px-5 py-3 sticky bottom-0 bg-[#1a1a1a] z-[60]">
+        <div className="flex items-center justify-end gap-2 border-t border-line/30 px-5 py-3 sticky bottom-0 bg-panel z-[60]">
           <button
             onClick={onClose}
-            className="px-4 py-2 font-mono text-[11px] tracking-widest uppercase text-[#ebbbb4]/40 hover:text-[#e2e2e2] transition-colors"
+            className="px-4 py-2 font-mono text-[11px] tracking-widest uppercase text-accent/40 hover:text-fg transition-colors"
           >
             Cancel
           </button>

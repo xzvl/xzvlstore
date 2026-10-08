@@ -26,9 +26,9 @@ const MONTHS = [
 
 const now = new Date();
 
-const INPUT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-[#ebbbb4]/20";
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/60 mb-1.5";
-const SELECT = "w-full bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors";
+const INPUT = "w-full bg-deep border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
+const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5";
+const SELECT = "w-full bg-deep border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors";
 
 // Returns current time in Asia/Manila as a datetime-local string (YYYY-MM-DDTHH:mm)
 function nowPH(): string {
@@ -168,7 +168,7 @@ export default function LedgerPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-1">ADMIN // LEDGER</p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Ledger</h1>
+          <h1 className="font-inter font-black text-[28px] uppercase text-fg">Ledger</h1>
         </div>
         <button
           onClick={openNew}
@@ -181,22 +181,22 @@ export default function LedgerPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5">
+        <div className="bg-panel border border-line/30 p-5">
           <div className="flex items-center gap-1.5 font-mono text-[10px] text-green-400/70 uppercase tracking-widest mb-2">
             <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
             Total Incoming
           </div>
           <p className="font-inter font-black text-[26px] text-green-400">₱{totalIncoming.toLocaleString("en-US")}</p>
         </div>
-        <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5">
+        <div className="bg-panel border border-line/30 p-5">
           <div className="flex items-center gap-1.5 font-mono text-[10px] text-red-400/70 uppercase tracking-widest mb-2">
             <span className="material-symbols-outlined text-[13px]">arrow_upward</span>
             Total Outgoing
           </div>
           <p className="font-inter font-black text-[26px] text-red-400">₱{totalOutgoing.toLocaleString("en-US")}</p>
         </div>
-        <div className="bg-[#1a1a1a] border border-[#603e39]/30 p-5">
-          <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest mb-2">
+        <div className="bg-panel border border-line/30 p-5">
+          <div className="flex items-center gap-1.5 font-mono text-[10px] text-accent/50 uppercase tracking-widest mb-2">
             <span className="material-symbols-outlined text-[13px]">account_balance</span>
             Balance
           </div>
@@ -211,7 +211,7 @@ export default function LedgerPage() {
         <select
           value={filterMonth}
           onChange={e => setFilterMonth(e.target.value)}
-          className="bg-[#1a1a1a] border border-[#603e39]/40 text-[#e2e2e2] font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+          className="bg-panel border border-line/40 text-fg font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
         >
           <option value="all">All Months</option>
           {MONTHS.map((m, i) => (
@@ -221,7 +221,7 @@ export default function LedgerPage() {
         <select
           value={filterYear}
           onChange={e => setFilterYear(e.target.value)}
-          className="bg-[#1a1a1a] border border-[#603e39]/40 text-[#e2e2e2] font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+          className="bg-panel border border-line/40 text-fg font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
         >
           <option value="">All Years</option>
           {years.map(y => (
@@ -231,7 +231,7 @@ export default function LedgerPage() {
         <select
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
-          className="bg-[#1a1a1a] border border-[#603e39]/40 text-[#e2e2e2] font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+          className="bg-panel border border-line/40 text-fg font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
         >
           <option value="all">All Types</option>
           <option value="incoming">Incoming</option>
@@ -240,41 +240,41 @@ export default function LedgerPage() {
         <select
           value={filterSource}
           onChange={e => setFilterSource(e.target.value)}
-          className="bg-[#1a1a1a] border border-[#603e39]/40 text-[#e2e2e2] font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+          className="bg-panel border border-line/40 text-fg font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
         >
           <option value="all">All Source</option>
           {sources.map(s => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
-        <span className="font-mono text-[11px] text-[#ebbbb4]/30">{filtered.length} {filtered.length === 1 ? "entry" : "entries"}</span>
+        <span className="font-mono text-[11px] text-accent/30">{filtered.length} {filtered.length === 1 ? "entry" : "entries"}</span>
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-8">
+        <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
           <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
           Loading…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-[#1a1a1a] border border-[#603e39]/20 p-12 text-center">
-          <span className="material-symbols-outlined text-[32px] text-[#ebbbb4]/20 block mb-3">account_balance_wallet</span>
-          <p className="font-mono text-[12px] text-[#ebbbb4]/30">No entries for this period.</p>
+        <div className="bg-panel border border-line/20 p-12 text-center">
+          <span className="material-symbols-outlined text-[32px] text-accent/20 block mb-3">account_balance_wallet</span>
+          <p className="font-mono text-[12px] text-accent/30">No entries for this period.</p>
         </div>
       ) : (
         <>
           {/* ── Mobile cards (hidden on md+) ── */}
           <div className="md:hidden space-y-2">
             {filtered.map(entry => (
-              <div key={entry.id} className="bg-[#1a1a1a] border border-[#603e39]/20">
+              <div key={entry.id} className="bg-panel border border-line/20">
                 <div className="px-4 py-3 space-y-1">
                   {/* Row 1: title */}
-                  <p className="font-inter font-semibold text-[13px] text-[#e2e2e2] truncate">{entry.title}</p>
+                  <p className="font-inter font-semibold text-[13px] text-fg truncate">{entry.title}</p>
 
                   {/* Row 2: source | date and time */}
-                  <p className="font-mono text-[11px] text-[#ebbbb4]/40 flex items-center gap-1.5">
+                  <p className="font-mono text-[11px] text-accent/40 flex items-center gap-1.5">
                     <span>{entry.source || "—"}</span>
-                    <span className="text-[#603e39]/60">|</span>
+                    <span className="text-line/60">|</span>
                     <span>{formatDate(entry.entry_date)}</span>
                   </p>
 
@@ -290,15 +290,15 @@ export default function LedgerPage() {
                       </span>
                       {entry.type}
                     </span>
-                    <span className="text-[#603e39]/60 font-mono text-[11px]">|</span>
+                    <span className="text-line/60 font-mono text-[11px]">|</span>
                     <span className={`font-mono font-bold text-[13px] ${entry.type === "incoming" ? "text-green-400" : "text-red-400"}`}>
                       {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString("en-US")}
                     </span>
                     <span className="flex-1" />
-                    <button onClick={() => openEdit(entry)} className="text-[#ebbbb4]/30 hover:text-primary transition-colors" title="Edit">
+                    <button onClick={() => openEdit(entry)} className="text-accent/30 hover:text-primary transition-colors" title="Edit">
                       <span className="material-symbols-outlined text-[16px]">edit</span>
                     </button>
-                    <button onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)} className="text-[#ebbbb4]/30 hover:text-red-400 transition-colors" title="Delete">
+                    <button onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)} className="text-accent/30 hover:text-red-400 transition-colors" title="Delete">
                       <span className="material-symbols-outlined text-[16px]">delete</span>
                     </button>
                   </div>
@@ -306,12 +306,12 @@ export default function LedgerPage() {
 
                 {/* Delete confirmation */}
                 {confirmId === entry.id && (
-                  <div className="border-t border-red-900/30 bg-[#1f1212] px-4 py-3">
+                  <div className="border-t border-red-900/30 bg-primary/[0.06] px-4 py-3">
                     <p className="font-mono text-[11px] text-red-300 mb-2">
                       Delete <span className="text-white">{entry.title}</span>? Cannot be undone.
                     </p>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors">Cancel</button>
+                      <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors">Cancel</button>
                       <button onClick={() => handleDelete(entry.id)} disabled={deletingId === entry.id} className="flex items-center gap-1.5 px-3 py-1 bg-red-600/20 border border-red-600/50 text-red-400 font-mono text-[11px] uppercase tracking-widest hover:bg-red-600/30 transition-colors disabled:opacity-50">
                         {deletingId === entry.id ? <span className="material-symbols-outlined animate-spin text-[13px]">progress_activity</span> : <span className="material-symbols-outlined text-[13px]">delete</span>}
                         {deletingId === entry.id ? "Deleting…" : "Delete"}
@@ -327,9 +327,9 @@ export default function LedgerPage() {
           <div className="hidden md:block overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#603e39]/40">
+              <tr className="border-b border-line/40">
                 {["Title", "Source", "Type", "Amount", "Date", ""].map((h, i) => (
-                  <th key={i} className={`text-left font-mono text-[10px] tracking-[0.15em] uppercase text-[#ebbbb4]/40 px-3 py-3 whitespace-nowrap ${i >= 3 ? "text-right" : "text-left"} ${i === 0 ? "w-[240px]" : ""}`}>
+                  <th key={i} className={`text-left font-mono text-[10px] tracking-[0.15em] uppercase text-accent/40 px-3 py-3 whitespace-nowrap ${i >= 3 ? "text-right" : "text-left"} ${i === 0 ? "w-[240px]" : ""}`}>
                     {h}
                   </th>
                 ))}
@@ -338,11 +338,11 @@ export default function LedgerPage() {
             <tbody>
               {filtered.map(entry => (
                 <Fragment key={entry.id}>
-                  <tr className="border-b border-[#603e39]/15 hover:bg-[#1a1a1a] transition-colors">
-                    <td className="px-3 py-3 font-inter font-semibold text-[13px] text-[#e2e2e2] max-w-[240px] truncate" title={entry.title}>
+                  <tr className="border-b border-line/15 hover:bg-panel transition-colors">
+                    <td className="px-3 py-3 font-inter font-semibold text-[13px] text-fg max-w-[240px] truncate" title={entry.title}>
                       {entry.title}
                     </td>
-                    <td className="px-3 py-3 font-mono text-[12px] text-[#ebbbb4]/60 whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[12px] text-accent/60 whitespace-nowrap">
                       {entry.source || "—"}
                     </td>
                     <td className="px-3 py-3">
@@ -362,21 +362,21 @@ export default function LedgerPage() {
                     }`}>
                       {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString("en-US")}
                     </td>
-                    <td className="px-3 py-3 font-mono text-[11px] text-[#ebbbb4]/40 text-right whitespace-nowrap">
+                    <td className="px-3 py-3 font-mono text-[11px] text-accent/40 text-right whitespace-nowrap">
                       {formatDate(entry.entry_date)}
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           onClick={() => openEdit(entry)}
-                          className="p-1.5 text-[#ebbbb4]/30 hover:text-primary transition-colors"
+                          className="p-1.5 text-accent/30 hover:text-primary transition-colors"
                           title="Edit"
                         >
                           <span className="material-symbols-outlined text-[16px]">edit</span>
                         </button>
                         <button
                           onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)}
-                          className="p-1.5 text-[#ebbbb4]/30 hover:text-red-400 transition-colors"
+                          className="p-1.5 text-accent/30 hover:text-red-400 transition-colors"
                           title="Delete"
                         >
                           <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -386,14 +386,14 @@ export default function LedgerPage() {
                   </tr>
 
                   {confirmId === entry.id && (
-                    <tr className="border-b border-[#603e39]/15 bg-[#1f1212]">
+                    <tr className="border-b border-line/15 bg-primary/[0.06]">
                       <td colSpan={6} className="px-5 py-3">
                         <div className="flex items-center justify-between gap-4">
                           <p className="font-mono text-[11px] text-red-300">
                             Delete <span className="text-white">{entry.title}</span>? This cannot be undone.
                           </p>
                           <div className="flex items-center gap-3 flex-shrink-0">
-                            <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors">
+                            <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors">
                               Cancel
                             </button>
                             <button
@@ -425,19 +425,19 @@ export default function LedgerPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm">
           <div
             ref={modalRef}
-            className="w-full max-w-md bg-[#131313] border border-[#603e39]/60 shadow-2xl"
+            className="w-full max-w-md bg-canvas border border-line/60 shadow-2xl"
           >
             {/* Modal header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#603e39]/30">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-line/30">
               <div>
                 <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
                   {editing ? "Edit Entry" : "New Entry"}
                 </p>
-                <h2 className="font-inter font-black text-[18px] uppercase text-[#e2e2e2]">
+                <h2 className="font-inter font-black text-[18px] uppercase text-fg">
                   {editing ? editing.title : "Add Ledger Entry"}
                 </h2>
               </div>
-              <button onClick={closeModal} className="text-[#ebbbb4]/30 hover:text-primary transition-colors">
+              <button onClick={closeModal} className="text-accent/30 hover:text-primary transition-colors">
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
@@ -503,8 +503,8 @@ export default function LedgerPage() {
             </div>
 
             {/* Modal footer */}
-            <div className="px-6 py-4 border-t border-[#603e39]/30 flex items-center justify-end gap-3">
-              <button onClick={closeModal} className="font-mono text-[11px] text-[#ebbbb4]/50 hover:text-[#e2e2e2] transition-colors px-4 py-2">
+            <div className="px-6 py-4 border-t border-line/30 flex items-center justify-end gap-3">
+              <button onClick={closeModal} className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors px-4 py-2">
                 Cancel
               </button>
               <button

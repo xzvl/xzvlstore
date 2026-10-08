@@ -5,6 +5,7 @@ import { CartProvider } from "@/lib/cart-context";
 import { getSiteContent, isMaintenanceForced } from "@/lib/get-site-content";
 import { SiteContentProvider } from "@/components/SiteContentProvider";
 import MaintenanceGate from "@/components/MaintenanceGate";
+import HoldPreOrderReminder from "@/components/HoldPreOrderReminder";
 import { THEME_INIT_SCRIPT, themeCss } from "@/lib/theme";
 
 const inter = Inter({
@@ -65,7 +66,10 @@ export default async function RootLayout({
         <div className="fixed inset-0 scanline z-[100] pointer-events-none" />
         <CartProvider>
           <SiteContentProvider value={siteContent}>
-            <MaintenanceGate forced={isMaintenanceForced()}>{children}</MaintenanceGate>
+            <MaintenanceGate forced={isMaintenanceForced()}>
+              {children}
+              <HoldPreOrderReminder />
+            </MaintenanceGate>
           </SiteContentProvider>
         </CartProvider>
       </body>

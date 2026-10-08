@@ -23,7 +23,7 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
           type="color"
           value={isHexColor(value) ? value : "#000000"}
           onChange={(e) => onChange(e.target.value)}
-          className="w-11 h-11 p-1 bg-[#1f1f1f] border border-[#603e39] cursor-pointer flex-shrink-0"
+          className="w-11 h-11 p-1 bg-fg/[0.05] border border-line cursor-pointer flex-shrink-0"
           aria-label={`${label} picker`}
         />
         <input
@@ -63,7 +63,7 @@ export default function HeroTab({
     <div className="space-y-6">
       <div className={CARD}>
         <p className={CARD_TITLE}>Hero Slider</p>
-        <p className="font-mono text-[11px] text-[#ebbbb4]/40">
+        <p className="font-mono text-[11px] text-accent/40">
           The three slides at the top of the homepage. Pick a slide, edit it, then save.
         </p>
         <div className="flex gap-2 flex-wrap">
@@ -75,7 +75,7 @@ export default function HeroTab({
               className={`px-4 py-2 border font-mono text-[10px] tracking-widest uppercase transition-colors ${
                 active === i
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-[#603e39]/50 text-[#ebbbb4]/50 hover:border-[#ebbbb4]/40 hover:text-[#e2e2e2]"
+                  : "border-line/50 text-accent/50 hover:border-accent/40 hover:text-fg"
               }`}
             >
               Slide {i + 1}
@@ -149,7 +149,7 @@ export default function HeroTab({
             onChange={(background) => update({ background })}
           />
         </div>
-        <p className="font-mono text-[11px] text-[#ebbbb4]/40">
+        <p className="font-mono text-[11px] text-accent/40">
           Background color fills the slide and fades the images into it. Text color is used for the main title line, the
           description and the slide controls. The red title line and button always use the Primary color from the Colors tab.
         </p>
@@ -158,7 +158,7 @@ export default function HeroTab({
             const c = slide.colors[mode];
             return (
               <div key={mode} className="space-y-3">
-                <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.15em] uppercase text-[#e2e2e2]">
+                <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.15em] uppercase text-fg">
                   <span className="material-symbols-outlined text-[16px]">{MODE_META[mode].icon}</span>
                   {MODE_META[mode].title}
                 </p>
@@ -166,7 +166,7 @@ export default function HeroTab({
                 <ColorField label="Text color" value={c.text} onChange={(text) => updateColor(mode, { text })} />
                 {/* Preview */}
                 <div
-                  className="border border-[#603e39]/40 px-4 py-3"
+                  className="border border-line/40 px-4 py-3"
                   style={{ backgroundColor: isHexColor(c.background) ? c.background : undefined }}
                 >
                   <p

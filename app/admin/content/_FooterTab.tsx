@@ -35,7 +35,7 @@ export default function FooterTab({
 
       <div className={CARD}>
         <p className={CARD_TITLE}>Navigation Links</p>
-        <p className="font-mono text-[11px] text-[#ebbbb4]/40">The &quot;Shop&quot; column of links in the footer.</p>
+        <p className="font-mono text-[11px] text-accent/40">The &quot;Shop&quot; column of links in the footer.</p>
         <ListEditor<NavLink>
           items={value.navLinks}
           onChange={(navLinks) => setValue((v) => ({ ...v, navLinks }))}

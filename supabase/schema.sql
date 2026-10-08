@@ -256,3 +256,9 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- 2. Name: product-images
 -- 3. Public bucket: YES (toggle on)
 -- 4. Click Create bucket
+
+-- ─── Pre-order down payment (run this against the live DB) ────────────────────
+-- When down_payment_required is on (pre-order products only), the customer pays
+-- down_payment_price per unit upfront and the order is saved as "hold pre-order".
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS down_payment_required boolean NOT NULL DEFAULT false;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS down_payment_price numeric;

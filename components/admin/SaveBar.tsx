@@ -14,7 +14,7 @@ export default function SaveBar({
   label?: string;
 }) {
   return (
-    <div className="flex items-center gap-4 sticky bottom-0 bg-[#0e0e0e]/95 backdrop-blur-sm py-4 border-t border-[#603e39]/30">
+    <div className="flex items-center gap-4 sticky bottom-0 bg-deep/95 backdrop-blur-sm py-4 border-t border-line/30">
       <button
         type="button"
         onClick={onSave}

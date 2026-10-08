@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
-import type { StoreProduct } from "@/lib/store-types";
+import { downPaymentPerUnit, type StoreProduct } from "@/lib/store-types";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
@@ -22,6 +22,8 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     sale_price: (p.sale_price as number | null) ?? null,
     pre_order: (p.pre_order as boolean) ?? false,
     pre_order_note: (p.pre_order_note as string | null) ?? null,
+    down_payment_required: (p.down_payment_required as boolean | null) ?? false,
+    down_payment_price: p.down_payment_price != null ? Number(p.down_payment_price) : null,
     sneak_peek: (p.sneak_peek as boolean) ?? false,
     sneak_peek_note: (p.sneak_peek_note as string | null) ?? null,
     stock: (p.stock as number) ?? 0,
@@ -67,7 +69,7 @@ async function getRecommended(brandId: string | null, excludeId: string): Promis
 }
 
 const PRODUCT_SELECT =
-  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, pre_order_note, sneak_peek, sneak_peek_note, status, brand_id, brands, category_ids, tag_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, pre_order_note, down_payment_required, down_payment_price, sneak_peek, sneak_peek_note, status, brand_id, brands, category_ids, tag_ids, max_purchase_enabled, max_purchase_limit";
 
 const nameToSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -173,6 +175,7 @@ export default async function ProductPage({
   const tags = taxonomyTerms.filter((t) => t.type === "tag");
 
   const displayPrice = product.sale_price ?? product.price;
+  const downPayment = downPaymentPerUnit(product);
 
   return (
     <>
@@ -240,6 +243,19 @@ export default async function ProductPage({
                   </span>
                 )}
               </div>
+
+              {/* Pre-order down payment */}
+              {downPayment > 0 && (
+                <div className="flex items-center gap-3 border border-orange-400/30 bg-orange-400/5 px-4 py-3">
+                  <span className="material-symbols-outlined text-[18px] text-orange-400/80">payments</span>
+                  <div>
+                    <p className="font-mono text-[10px] tracking-widest uppercase text-orange-400/70">Required Down Payment</p>
+                    <p className="font-mono text-[12px] text-accent/70">
+                      <span className="font-bold text-fg">₱{downPayment.toLocaleString()}</span> per unit, paid upfront to secure your pre-order
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="h-px bg-line/30" />
 

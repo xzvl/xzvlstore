@@ -40,8 +40,8 @@ const STATUS_COLORS: Record<string, string> = {
   confirmed: "text-blue-400 border-blue-400/30 bg-blue-400/10",
   shipped: "text-green-400 border-green-400/30 bg-green-400/10",
   completed: "text-primary border-primary/30 bg-primary/10",
-  cancelled: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
-  refunded: "text-[#ebbbb4]/40 border-[#ebbbb4]/20 bg-[#ebbbb4]/5",
+  cancelled: "text-accent/40 border-accent/20 bg-accent/5",
+  refunded: "text-accent/40 border-accent/20 bg-accent/5",
 };
 
 const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed", "cancelled", "refunded"];
@@ -138,12 +138,12 @@ function ProductFilterCombobox({
 
   if (selected) {
     return (
-      <div className="flex items-center gap-2 bg-[#0e0e0e] border border-primary/40 px-3 py-1.5 min-w-[220px]">
-        <span className="font-mono text-[12px] text-[#e2e2e2] flex-1 truncate">{selected}</span>
+      <div className="flex items-center gap-2 bg-deep border border-primary/40 px-3 py-1.5 min-w-[220px]">
+        <span className="font-mono text-[12px] text-fg flex-1 truncate">{selected}</span>
         <button
           type="button"
           onClick={() => { onSelect(null); setQuery(""); }}
-          className="flex-shrink-0 text-[#ebbbb4]/40 hover:text-primary transition-colors"
+          className="flex-shrink-0 text-accent/40 hover:text-primary transition-colors"
         >
           <span className="material-symbols-outlined text-[15px]">close</span>
         </button>
@@ -153,28 +153,28 @@ function ProductFilterCombobox({
 
   return (
     <div ref={ref} className="relative min-w-[220px]">
-      <div className="flex items-center gap-2 bg-[#0e0e0e] border border-[#603e39] focus-within:border-primary transition-colors px-3">
-        <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[15px] flex-shrink-0">search</span>
+      <div className="flex items-center gap-2 bg-deep border border-line focus-within:border-primary transition-colors px-3">
+        <span className="material-symbols-outlined text-accent/30 text-[15px] flex-shrink-0">search</span>
         <input
           type="text"
           placeholder="Search product…"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          className="flex-1 bg-transparent text-[#e2e2e2] font-mono text-[12px] py-1.5 focus:outline-none placeholder:text-[#ebbbb4]/20"
+          className="flex-1 bg-transparent text-fg font-mono text-[12px] py-1.5 focus:outline-none placeholder:text-accent/20"
         />
       </div>
       {open && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-[#161616] border border-[#603e39] max-h-[200px] overflow-y-auto shadow-xl shadow-black/60">
+        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-panel border border-line max-h-[200px] overflow-y-auto shadow-xl shadow-black/60">
           {filtered.length === 0 ? (
-            <div className="px-3 py-4 font-mono text-[11px] text-[#ebbbb4]/30 text-center">No products found.</div>
+            <div className="px-3 py-4 font-mono text-[11px] text-accent/30 text-center">No products found.</div>
           ) : (
             filtered.map((name) => (
               <button
                 key={name}
                 type="button"
                 onClick={() => { onSelect(name); setQuery(""); setOpen(false); }}
-                className="w-full text-left px-3 py-2.5 font-mono text-[12px] text-[#e2e2e2] hover:bg-[#222] border-b border-[#603e39]/10 transition-colors truncate"
+                className="w-full text-left px-3 py-2.5 font-mono text-[12px] text-fg hover:bg-fg/[0.06] border-b border-line/10 transition-colors truncate"
               >
                 {name}
               </button>
@@ -219,12 +219,12 @@ function CustomerFilterCombobox({
 
   if (selected) {
     return (
-      <div className="flex items-center gap-2 bg-[#0e0e0e] border border-primary/40 px-3 py-1.5 min-w-[220px]">
-        <span className="font-mono text-[12px] text-[#e2e2e2] flex-1 truncate">{displayName(selected)}</span>
+      <div className="flex items-center gap-2 bg-deep border border-primary/40 px-3 py-1.5 min-w-[220px]">
+        <span className="font-mono text-[12px] text-fg flex-1 truncate">{displayName(selected)}</span>
         <button
           type="button"
           onClick={() => { onSelect(null); setQuery(""); }}
-          className="flex-shrink-0 text-[#ebbbb4]/40 hover:text-primary transition-colors"
+          className="flex-shrink-0 text-accent/40 hover:text-primary transition-colors"
         >
           <span className="material-symbols-outlined text-[15px]">close</span>
         </button>
@@ -234,28 +234,28 @@ function CustomerFilterCombobox({
 
   return (
     <div ref={ref} className="relative min-w-[220px]">
-      <div className="flex items-center gap-2 bg-[#0e0e0e] border border-[#603e39] focus-within:border-primary transition-colors px-3">
-        <span className="material-symbols-outlined text-[#ebbbb4]/30 text-[15px] flex-shrink-0">search</span>
+      <div className="flex items-center gap-2 bg-deep border border-line focus-within:border-primary transition-colors px-3">
+        <span className="material-symbols-outlined text-accent/30 text-[15px] flex-shrink-0">search</span>
         <input
           type="text"
           placeholder="Filter by registered customer"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          className="flex-1 bg-transparent text-[#e2e2e2] font-mono text-[12px] py-1.5 focus:outline-none placeholder:text-[#ebbbb4]/20"
+          className="flex-1 bg-transparent text-fg font-mono text-[12px] py-1.5 focus:outline-none placeholder:text-accent/20"
         />
       </div>
       {open && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-[#161616] border border-[#603e39] max-h-[200px] overflow-y-auto shadow-xl shadow-black/60">
+        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-panel border border-line max-h-[200px] overflow-y-auto shadow-xl shadow-black/60">
           {filtered.length === 0 ? (
-            <div className="px-3 py-4 font-mono text-[11px] text-[#ebbbb4]/30 text-center">No customers found.</div>
+            <div className="px-3 py-4 font-mono text-[11px] text-accent/30 text-center">No customers found.</div>
           ) : (
             filtered.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => { onSelect(c.id); setQuery(""); setOpen(false); }}
-                className="w-full text-left px-3 py-2.5 font-mono text-[12px] text-[#e2e2e2] hover:bg-[#222] border-b border-[#603e39]/10 transition-colors truncate"
+                className="w-full text-left px-3 py-2.5 font-mono text-[12px] text-fg hover:bg-fg/[0.06] border-b border-line/10 transition-colors truncate"
               >
                 {displayName(c)}
               </button>
@@ -282,10 +282,10 @@ function OrderTotalInline({ order }: { order: Order }) {
   return (
     <div className="leading-tight">
       <div className="flex items-center gap-1.5">
-        <span className="font-mono text-[10px] text-[#ebbbb4]/40 line-through">₱{order.estimated_total.toLocaleString()}</span>
+        <span className="font-mono text-[10px] text-accent/40 line-through">₱{order.estimated_total.toLocaleString()}</span>
         <span className="font-mono text-[13px] text-primary font-bold">₱{remaining.toLocaleString()}</span>
       </div>
-      <p className="font-mono text-[9px] text-[#ebbbb4]/30">DP ₱{downPayment.toLocaleString()} paid</p>
+      <p className="font-mono text-[9px] text-accent/30">DP ₱{downPayment.toLocaleString()} paid</p>
     </div>
   );
 }
@@ -404,7 +404,7 @@ function CopyIconButton({
       type="button"
       onClick={handleCopy}
       title={title}
-      className={`text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0 ${className}`}
+      className={`text-accent/30 hover:text-primary transition-colors flex-shrink-0 ${className}`}
     >
       <span className="material-symbols-outlined" style={{ fontSize: size }}>{copied ? "check" : "content_copy"}</span>
     </button>
@@ -438,7 +438,7 @@ function CopyTextButton({ text, label }: { text: string; label: string }) {
 
 function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
   return (
-    <div className="w-[30px] h-[30px] relative bg-[#111] border border-[#603e39]/20 overflow-hidden flex-shrink-0">
+    <div className="w-[30px] h-[30px] relative bg-deep border border-line/20 overflow-hidden flex-shrink-0">
       {src ? (
         <Image
           src={sizedImageUrl(src, "small") ?? src}
@@ -452,7 +452,7 @@ function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
-          <span className="material-symbols-outlined text-[13px] text-[#ebbbb4]/20">image</span>
+          <span className="material-symbols-outlined text-[13px] text-accent/20">image</span>
         </div>
       )}
     </div>
@@ -632,13 +632,13 @@ function AdminOrdersPageInner() {
       <div className="flex items-start justify-between">
         <div>
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">ADMIN // ORDERS</p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-[#e2e2e2]">Orders</h1>
+          <h1 className="font-inter font-black text-[28px] uppercase text-fg">Orders</h1>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             type="button"
             onClick={() => setExportOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] border border-[#603e39] text-[#e2e2e2] font-mono text-[11px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-panel border border-line text-fg font-mono text-[11px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-[14px]">download</span>
             Export
@@ -662,12 +662,12 @@ function AdminOrdersPageInner() {
             { label: "Pre-Order", value: stats.preOrderOrders, icon: "schedule" },
             { label: "Shipped", value: stats.shippedOrders, icon: "local_shipping" },
           ].map((s) => (
-            <div key={s.label} className="bg-[#1a1a1a] border border-[#603e39]/30 p-4 space-y-1">
-              <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#ebbbb4]/50 uppercase tracking-widest">
+            <div key={s.label} className="bg-panel border border-line/30 p-4 space-y-1">
+              <div className="flex items-center gap-1.5 font-mono text-[10px] text-accent/50 uppercase tracking-widest">
                 <span className="material-symbols-outlined text-[12px]">{s.icon}</span>
                 {s.label}
               </div>
-              <p className="font-inter font-black text-[22px] text-[#e2e2e2]">{s.value}</p>
+              <p className="font-inter font-black text-[22px] text-fg">{s.value}</p>
             </div>
           ))}
         </div>
@@ -675,7 +675,7 @@ function AdminOrdersPageInner() {
 
       {/* Status tabs: left sidebar on md+ (icon rail on tablets, full labels on lg+), scrolling row on mobile */}
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        <nav className="flex md:flex-col gap-1 overflow-x-auto overflow-y-hidden md:overflow-visible w-full md:w-12 lg:w-52 md:flex-shrink-0 border-b md:border-b-0 md:border-r border-[#603e39]/30 md:pr-2 lg:pr-4 md:sticky md:top-0 scrollbar-x-5">
+        <nav className="flex md:flex-col gap-1 overflow-x-auto overflow-y-hidden md:overflow-visible w-full md:w-12 lg:w-52 md:flex-shrink-0 border-b md:border-b-0 md:border-r border-line/30 md:pr-2 lg:pr-4 md:sticky md:top-0 scrollbar-x-5">
           {STATUS_TABS.map((tab) => {
             const count = BADGE_STATUSES.has(tab.value) ? statusCounts[tab.value] ?? 0 : 0;
             return (
@@ -687,7 +687,7 @@ function AdminOrdersPageInner() {
                 className={`relative flex items-center gap-2 px-3 py-2.5 font-mono text-[11px] tracking-widest uppercase transition-colors whitespace-nowrap flex-shrink-0 md:w-full md:justify-center lg:justify-start border-b-2 -mb-px md:mb-0 md:border-b-0 md:border-l-2 ${
                   status === tab.value
                     ? "text-primary border-primary md:bg-primary/5"
-                    : "text-[#ebbbb4]/50 border-transparent hover:text-[#e2e2e2] md:hover:bg-[#1a1a1a]"
+                    : "text-accent/50 border-transparent hover:text-fg md:hover:bg-panel"
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
@@ -708,7 +708,7 @@ function AdminOrdersPageInner() {
             <select
               value={dateFilter}
               onChange={(e) => setParam("dateFilter", e.target.value, "default")}
-              className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+              className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
             >
               <option value="all">All Dates</option>
               <option value="default">Default</option>
@@ -723,14 +723,14 @@ function AdminOrdersPageInner() {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setParam("dateFrom", e.target.value, "")}
-                  className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+                  className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
                 />
-                <span className="font-mono text-[10px] text-[#ebbbb4]/30">to</span>
+                <span className="font-mono text-[10px] text-accent/30">to</span>
                 <input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setParam("dateTo", e.target.value, "")}
-                  className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+                  className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
                 />
               </>
             )}
@@ -750,13 +750,13 @@ function AdminOrdersPageInner() {
             )}
 
             {filteredProductStats && (
-              <div className="flex items-center gap-4 border-l border-[#603e39]/30 pl-4">
+              <div className="flex items-center gap-4 border-l border-line/30 pl-4">
                 <div>
-                  <p className="font-mono text-[9px] text-[#ebbbb4]/30 uppercase tracking-widest">Total Qty</p>
-                  <p className="font-mono text-[14px] font-bold text-[#e2e2e2]">{filteredProductStats.qty}</p>
+                  <p className="font-mono text-[9px] text-accent/30 uppercase tracking-widest">Total Qty</p>
+                  <p className="font-mono text-[14px] font-bold text-fg">{filteredProductStats.qty}</p>
                 </div>
                 <div>
-                  <p className="font-mono text-[9px] text-[#ebbbb4]/30 uppercase tracking-widest">Total Amount</p>
+                  <p className="font-mono text-[9px] text-accent/30 uppercase tracking-widest">Total Amount</p>
                   <p className="font-mono text-[14px] font-bold text-primary">₱{filteredProductStats.total.toLocaleString()}</p>
                 </div>
               </div>
@@ -765,18 +765,18 @@ function AdminOrdersPageInner() {
 
           {/* Orders list */}
           {loading ? (
-            <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-8">
+            <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
               <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
               Loading orders…
             </div>
           ) : visibleOrders.length === 0 ? (
-            <div className="text-center py-16 font-mono text-[13px] text-[#ebbbb4]/30">No orders found.</div>
+            <div className="text-center py-16 font-mono text-[13px] text-accent/30">No orders found.</div>
           ) : (
             <div className="space-y-2">
               {visibleOrders.map((order) => {
                 const facebookUrl = order.facebook || (order.customer_id ? customerMap[order.customer_id]?.facebook_url ?? undefined : undefined);
                 return (
-                <div key={order.id} className="bg-[#1a1a1a] border border-[#603e39]/30 overflow-hidden">
+                <div key={order.id} className="bg-panel border border-line/30 overflow-hidden">
 
                   {/* ── Mobile layout (hidden on md+) ── */}
                   <div className="md:hidden px-4 py-3">
@@ -785,21 +785,21 @@ function AdminOrdersPageInner() {
                       className="cursor-pointer hover:opacity-80 transition-opacity mb-2"
                       onClick={() => setExpanded(expanded === order.id ? null : order.id)}
                     >
-                      <p className="font-inter font-bold text-[14px] text-[#e2e2e2] truncate flex items-center gap-1">
+                      <p className="font-inter font-bold text-[14px] text-fg truncate flex items-center gap-1">
                         {order.order_number != null && (
-                          <span className="text-[#ebbbb4]/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
+                          <span className="text-accent/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
                         )}
                         <span className="truncate"><CustomerNameLink order={order} facebookUrl={facebookUrl} /></span>
                         <CopyIconButton text={order.name} />
                       </p>
                       {order.location && (
-                        <p className="font-mono text-[11px] text-[#ebbbb4]/40 mt-0.5">{order.location}</p>
+                        <p className="font-mono text-[11px] text-accent/40 mt-0.5">{order.location}</p>
                       )}
                       {order.items.length > 0 && (
                         <div className="mt-1 space-y-1">
                           {order.items.map((it, i) => (
                             <div key={i} className="flex items-center gap-1.5">
-                              <p className="font-mono text-[10px] text-[#ebbbb4]/30 truncate">
+                              <p className="font-mono text-[10px] text-accent/30 truncate">
                                 {it.product} ×{it.qty}
                               </p>
                             </div>
@@ -811,14 +811,14 @@ function AdminOrdersPageInner() {
                     {/* Row 2: total · status badge · select · edit · delete */}
                     <div className="flex items-center gap-[0.4rem] flex-wrap">
                       <OrderTotalInline order={order} />
-                      <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-[#ebbbb4]/40"}`}>
+                      <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-accent/40"}`}>
                         {order.status}
                       </span>
                       <select
                         value={order.status}
                         onChange={(e) => updateStatus(order.id, e.target.value as OrderStatus)}
                         disabled={updating === order.id}
-                        className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
+                        className="bg-deep border border-line text-fg font-mono text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
                       >
                         {ALL_STATUSES.map(s => (
                           <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -829,12 +829,12 @@ function AdminOrdersPageInner() {
                           text={orderSummaryText(order)}
                           title="Copy name, phone & address"
                           size={18}
-                          className="text-[#ebbbb4]/40"
+                          className="text-accent/40"
                         />
-                        <button onClick={() => setQuickEdit(order)} className="text-[#ebbbb4]/40 hover:text-primary transition-colors" title="Quick edit">
+                        <button onClick={() => setQuickEdit(order)} className="text-accent/40 hover:text-primary transition-colors" title="Quick edit">
                           <span className="material-symbols-outlined !text-[20px]">bolt</span>
                         </button>
-                        <Link href={`/admin/orders/${order.id}`} className="text-[#ebbbb4]/40 hover:text-primary transition-colors" title="Edit order">
+                        <Link href={`/admin/orders/${order.id}`} className="text-accent/40 hover:text-primary transition-colors" title="Edit order">
                           <span className="material-symbols-outlined !text-[20px]">edit</span>
                         </Link>
                         {confirmDelete === order.id ? (
@@ -842,10 +842,10 @@ function AdminOrdersPageInner() {
                             <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50">
                               {deleting === order.id ? "…" : "Yes"}
                             </button>
-                            <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-[#ebbbb4]/40 border border-[#603e39]/40 px-2 py-1 hover:text-[#e2e2e2] transition-colors">No</button>
+                            <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-accent/40 border border-line/40 px-2 py-1 hover:text-fg transition-colors">No</button>
                           </div>
                         ) : (
-                          <button onClick={() => setConfirmDelete(order.id)} className="text-[#ebbbb4]/30 hover:text-primary transition-colors" title="Delete order">
+                          <button onClick={() => setConfirmDelete(order.id)} className="text-accent/30 hover:text-primary transition-colors" title="Delete order">
                             <span className="material-symbols-outlined !text-[20px]">delete</span>
                           </button>
                         )}
@@ -855,31 +855,31 @@ function AdminOrdersPageInner() {
 
                   {/* ── Desktop layout (hidden below md) ── */}
                   <div
-                    className="hidden md:flex flex-wrap items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#222] transition-colors"
+                    className="hidden md:flex flex-wrap items-center gap-3 px-4 py-3 cursor-pointer hover:bg-fg/[0.06] transition-colors"
                     onClick={() => setExpanded(expanded === order.id ? null : order.id)}
                   >
-                    <span className="material-symbols-outlined text-[14px] text-[#ebbbb4]/30 flex-shrink-0">
+                    <span className="material-symbols-outlined text-[14px] text-accent/30 flex-shrink-0">
                       {expanded === order.id ? "expand_less" : "expand_more"}
                     </span>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2 truncate">
-                        <p className="font-inter font-bold text-[14px] text-[#e2e2e2] truncate flex items-center gap-1">
+                        <p className="font-inter font-bold text-[14px] text-fg truncate flex items-center gap-1">
                           {order.order_number != null && (
-                            <span className="text-[#ebbbb4]/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
+                            <span className="text-accent/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
                           )}
                           <span className="truncate"><CustomerNameLink order={order} facebookUrl={facebookUrl} /></span>
                           <CopyIconButton text={order.name} />
                         </p>
                         {order.location && (
-                          <p className="font-mono text-[11px] text-[#ebbbb4]/40 flex-shrink-0">{order.location}</p>
+                          <p className="font-mono text-[11px] text-accent/40 flex-shrink-0">{order.location}</p>
                         )}
                       </div>
                       {order.items.length > 0 && (
                         <div className="flex items-center gap-3 mt-0.5 overflow-hidden">
                           {order.items.map((it, i) => (
                             <div key={i} className="flex items-center gap-1.5 flex-shrink-0 min-w-0">
-                              <span className="font-mono text-[10px] text-[#ebbbb4]/30 truncate lg:max-w-[240px] max-w-[160px]">
+                              <span className="font-mono text-[10px] text-accent/30 truncate lg:max-w-[240px] max-w-[160px]">
                                 {it.product} ×{it.qty}
                               </span>
                             </div>
@@ -892,7 +892,7 @@ function AdminOrdersPageInner() {
                       <OrderTotalInline order={order} />
                     </div>
 
-                    <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-[#ebbbb4]/40"}`}>
+                    <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-accent/40"}`}>
                       {order.status}
                     </span>
 
@@ -901,7 +901,7 @@ function AdminOrdersPageInner() {
                       onChange={(e) => { e.stopPropagation(); updateStatus(order.id, e.target.value as OrderStatus); }}
                       disabled={updating === order.id}
                       onClick={(e) => e.stopPropagation()}
-                      className="bg-[#0e0e0e] border border-[#603e39] text-[#e2e2e2] font-mono text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
+                      className="bg-deep border border-line text-fg font-mono text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
                     >
                       {ALL_STATUSES.map(s => (
                         <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -912,12 +912,12 @@ function AdminOrdersPageInner() {
                       text={orderSummaryText(order)}
                       title="Copy name, phone & address"
                       size={18}
-                      className="text-[#ebbbb4]/40"
+                      className="text-accent/40"
                     />
 
                     <button
                       onClick={e => { e.stopPropagation(); setQuickEdit(order); }}
-                      className="text-[#ebbbb4]/40 hover:text-primary transition-colors flex-shrink-0"
+                      className="text-accent/40 hover:text-primary transition-colors flex-shrink-0"
                       title="Quick edit"
                     >
                       <span className="material-symbols-outlined text-[16px]">bolt</span>
@@ -926,7 +926,7 @@ function AdminOrdersPageInner() {
                     <Link
                       href={`/admin/orders/${order.id}`}
                       onClick={e => e.stopPropagation()}
-                      className="text-[#ebbbb4]/40 hover:text-primary transition-colors flex-shrink-0"
+                      className="text-accent/40 hover:text-primary transition-colors flex-shrink-0"
                       title="Edit order"
                     >
                       <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -937,17 +937,17 @@ function AdminOrdersPageInner() {
                         <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50">
                           {deleting === order.id ? "…" : "Yes"}
                         </button>
-                        <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-[#ebbbb4]/40 border border-[#603e39]/40 px-2 py-1 hover:text-[#e2e2e2] transition-colors">No</button>
+                        <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-accent/40 border border-line/40 px-2 py-1 hover:text-fg transition-colors">No</button>
                       </div>
                     ) : (
-                      <button onClick={e => { e.stopPropagation(); setConfirmDelete(order.id); }} className="text-[#ebbbb4]/30 hover:text-primary transition-colors flex-shrink-0" title="Delete order">
+                      <button onClick={e => { e.stopPropagation(); setConfirmDelete(order.id); }} className="text-accent/30 hover:text-primary transition-colors flex-shrink-0" title="Delete order">
                         <span className="material-symbols-outlined text-[16px]">delete</span>
                       </button>
                     )}
                   </div>
 
                   {expanded === order.id && (
-                    <div className="border-t border-[#603e39]/30 px-4 py-4 space-y-4 bg-[#161616]">
+                    <div className="border-t border-line/30 px-4 py-4 space-y-4 bg-panel">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[12px]">
                         {[
                           { label: "Email", value: order.email, copy: order.email },
@@ -956,62 +956,62 @@ function AdminOrdersPageInner() {
                           { label: "Order Date", value: formatDate(order.created_at), copy: undefined },
                         ].map((f) => (
                           <div key={f.label}>
-                            <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5 flex items-center gap-1">
+                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5 flex items-center gap-1">
                               {f.label}
                               {f.copy && <CopyIconButton text={f.copy} />}
                             </p>
-                            <p className="font-mono text-[12px] text-[#e2e2e2]">{f.value}</p>
+                            <p className="font-mono text-[12px] text-fg">{f.value}</p>
                           </div>
                         ))}
                         {order.official_receipt && (
                           <div>
-                            <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Official Receipt</p>
-                            <p className="font-mono text-[12px] text-[#e2e2e2]">{order.official_receipt}</p>
+                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Official Receipt</p>
+                            <p className="font-mono text-[12px] text-fg">{order.official_receipt}</p>
                           </div>
                         )}
                         {order.delivery_method && (
                           <div>
-                            <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Delivery</p>
-                            <p className="font-mono text-[12px] text-[#e2e2e2]">{order.delivery_method}</p>
+                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Delivery</p>
+                            <p className="font-mono text-[12px] text-fg">{order.delivery_method}</p>
                           </div>
                         )}
                         {order.delivery_method && order.delivery_method !== "Pickup" && (
                           <div>
-                            <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Shipping Fee</p>
-                            <p className="font-mono text-[12px] text-[#e2e2e2]">
+                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Shipping Fee</p>
+                            <p className="font-mono text-[12px] text-fg">
                               {order.shipping_fee != null ? `₱${order.shipping_fee.toLocaleString()}` : "TBA"}
                             </p>
                           </div>
                         )}
                         {order.payment_method && (
                           <div>
-                            <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Payment</p>
-                            <p className="font-mono text-[12px] text-[#e2e2e2]">{order.payment_method}</p>
+                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Payment</p>
+                            <p className="font-mono text-[12px] text-fg">{order.payment_method}</p>
                           </div>
                         )}
                         <div>
-                          <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-0.5">Payment Date</p>
-                          <p className="font-mono text-[12px] text-[#e2e2e2]">{formatDate(order.payment_date ?? order.created_at)}</p>
+                          <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Payment Date</p>
+                          <p className="font-mono text-[12px] text-fg">{formatDate(order.payment_date ?? order.created_at)}</p>
                         </div>
                       </div>
 
                       <div>
-                        <p className="font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest mb-2">Items</p>
+                        <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-2">Items</p>
                         <table className="w-full text-[12px]">
                           <thead>
-                            <tr className="border-b border-[#603e39]/20">
+                            <tr className="border-b border-line/20">
                               <th className="pb-2 w-[30px]"></th>
-                              <th className="text-left font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest pb-2">Product</th>
-                              <th className="text-center font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest pb-2">Qty</th>
-                              <th className="text-right font-mono text-[10px] text-[#ebbbb4]/40 uppercase tracking-widest pb-2">Subtotal</th>
+                              <th className="text-left font-mono text-[10px] text-accent/40 uppercase tracking-widest pb-2">Product</th>
+                              <th className="text-center font-mono text-[10px] text-accent/40 uppercase tracking-widest pb-2">Qty</th>
+                              <th className="text-right font-mono text-[10px] text-accent/40 uppercase tracking-widest pb-2">Subtotal</th>
                             </tr>
                           </thead>
                           <tbody>
                             {order.items.map((item, i) => (
-                              <tr key={i} className="border-b border-[#603e39]/10">
+                              <tr key={i} className="border-b border-line/10">
                                 <td className="py-2 pr-2"><ItemThumb src={item.image} alt={item.product} /></td>
-                                <td className="py-2 font-mono text-[#e2e2e2]">{item.product}</td>
-                                <td className="py-2 text-center font-mono text-[#ebbbb4]/60">{item.qty}</td>
+                                <td className="py-2 font-mono text-fg">{item.product}</td>
+                                <td className="py-2 text-center font-mono text-accent/60">{item.qty}</td>
                                 <td className="py-2 text-right font-mono text-primary">₱{item.subtotal.toLocaleString()}</td>
                               </tr>
                             ))}
@@ -1022,23 +1022,23 @@ function AdminOrdersPageInner() {
                       <div className="space-y-1 max-w-xs ml-auto">
                         {order.discount > 0 && (
                           <div className="flex justify-between font-mono text-[12px]">
-                            <span className="text-[#ebbbb4]/50">Discount</span>
+                            <span className="text-accent/50">Discount</span>
                             <span className="text-green-400">−₱{order.discount.toLocaleString()}</span>
                           </div>
                         )}
                         {(order.down_payment ?? 0) > 0 && order.status !== "completed" && (
                           <div className="flex justify-between font-mono text-[12px]">
-                            <span className="text-[#ebbbb4]/50">Down Payment</span>
+                            <span className="text-accent/50">Down Payment</span>
                             <span className="text-blue-400">₱{(order.down_payment ?? 0).toLocaleString()}</span>
                           </div>
                         )}
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-[11px] text-[#ebbbb4]/40 uppercase tracking-widest">
+                          <span className="font-mono text-[11px] text-accent/40 uppercase tracking-widest">
                             {(order.down_payment ?? 0) > 0 && order.status !== "completed" ? "Remaining Balance" : "Total"}
                           </span>
                           <div className="text-right">
                             {(order.down_payment ?? 0) > 0 && order.status !== "completed" && (
-                              <p className="font-mono text-[12px] text-[#ebbbb4]/40 line-through">₱{order.estimated_total.toLocaleString()}</p>
+                              <p className="font-mono text-[12px] text-accent/40 line-through">₱{order.estimated_total.toLocaleString()}</p>
                             )}
                             <span className="font-inter font-black text-[20px] text-primary">
                               ₱{((order.down_payment ?? 0) > 0 && order.status !== "completed"
@@ -1091,7 +1091,7 @@ function AdminOrdersPageInner() {
 export default function AdminOrdersPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center gap-2 font-mono text-[12px] text-[#ebbbb4]/40 py-8">
+      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading orders…
       </div>
