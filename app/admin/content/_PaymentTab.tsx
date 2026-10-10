@@ -14,7 +14,7 @@ function Switch({ on, onClick, label }: { on: boolean; onClick: () => void; labe
       role="switch"
       aria-checked={on}
       onClick={onClick}
-      className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase"
+      className="flex items-center gap-2 tabular-nums text-[10px] uppercase tracking-wider font-medium"
     >
       <span
         className={`relative w-10 h-5 border transition-colors ${
@@ -25,7 +25,7 @@ function Switch({ on, onClick, label }: { on: boolean; onClick: () => void; labe
           className={`absolute top-0.5 w-[14px] h-[14px] transition-all ${on ? "left-[22px] bg-primary" : "left-0.5 bg-accent/40"}`}
         />
       </span>
-      <span className={on ? "text-primary" : "text-accent/50"}>{label}</span>
+      <span className={on ? "text-primary" : "text-accent/70"}>{label}</span>
     </button>
   );
 }
@@ -50,13 +50,13 @@ export default function PaymentTab({
     <div className="space-y-6">
       <div className={CARD}>
         <p className={CARD_TITLE}>Payment Methods</p>
-        <p className="font-mono text-[11px] text-accent/40">
+        <p className="tabular-nums text-[11px] text-accent/60">
           Shown on the checkout page and on the pre-order form, in this order. Only enabled methods are shown to
           customers. The <span className="text-primary">default</span> method is pre-selected on the pre-order form
           when a product requires a down payment. QR code uploads are converted to WebP and resized automatically.
         </p>
         {defaultMethod && !defaultMethod.enabled && (
-          <p className="flex items-center gap-1.5 font-mono text-[11px] text-orange-400">
+          <p className="flex items-center gap-1.5 tabular-nums text-[11px] text-orange-400">
             <span className="material-symbols-outlined text-[14px]">warning</span>
             The default method ({defaultMethod.company || "unnamed"}) is disabled, so the first enabled method is used instead.
           </p>
@@ -83,7 +83,7 @@ export default function PaymentTab({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
                   <label className={LABEL}>
-                    Company <span className="text-primary">*</span>
+                    Company <span className="text-red-400">*</span>
                   </label>
                   <input
                     value={item.company}
@@ -121,14 +121,14 @@ export default function PaymentTab({
           )}
         />
         {value.methods.length === 0 && (
-          <p className="font-mono text-[11px] text-accent/30 italic">
+          <p className="tabular-nums text-[11px] text-accent/50 italic">
             No payment methods yet. Until you add one, checkout shows the built-in list (GCash, Cash, Bank Transfer, Maya).
           </p>
         )}
       </div>
 
       {missingCompany && (
-        <p className="flex items-center gap-1.5 font-mono text-[11px] text-primary">
+        <p className="flex items-center gap-1.5 tabular-nums text-[11px] text-primary">
           <span className="material-symbols-outlined text-[14px]">error</span>
           Every payment method needs a company name.
         </p>

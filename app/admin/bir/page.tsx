@@ -201,13 +201,13 @@ function buildJournalRows(pageTxns: Txn[]): JournalRow[] {
 
 function JournalTable({ pages, pagePrefix }: { pages: Txn[][]; pagePrefix: string }) {
   if (pages.length === 0) {
-    return <div className="text-center py-16 font-mono text-[13px] text-accent/30">No entries for this period.</div>;
+    return <div className="text-center py-16 tabular-nums text-[13px] text-accent/50">No entries for this period.</div>;
   }
   return (
     <div className="space-y-8">
       {pages.map((pageTxns, idx) => (
-        <div key={idx} className="bg-panel border border-line/30">
-          <div className="px-4 py-2.5 border-b border-line/30 font-mono text-[11px] tracking-widest uppercase text-primary">
+        <div key={idx} className="bg-panel border border-line/30 rounded-lg">
+          <div className="px-4 py-2.5 border-b border-line/30 tabular-nums text-[11px] text-primary font-medium">
             {pagePrefix} — Page {idx + 1}
           </div>
           <div className="overflow-x-auto">
@@ -217,7 +217,7 @@ function JournalTable({ pages, pagePrefix }: { pages: Txn[][]; pagePrefix: strin
                   {["#", "Date", "Account Titles", "PR", "Debit", "Credit", "#"].map((h, i) => (
                     <th
                       key={i}
-                      className="font-mono text-[10px] text-accent/40 uppercase tracking-widest px-3 py-2 text-left first:text-center last:text-center"
+                      className="tabular-nums text-[10px] text-accent/60 uppercase px-3 py-2 text-left first:text-center last:text-center tracking-wider font-medium"
                     >
                       {h}
                     </th>
@@ -227,13 +227,13 @@ function JournalTable({ pages, pagePrefix }: { pages: Txn[][]; pagePrefix: strin
               <tbody>
                 {buildJournalRows(pageTxns).map((row) => (
                   <tr key={row.n} className="border-b border-line/10">
-                    <td className="px-3 py-1.5 font-mono text-accent/40 text-center">{row.n}</td>
-                    <td className="px-3 py-1.5 font-mono text-fg">{row.date}</td>
-                    <td className="px-3 py-1.5 font-mono text-fg">{row.account}</td>
-                    <td className="px-3 py-1.5 font-mono text-accent/50">{row.pr}</td>
-                    <td className="px-3 py-1.5 font-mono text-primary text-right">{row.debit}</td>
-                    <td className="px-3 py-1.5 font-mono text-primary text-right">{row.credit}</td>
-                    <td className="px-3 py-1.5 font-mono text-accent/40 text-center">{row.n}</td>
+                    <td className="px-3 py-1.5 tabular-nums text-accent/60 text-center">{row.n}</td>
+                    <td className="px-3 py-1.5 tabular-nums text-fg">{row.date}</td>
+                    <td className="px-3 py-1.5 tabular-nums text-fg">{row.account}</td>
+                    <td className="px-3 py-1.5 tabular-nums text-accent/70">{row.pr}</td>
+                    <td className="px-3 py-1.5 tabular-nums text-primary text-right">{row.debit}</td>
+                    <td className="px-3 py-1.5 tabular-nums text-primary text-right">{row.credit}</td>
+                    <td className="px-3 py-1.5 tabular-nums text-accent/60 text-center">{row.n}</td>
                   </tr>
                 ))}
               </tbody>
@@ -250,12 +250,12 @@ type LedgerLine = { date: string; particulars: string; pr: string; amount: numbe
 function LedgerColumn({ title, lines }: { title: string; lines: LedgerLine[] }) {
   return (
     <div className="flex-1 min-w-0">
-      <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-2">{title}</p>
+      <p className="tabular-nums text-[10px] text-accent/60 uppercase mb-2 tracking-wider font-medium">{title}</p>
       <table className="w-full text-[12px]">
         <thead>
           <tr className="border-b border-line/20">
             {["Date", "Particulars", "PR", title].map((h) => (
-              <th key={h} className="font-mono text-[10px] text-accent/40 uppercase tracking-widest px-2 py-2 text-left">
+              <th key={h} className="tabular-nums text-[10px] text-accent/60 uppercase px-2 py-2 text-left tracking-wider font-medium">
                 {h}
               </th>
             ))}
@@ -264,17 +264,17 @@ function LedgerColumn({ title, lines }: { title: string; lines: LedgerLine[] }) 
         <tbody>
           {lines.length === 0 ? (
             <tr>
-              <td colSpan={4} className="px-2 py-4 font-mono text-[11px] text-accent/30 text-center">
+              <td colSpan={4} className="px-2 py-4 tabular-nums text-[11px] text-accent/50 text-center">
                 No entries
               </td>
             </tr>
           ) : (
             lines.map((l, i) => (
               <tr key={i} className="border-b border-line/10">
-                <td className="px-2 py-1.5 font-mono text-fg">{l.date}</td>
-                <td className="px-2 py-1.5 font-mono text-fg truncate max-w-[220px]">{l.particulars}</td>
-                <td className="px-2 py-1.5 font-mono text-accent/50">{l.pr}</td>
-                <td className="px-2 py-1.5 font-mono text-primary text-right">{l.amount.toLocaleString("en-US")}</td>
+                <td className="px-2 py-1.5 tabular-nums text-fg">{l.date}</td>
+                <td className="px-2 py-1.5 tabular-nums text-fg truncate max-w-[220px]">{l.particulars}</td>
+                <td className="px-2 py-1.5 tabular-nums text-accent/70">{l.pr}</td>
+                <td className="px-2 py-1.5 tabular-nums text-primary text-right">{l.amount.toLocaleString("en-US")}</td>
               </tr>
             ))
           )}
@@ -300,15 +300,15 @@ function CashJournalTable({
   columns: CashColumn[];
 }) {
   if (pages.length === 0) {
-    return <div className="text-center py-16 font-mono text-[13px] text-accent/30">No entries for this period.</div>;
+    return <div className="text-center py-16 tabular-nums text-[13px] text-accent/50">No entries for this period.</div>;
   }
   return (
     <div className="space-y-8">
       {pages.map((pageTxns, pageIdx) => {
         const totals = columns.map((c) => pageTxns.reduce((sum, t) => sum + c.value(t), 0));
         return (
-          <div key={pageIdx} className="bg-panel border border-line/30">
-            <div className="px-4 py-2.5 border-b border-line/30 font-mono text-[11px] tracking-widest uppercase text-primary">
+          <div key={pageIdx} className="bg-panel border border-line/30 rounded-lg">
+            <div className="px-4 py-2.5 border-b border-line/30 tabular-nums text-[11px] text-primary font-medium">
               {title} — Page {pageIdx + 1}
             </div>
             <div className="overflow-x-auto">
@@ -318,7 +318,7 @@ function CashJournalTable({
                     {["#", "Date", "Description", "PR", ...columns.map((c) => c.label), "#"].map((h, i) => (
                       <th
                         key={i}
-                        className="font-mono text-[10px] text-accent/40 uppercase tracking-widest px-3 py-2 text-left first:text-center last:text-center"
+                        className="tabular-nums text-[10px] text-accent/60 uppercase px-3 py-2 text-left first:text-center last:text-center tracking-wider font-medium"
                       >
                         {h}
                       </th>
@@ -330,30 +330,30 @@ function CashJournalTable({
                     const n = i + 1;
                     return (
                       <tr key={t.id} className="border-b border-line/10">
-                        <td className="px-3 py-1.5 font-mono text-accent/40 text-center">{n}</td>
-                        <td className="px-3 py-1.5 font-mono text-fg whitespace-nowrap">{mmdd(t.date)}</td>
-                        <td className="px-3 py-1.5 font-mono text-fg">{describe(t)}</td>
-                        <td className="px-3 py-1.5 font-mono text-accent/50 whitespace-nowrap">GJ{gjPageOf[t.id] ?? ""}</td>
+                        <td className="px-3 py-1.5 tabular-nums text-accent/60 text-center">{n}</td>
+                        <td className="px-3 py-1.5 tabular-nums text-fg whitespace-nowrap">{mmdd(t.date)}</td>
+                        <td className="px-3 py-1.5 tabular-nums text-fg">{describe(t)}</td>
+                        <td className="px-3 py-1.5 tabular-nums text-accent/70 whitespace-nowrap">GJ{gjPageOf[t.id] ?? ""}</td>
                         {columns.map((c, ci) => {
                           const v = c.value(t);
                           return (
-                            <td key={ci} className="px-3 py-1.5 font-mono text-primary text-right whitespace-nowrap">
+                            <td key={ci} className="px-3 py-1.5 tabular-nums text-primary text-right whitespace-nowrap">
                               {v ? v.toLocaleString("en-US") : ""}
                             </td>
                           );
                         })}
-                        <td className="px-3 py-1.5 font-mono text-accent/40 text-center">{n}</td>
+                        <td className="px-3 py-1.5 tabular-nums text-accent/60 text-center">{n}</td>
                       </tr>
                     );
                   })}
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-line/30">
-                    <td colSpan={4} className="px-3 py-2 font-mono text-[11px] text-accent/50 uppercase tracking-widest text-right">
+                    <td colSpan={4} className="px-3 py-2 tabular-nums text-[11px] text-accent/70 text-right font-medium">
                       Total
                     </td>
                     {totals.map((tot, i) => (
-                      <td key={i} className="px-3 py-2 font-mono text-[13px] text-primary font-bold text-right whitespace-nowrap">
+                      <td key={i} className="px-3 py-2 tabular-nums text-[13px] text-primary font-bold text-right whitespace-nowrap">
                         {tot.toLocaleString("en-US")}
                       </td>
                     ))}
@@ -577,27 +577,26 @@ function AdminBirPageInner() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">ADMIN // BIR TAX</p>
-        <h1 className="font-inter font-black text-[28px] uppercase text-fg">BIR - Books of Account</h1>
+        <h1 className="font-semibold text-fg text-[22px] tracking-tight">BIR - Books of Account</h1>
       </div>
 
       {/* Quarterly BIR income-tax return summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         {birReturns.map((r) => (
-          <div key={r.title} className="bg-panel border border-line/30 p-4 space-y-1.5">
-            <p className="font-mono text-[11px] tracking-widest uppercase text-fg font-bold">{r.title}</p>
-            <p className="font-mono text-[10px] text-accent/40">{r.cover}</p>
-            <p className="font-mono text-[10px] text-red-400">{r.deadline}</p>
-            <p className="font-inter font-black text-[22px] text-primary pt-1">₱{r.creditSales.toLocaleString()}</p>
+          <div key={r.title} className="bg-panel border border-line/30 p-4 space-y-1.5 rounded-lg">
+            <p className="tabular-nums text-[11px] text-fg font-bold font-medium">{r.title}</p>
+            <p className="tabular-nums text-[10px] text-accent/60">{r.cover}</p>
+            <p className="tabular-nums text-[10px] text-red-400">{r.deadline}</p>
+            <p className="font-semibold text-[22px] text-primary pt-1">₱{r.creditSales.toLocaleString()}</p>
           </div>
         ))}
-        <div className="bg-panel border border-line/30 p-4 space-y-1.5">
-          <p className="font-mono text-[11px] tracking-widest uppercase text-fg font-bold">Annual Income Tax Due</p>
-          <p className="font-mono text-[10px] text-accent/40">(Gross Sales − ₱250,000) × 8%</p>
-          <p className="font-mono text-[10px] text-red-400">
+        <div className="bg-panel border border-line/30 p-4 space-y-1.5 rounded-lg">
+          <p className="tabular-nums text-[11px] text-fg font-bold font-medium">Annual Income Tax Due</p>
+          <p className="tabular-nums text-[10px] text-accent/60">(Gross Sales − ₱250,000) × 8%</p>
+          <p className="tabular-nums text-[10px] text-red-400">
             (₱{annualCreditSales.toLocaleString()} − ₱250,000) × 8%
           </p>
-          <p className="font-inter font-black text-[22px] text-primary pt-1">
+          <p className="font-semibold text-[22px] text-primary pt-1">
             ₱{annualTaxDue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </p>
         </div>
@@ -609,10 +608,10 @@ function AdminBirPageInner() {
           <button
             key={t.value}
             onClick={() => setParam("tab", t.value, "gj")}
-            className={`px-4 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors border-b-2 -mb-px whitespace-nowrap ${
+            className={`px-4 py-2 tabular-nums text-[11px] transition-colors border-b-2 -mb-px whitespace-nowrap font-medium rounded-none ${
               tab === t.value
                 ? "text-primary border-primary"
-                : "text-accent/40 border-transparent hover:text-fg"
+                : "text-accent/60 border-transparent hover:text-fg"
             }`}
           >
             {t.label}
@@ -625,7 +624,7 @@ function AdminBirPageInner() {
         <select
           value={dateFilter}
           onChange={(e) => setParam("dateFilter", e.target.value, "default")}
-          className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+          className="bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20"
         >
           <option value="all">All Dates</option>
           <option value="default">Default</option>
@@ -640,14 +639,14 @@ function AdminBirPageInner() {
               type="date"
               value={dateFrom}
               onChange={(e) => setParam("dateFrom", e.target.value, "")}
-              className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+              className="bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20"
             />
-            <span className="font-mono text-[10px] text-accent/30">to</span>
+            <span className="tabular-nums text-[10px] text-accent/50">to</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setParam("dateTo", e.target.value, "")}
-              className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+              className="bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20"
             />
           </>
         )}
@@ -655,7 +654,7 @@ function AdminBirPageInner() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
+        <div className="flex items-center gap-2 tabular-nums text-[12px] text-accent/60 py-8">
           <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
           Loading…
         </div>
@@ -705,8 +704,8 @@ function AdminBirPageInner() {
       ) : (
         <div className="space-y-6">
           {ledgerByAccount.map(({ account, debit, credit }, idx) => (
-            <div key={account.no} className="bg-panel border border-line/30">
-              <div className="px-4 py-2.5 border-b border-line/30 font-mono text-[11px] tracking-widest uppercase text-primary">
+            <div key={account.no} className="bg-panel border border-line/30 rounded-lg">
+              <div className="px-4 py-2.5 border-b border-line/30 tabular-nums text-[11px] text-primary font-medium">
                 Page: {idx + 1} | Accounts Title: {account.title} | Accounts Number: {account.no}
               </div>
               <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-line/20 p-4 gap-4 md:gap-0">
@@ -724,7 +723,7 @@ function AdminBirPageInner() {
 export default function AdminBirPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
+      <div className="flex items-center gap-2 tabular-nums text-[12px] text-accent/60 py-8">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading…
       </div>

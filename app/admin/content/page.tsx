@@ -49,7 +49,7 @@ function ClearCacheButton() {
   return (
     <div className="flex items-center gap-3">
       {result && (
-        <span className={`font-mono text-[11px] flex items-center gap-1 ${result.ok ? "text-green-400" : "text-primary"}`}>
+        <span className={`tabular-nums text-[11px] flex items-center gap-1 ${result.ok ? "text-green-400" : "text-primary"}`}>
           <span className="material-symbols-outlined text-[14px]">{result.ok ? "check_circle" : "error"}</span>
           {result.text}
         </span>
@@ -59,7 +59,7 @@ function ClearCacheButton() {
         onClick={clearCache}
         disabled={clearing}
         title="Purge the cached storefront pages (Vercel) so they re-fetch the latest data from Supabase"
-        className="flex items-center gap-2 px-4 py-2 border border-line/60 text-accent/60 font-mono text-[10px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 border border-line/60 text-accent/60 tabular-nums text-[10px] uppercase hover:border-primary hover:text-primary transition-colors disabled:opacity-50 tracking-wider font-medium"
       >
         <span className={`material-symbols-outlined text-[14px] ${clearing ? "animate-spin" : ""}`}>
           {clearing ? "progress_activity" : "cleaning_services"}
@@ -86,12 +86,12 @@ export default function AdminContentPage() {
   }, []);
 
   if (loadError) {
-    return <p className="font-mono text-[12px] text-primary py-8">Failed to load site content.</p>;
+    return <p className="tabular-nums text-[12px] text-red-400 py-8">Failed to load site content.</p>;
   }
 
   if (!content) {
     return (
-      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
+      <div className="flex items-center gap-2 tabular-nums text-[12px] text-accent/60 py-8">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading…
       </div>
@@ -102,9 +102,8 @@ export default function AdminContentPage() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">ADMIN // SITE CONTENT</p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-fg">Site Content</h1>
-          <p className="font-mono text-[11px] text-accent/40 mt-1">
+          <h1 className="font-semibold text-fg text-[22px] tracking-tight">Site Content</h1>
+          <p className="tabular-nums text-[11px] text-accent/60 mt-1">
             Edit the storefront&apos;s logo, menus, homepage hero, footer and colors. Saving refreshes the live pages automatically.
           </p>
         </div>
@@ -113,7 +112,7 @@ export default function AdminContentPage() {
           <Link
             href="/"
             target="_blank"
-            className="flex items-center gap-2 px-4 py-2 border border-line/60 text-accent/60 font-mono text-[10px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-line/60 text-accent/60 tabular-nums text-[10px] uppercase hover:border-primary hover:text-primary transition-colors tracking-wider font-medium"
           >
             <span className="material-symbols-outlined text-[14px]">open_in_new</span>
             Preview Site
@@ -128,10 +127,10 @@ export default function AdminContentPage() {
               key={t.key}
               type="button"
               onClick={() => setActive(t.key)}
-              className={`flex items-center gap-2 px-3 py-2.5 font-mono text-[11px] tracking-widest uppercase transition-colors whitespace-nowrap flex-shrink-0 lg:w-full border-l-2 ${
+              className={`flex items-center gap-2 px-3 py-2.5 tabular-nums text-[11px] transition-colors whitespace-nowrap flex-shrink-0 lg:w-full border-l-2 font-medium rounded-none ${
                 active === t.key
                   ? "text-primary border-primary bg-primary/5"
-                  : "text-accent/50 border-transparent hover:text-fg hover:bg-panel"
+                  : "text-accent/70 border-transparent hover:text-fg hover:bg-panel"
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">{t.icon}</span>

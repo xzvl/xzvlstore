@@ -23,7 +23,7 @@ export default function ImageUploader({
     <div>
       <label className={LABEL}>{label}</label>
       <div className="flex items-center gap-3">
-        <div className="w-28 h-20 shrink-0 border border-line/40 bg-deep overflow-hidden relative">
+        <div className="w-28 h-20 shrink-0 border border-line/40 bg-deep overflow-hidden relative rounded-md">
           {value ? (
             <Image
               src={sizedImageUrl(value, "thumbnail") ?? value}
@@ -36,7 +36,7 @@ export default function ImageUploader({
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-accent/20">
+            <div className="w-full h-full flex items-center justify-center text-accent/40">
               <span className="material-symbols-outlined text-[24px]">image</span>
             </div>
           )}
@@ -45,7 +45,7 @@ export default function ImageUploader({
           <button
             type="button"
             onClick={() => setShowPicker(true)}
-            className="px-4 py-2 border border-line/60 text-accent/60 font-mono text-[10px] tracking-widest uppercase cursor-pointer hover:border-primary hover:text-primary transition-colors"
+            className="px-4 py-2 border border-line/60 text-accent/60 tabular-nums text-[10px] uppercase cursor-pointer hover:border-primary hover:text-primary transition-colors tracking-wider font-medium"
           >
             {value ? "Replace" : "Upload"}
           </button>
@@ -53,14 +53,14 @@ export default function ImageUploader({
             <button
               type="button"
               onClick={() => onChange("")}
-              className="font-mono text-[10px] text-accent/40 hover:text-primary transition-colors"
+              className="tabular-nums text-[10px] text-accent/60 hover:text-primary transition-colors"
             >
               Remove
             </button>
           )}
         </div>
       </div>
-      {hint && <p className="mt-1.5 font-mono text-[10px] text-accent/30">{hint}</p>}
+      {hint && <p className="mt-1.5 tabular-nums text-[10px] text-accent/50">{hint}</p>}
 
       {showPicker && (
         <MediaLibraryModal

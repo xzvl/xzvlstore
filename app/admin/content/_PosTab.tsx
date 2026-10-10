@@ -10,7 +10,7 @@ import ListEditor from "@/components/admin/ListEditor";
 import SaveBar from "@/components/admin/SaveBar";
 
 const SELECT =
-  "w-full bg-fg/[0.05] border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors";
+  "w-full bg-fg/[0.05] border border-line text-fg tabular-nums text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors focus:ring-2 focus:ring-primary/20";
 
 const TYPE_LABEL: Record<Taxonomy["type"], string> = { brand: "Brand", category: "Category", tag: "Tag" };
 
@@ -42,7 +42,7 @@ export default function PosTab({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
+      <div className="flex items-center gap-2 tabular-nums text-[12px] text-accent/60 py-8">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading…
       </div>
@@ -70,13 +70,13 @@ export default function PosTab({
     <div className="space-y-6">
       <div className={CARD}>
         <p className={CARD_TITLE}>Brand Quick Filters</p>
-        <p className="font-mono text-[11px] text-accent/40">
+        <p className="tabular-nums text-[11px] text-accent/60">
           Filter chips shown at the top of the Point of Sale product grid, in this order, alongside &quot;All&quot;.
           Pick any brand, category or tag — e.g. &quot;Takara Tomy&quot;, &quot;Hasbro&quot;, &quot;Pop!&quot;.
           Leave empty to show every brand automatically.
         </p>
         {taxonomy.length === 0 ? (
-          <p className="font-mono text-[11px] text-accent/30 italic">
+          <p className="tabular-nums text-[11px] text-accent/50 italic">
             Nothing in Taxonomy yet — add some brands, categories or tags first.
           </p>
         ) : (
@@ -97,7 +97,7 @@ export default function PosTab({
 
       <div className={CARD}>
         <p className={CARD_TITLE}>Category Side Navigation</p>
-        <p className="font-mono text-[11px] text-accent/40">
+        <p className="tabular-nums text-[11px] text-accent/60">
           Entries shown as icons in the Point of Sale side navigation, in this order, alongside &quot;All&quot;.
           Pick any brand, category or tag — e.g. &quot;BX&quot;, &quot;UX&quot;, &quot;CX&quot;, &quot;Attack&quot;, &quot;Balance&quot;, &quot;Defence&quot;, &quot;Stamina&quot;.
           Icon names come from{" "}
@@ -107,7 +107,7 @@ export default function PosTab({
           (e.g. <code>bolt</code>, <code>shield</code>, <code>timer</code>, <code>balance</code>). Leave empty to show every category automatically.
         </p>
         {taxonomy.length === 0 ? (
-          <p className="font-mono text-[11px] text-accent/30 italic">
+          <p className="tabular-nums text-[11px] text-accent/50 italic">
             Nothing in Taxonomy yet — add some brands, categories or tags first.
           </p>
         ) : (
@@ -134,7 +134,7 @@ export default function PosTab({
                     className={INPUT}
                   />
                 </div>
-                <div className="w-11 h-11 flex items-center justify-center border border-line/40 bg-deep flex-shrink-0">
+                <div className="w-11 h-11 flex items-center justify-center border border-line/40 bg-deep flex-shrink-0 rounded-md">
                   <span className="material-symbols-outlined text-[20px] text-primary">{item.icon || DEFAULT_CATEGORY_ICON}</span>
                 </div>
               </div>

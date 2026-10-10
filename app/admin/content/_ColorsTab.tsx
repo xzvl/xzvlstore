@@ -41,7 +41,7 @@ function Preview({ palette, fallback }: { palette: Palette; fallback: Palette })
         className="flex items-center justify-between px-3 h-9 border-b"
         style={{ backgroundColor: c("header"), borderColor: c("border"), color: c("headerText") }}
       >
-        <span className="font-inter font-black text-[12px] uppercase">
+        <span className="font-semibold text-[12px] font-medium">
           xzvl<span style={{ color: c("primary") }}>.</span>store
         </span>
         <span className="flex gap-2 opacity-60">
@@ -51,23 +51,23 @@ function Preview({ palette, fallback }: { palette: Palette; fallback: Palette })
         </span>
       </div>
       <div className="p-3 space-y-2">
-        <p className="font-mono text-[9px] tracking-[0.2em] uppercase" style={{ color: c("primary") }}>
+        <p className="tabular-nums text-[9px] uppercase tracking-wider font-medium" style={{ color: c("primary") }}>
           // New Arrivals
         </p>
         <div className="grid grid-cols-2 gap-2">
           {[0, 1].map((i) => (
             <div key={i} className="border p-2 space-y-1" style={{ backgroundColor: c("surface"), borderColor: c("border") }}>
-              <p className="font-inter font-bold text-[11px]" style={{ color: c("text") }}>
+              <p className="font-bold text-[11px]" style={{ color: c("text") }}>
                 Product {i + 1}
               </p>
-              <p className="font-mono text-[9px]" style={{ color: c("accent") }}>Takara Tomy</p>
-              <span className="inline-block font-mono text-[8px] px-1.5 py-0.5 text-white uppercase" style={{ backgroundColor: c("primary") }}>
+              <p className="tabular-nums text-[9px]" style={{ color: c("accent") }}>Takara Tomy</p>
+              <span className="inline-block tabular-nums text-[8px] px-1.5 py-0.5 text-white uppercase tracking-wider font-medium" style={{ backgroundColor: c("primary") }}>
                 Add to cart
               </span>
             </div>
           ))}
         </div>
-        <div className="p-2 font-mono text-[9px]" style={{ backgroundColor: c("surfaceDeep"), color: c("accent") }}>
+        <div className="p-2 tabular-nums text-[9px]" style={{ backgroundColor: c("surfaceDeep"), color: c("accent") }}>
           Deep section
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function ColorsTab({
     <div className="space-y-6">
       <div className={CARD}>
         <p className={CARD_TITLE}>Default Mode</p>
-        <p className="font-mono text-[11px] text-accent/40">
+        <p className="tabular-nums text-[11px] text-accent/60">
           What visitors see first. They can switch with the sun/moon icon in the header, and their choice is remembered
           on that device.
         </p>
@@ -100,10 +100,10 @@ export default function ColorsTab({
               key={mode}
               type="button"
               onClick={() => set("defaultMode", mode)}
-              className={`flex items-center gap-2 px-4 py-2 border font-mono text-[11px] tracking-widest uppercase transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 border tabular-nums text-[11px] transition-colors font-medium ${
                 value.defaultMode === mode
                   ? "border-primary text-primary bg-primary/10"
-                  : "border-line text-accent/50 hover:text-fg"
+                  : "border-line text-accent/70 hover:text-fg"
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">{MODE_META[mode].icon}</span>
@@ -123,7 +123,7 @@ export default function ColorsTab({
             <button
               type="button"
               onClick={() => set(mode, DEFAULT_COLORS[mode])}
-              className="flex items-center gap-1 font-mono text-[10px] tracking-widest uppercase text-accent/50 hover:text-primary transition-colors"
+              className="flex items-center gap-1 tabular-nums text-[10px] uppercase text-accent/70 hover:text-primary transition-colors tracking-wider font-medium"
             >
               <span className="material-symbols-outlined text-[14px]">restart_alt</span>
               Reset to defaults
@@ -154,7 +154,7 @@ export default function ColorsTab({
                         className={`${INPUT} ${valid ? "" : "!border-primary"}`}
                       />
                     </div>
-                    <p className="font-mono text-[10px] text-accent/30 mt-1">{FIELDS[key].hint}</p>
+                    <p className="tabular-nums text-[10px] text-accent/50 mt-1">{FIELDS[key].hint}</p>
                   </div>
                 );
               })}

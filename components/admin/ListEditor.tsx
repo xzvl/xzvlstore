@@ -32,14 +32,14 @@ export default function ListEditor<T>({
   };
 
   const iconBtn =
-    "w-7 h-7 flex items-center justify-center border border-line/40 text-accent/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed";
+    "w-7 h-7 flex items-center justify-center border border-line/40 text-accent/70 transition-colors disabled:opacity-20 disabled:cursor-not-allowed";
 
   return (
     <div className="space-y-3">
       {items.map((item, i) => (
-        <div key={i} className="border border-line/30 bg-canvas p-4">
+        <div key={i} className="border border-line/30 bg-canvas p-4 rounded-lg">
           <div className="flex items-center justify-between mb-3">
-            <span className="font-mono text-[10px] text-accent/50 uppercase tracking-widest">
+            <span className="tabular-nums text-[10px] text-accent/70 uppercase tracking-wider font-medium">
               {itemLabel} {i + 1}
             </span>
             <div className="flex items-center gap-1.5">
@@ -79,7 +79,7 @@ export default function ListEditor<T>({
       <button
         type="button"
         onClick={add}
-        className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-line/50 text-accent/50 font-mono text-[10px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
+        className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-line/50 text-accent/70 tabular-nums text-[10px] uppercase hover:border-primary hover:text-primary transition-colors tracking-wider font-medium"
       >
         <span className="material-symbols-outlined text-[14px]">add</span>
         Add {itemLabel}

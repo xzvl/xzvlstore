@@ -19,11 +19,11 @@ type ItemRow = {
   subtotal: string;
 };
 
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/40 mb-1";
+const LABEL = "block tabular-nums text-[10px] uppercase text-accent/60 mb-1 tracking-wider font-medium";
 const FIELD =
-  "w-full bg-deep border border-line/40 text-fg font-mono text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
+  "w-full bg-deep border border-line/40 text-fg tabular-nums text-[12px] px-3 py-2 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/40 rounded-md focus:ring-2 focus:ring-primary/20";
 const CELL =
-  "w-full bg-deep border border-line text-fg font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors";
+  "w-full bg-deep border border-line text-fg tabular-nums text-[12px] px-2 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20";
 
 const toRows = (order: Order): ItemRow[] =>
   (order.items ?? []).map((it) => ({
@@ -175,20 +175,20 @@ export function OrderQuickEditModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-panel border border-line/40"
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-panel border border-line/40 rounded-lg"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-line/30 px-5 py-3 sticky top-0 bg-panel z-[60]">
           <div className="min-w-0">
-            <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Quick Edit</p>
-            <p className="font-mono text-[11px] text-accent/40 truncate">
+            <p className="tabular-nums text-[13px] font-semibold text-fg">Quick Edit</p>
+            <p className="tabular-nums text-[11px] text-accent/60 truncate">
               {order.order_number != null ? `#${order.order_number} · ` : ""}{order.name}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center text-accent/40 hover:text-primary transition-colors"
+            className="w-7 h-7 flex items-center justify-center text-accent/60 hover:text-primary transition-colors"
             title="Close"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
@@ -253,11 +253,11 @@ export function OrderQuickEditModal({
           {/* Items */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Items</p>
+              <p className="tabular-nums text-[13px] font-semibold text-fg">Items</p>
               <button
                 type="button"
                 onClick={() => setItems((prev) => [...prev, { product_id: "", product: "", qty: "1", unit_price: "", subtotal: "" }])}
-                className="flex items-center gap-1 font-mono text-[10px] text-accent/50 hover:text-primary transition-colors"
+                className="flex items-center gap-1 tabular-nums text-[10px] text-accent/70 hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[13px]">add</span>
                 Add item
@@ -265,7 +265,7 @@ export function OrderQuickEditModal({
             </div>
             <div className="space-y-2">
               {items.map((item, i) => (
-                <div key={i} className="relative bg-canvas border border-line/30 p-3 space-y-2" style={{ zIndex: items.length - i }}>
+                <div key={i} className="relative bg-canvas border border-line/30 p-3 space-y-2 rounded-lg" style={{ zIndex: items.length - i }}>
                   <ProductCombobox
                     value={item.product_id}
                     onChange={(id) => selectProduct(i, id)}
@@ -274,22 +274,22 @@ export function OrderQuickEditModal({
                   />
                   <div className="flex items-end gap-2">
                     <div className="w-16">
-                      <p className="font-mono text-[9px] text-accent/40 uppercase tracking-widest mb-1">Qty</p>
+                      <p className="tabular-nums text-[9px] text-accent/60 uppercase mb-1 tracking-wider font-medium">Qty</p>
                       <input type="number" min="1" value={item.qty} onChange={(e) => setItem(i, "qty", e.target.value)} className={`${CELL} text-center`} />
                     </div>
                     <div className="flex-1">
-                      <p className="font-mono text-[9px] text-accent/40 uppercase tracking-widest mb-1">Unit (₱)</p>
+                      <p className="tabular-nums text-[9px] text-accent/60 uppercase mb-1 tracking-wider font-medium">Unit (₱)</p>
                       <input type="number" min="0" placeholder="0" value={item.unit_price} onChange={(e) => setItem(i, "unit_price", e.target.value)} className={CELL} />
                     </div>
                     <div className="flex-1">
-                      <p className="font-mono text-[9px] text-accent/40 uppercase tracking-widest mb-1">Subtotal</p>
-                      <p className="font-mono text-[13px] text-primary font-bold py-1.5">₱{(parseFloat(item.subtotal) || 0).toLocaleString()}</p>
+                      <p className="tabular-nums text-[9px] text-accent/60 uppercase mb-1 tracking-wider font-medium">Subtotal</p>
+                      <p className="tabular-nums text-[13px] text-primary font-bold py-1.5">₱{(parseFloat(item.subtotal) || 0).toLocaleString()}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
                       disabled={items.length === 1}
-                      className="flex-shrink-0 pb-2 text-accent/30 hover:text-primary transition-colors disabled:opacity-20"
+                      className="flex-shrink-0 pb-2 text-accent/50 hover:text-primary transition-colors disabled:opacity-20"
                       title="Remove item"
                     >
                       <span className="material-symbols-outlined text-[16px]">close</span>
@@ -300,10 +300,10 @@ export function OrderQuickEditModal({
             </div>
             {itemsChanged && (
               <div className="flex justify-between items-baseline pt-3 mt-3 border-t border-line/20">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-accent/50">
+                <span className="tabular-nums text-[10px] uppercase text-accent/70 tracking-wider font-medium">
                   New total{(order.discount ?? 0) > 0 ? " (after discount)" : ""}
                 </span>
-                <span className="font-inter font-black text-[18px] text-primary">₱{total.toLocaleString()}</span>
+                <span className="font-semibold text-[18px] text-primary">₱{total.toLocaleString()}</span>
               </div>
             )}
           </div>
@@ -311,18 +311,18 @@ export function OrderQuickEditModal({
           {/* Notes */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Order Notes</p>
+              <p className="tabular-nums text-[13px] font-semibold text-fg">Order Notes</p>
               <button
                 type="button"
                 onClick={() => setNotes((prev) => [...prev, ""])}
-                className="flex items-center gap-1 font-mono text-[10px] text-accent/50 hover:text-primary transition-colors"
+                className="flex items-center gap-1 tabular-nums text-[10px] text-accent/70 hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[13px]">add</span>
                 Add note
               </button>
             </div>
             {notes.length === 0 ? (
-              <p className="font-mono text-[11px] text-accent/30 italic">No notes yet.</p>
+              <p className="tabular-nums text-[11px] text-accent/50 italic">No notes yet.</p>
             ) : (
               <div className="space-y-2">
                 {notes.map((note, i) => (
@@ -337,7 +337,7 @@ export function OrderQuickEditModal({
                     <button
                       type="button"
                       onClick={() => setNotes((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="flex-shrink-0 text-accent/30 hover:text-primary transition-colors mt-1"
+                      className="flex-shrink-0 text-accent/50 hover:text-primary transition-colors mt-1"
                       title="Remove note"
                     >
                       <span className="material-symbols-outlined text-[16px]">close</span>
@@ -348,21 +348,21 @@ export function OrderQuickEditModal({
             )}
           </div>
 
-          {error && <p className="font-mono text-[11px] text-red-500">{error}</p>}
+          {error && <p className="tabular-nums text-[11px] text-red-500">{error}</p>}
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 border-t border-line/30 px-5 py-3 sticky bottom-0 bg-panel z-[60]">
           <button
             onClick={onClose}
-            className="px-4 py-2 font-mono text-[11px] tracking-widest uppercase text-accent/40 hover:text-fg transition-colors"
+            className="px-4 py-2 tabular-nums text-[11px] text-accent/60 hover:text-fg transition-colors font-medium"
           >
             Cancel
           </button>
           <button
             onClick={save}
             disabled={saving || invalid}
-            className="flex items-center gap-2 px-5 py-2 bg-primary text-white font-mono text-[11px] tracking-widest uppercase hover:brightness-110 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+            className="flex items-center gap-2 px-5 py-2 bg-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed font-medium shadow-sm"
           >
             {saving && <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>}
             {saving ? "Saving…" : "Save"}

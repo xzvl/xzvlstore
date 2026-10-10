@@ -152,7 +152,7 @@ const fmtPct = (n: number | null) => {
 
 // ── Chart Panel ────────────────────────────────────────────────────────────────
 
-const AXIS_STYLE = { fontFamily: "monospace", fontSize: 10, fill: "rgb(var(--c-accent) / 0.4)" } as const;
+const AXIS_STYLE = { fontSize: 11, fill: "rgb(var(--c-accent) / 0.7)" } as const;
 
 type ChartPanelProps = {
   title: string;
@@ -174,11 +174,12 @@ type ChartPanelProps = {
 function ChartTooltip({ active, payload, label, fmt }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ backgroundColor: "rgb(var(--c-panel))", border: "1px solid rgb(var(--c-line) / 0.4)", padding: "8px 12px" }}>
-      <p style={{ fontFamily: "monospace", fontSize: 10, color: "rgb(var(--c-accent) / 0.5)", marginBottom: 4 }}>{label}</p>
+    <div className="bg-panel border border-line/50 rounded-md shadow-xl shadow-black/40 px-3 py-2">
+      <p className="text-[11px] text-accent/70 mb-1">{label}</p>
       {payload.map((p: { name: string; value: number; color: string }) => (
-        <p key={p.name} style={{ fontFamily: "monospace", fontSize: 11, color: p.color }}>
-          {p.name}: {fmt(p.value ?? 0)}
+        <p key={p.name} className="flex items-center gap-2 text-[12px] text-fg tabular-nums">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+          {p.name}: <span className="font-semibold">{fmt(p.value ?? 0)}</span>
         </p>
       ))}
     </div>
@@ -189,21 +190,21 @@ function ChartPanel({ title, icon, dataKey, compareKey, chart, cb, kb, chartType
   const ChartComp = chartType === "line" ? LineChart : BarChart;
 
   return (
-    <div className="bg-panel border border-line/30">
+    <div className="bg-panel border border-line/30 rounded-lg">
       <div className="px-5 py-3 border-b border-line/20 flex items-center gap-2">
         <span className="material-symbols-outlined text-[13px] text-primary">{icon}</span>
-        <p className="font-mono text-[11px] tracking-widest uppercase text-fg">{title}</p>
+        <p className="tabular-nums text-[11px] text-fg font-medium">{title}</p>
       </div>
 
       <div className="px-3 pt-4 pb-2">
         {chart.length === 0 ? (
           <div className="h-[220px] flex items-center justify-center">
-            <p className="font-mono text-[11px] text-accent/30">No data for this period.</p>
+            <p className="tabular-nums text-[11px] text-accent/50">No data for this period.</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <ChartComp data={chart} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--c-line) / 0.12)" />
+              <CartesianGrid vertical={false} stroke="rgb(var(--c-line) / 0.25)" />
               <XAxis dataKey="label" tick={AXIS_STYLE} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis tick={AXIS_STYLE} axisLine={false} tickLine={false} tickFormatter={fmt} width={70} />
               <Tooltip content={(props) => <ChartTooltip {...props} fmt={fmt} />} />
@@ -216,8 +217,8 @@ function ChartPanel({ title, icon, dataKey, compareKey, chart, cb, kb, chartType
                 </>
               ) : (
                 <>
-                  <Bar dataKey={dataKey} name={title} fill={color} fillOpacity={0.85} radius={[2, 2, 0, 0]} />
-                  {hasCompare && <Bar dataKey={compareKey} name={`${title} (compare)`} fill={dimColor} radius={[2, 2, 0, 0]} />}
+                  <Bar dataKey={dataKey} name={title} fill={color} fillOpacity={0.85} radius={[4, 4, 0, 0]} />
+                  {hasCompare && <Bar dataKey={compareKey} name={`${title} (compare)`} fill={dimColor} radius={[4, 4, 0, 0]} />}
                 </>
               )}
             </ChartComp>
@@ -227,17 +228,17 @@ function ChartPanel({ title, icon, dataKey, compareKey, chart, cb, kb, chartType
 
       <div className="px-5 pb-4 space-y-3">
         <div>
-          <p className="font-mono text-[9px] uppercase tracking-widest text-accent/25 mb-1">Date range</p>
+          <p className="tabular-nums text-[9px] uppercase text-accent/45 mb-1 tracking-wider font-medium">Date range</p>
           {cb.length === 0 ? (
-            <p className="font-mono text-[11px] text-accent/25">—</p>
+            <p className="tabular-nums text-[11px] text-accent/45">—</p>
           ) : (
             <div className="max-h-32 overflow-y-auto">
               <table className="w-full">
                 <tbody className="divide-y divide-line/10">
                   {cb.map((b) => (
                     <tr key={b.date}>
-                      <td className="py-1 font-mono text-[11px] text-accent/50">{fmtLabel(b.date, groupBy)}</td>
-                      <td className="py-1 font-mono text-[11px] text-fg text-right">{fmt(dataKey === "netSales" ? b.netSales : b.orders)}</td>
+                      <td className="py-1 tabular-nums text-[11px] text-accent/70">{fmtLabel(b.date, groupBy)}</td>
+                      <td className="py-1 tabular-nums text-[11px] text-fg text-right">{fmt(dataKey === "netSales" ? b.netSales : b.orders)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -248,17 +249,17 @@ function ChartPanel({ title, icon, dataKey, compareKey, chart, cb, kb, chartType
 
         {hasCompare && (
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-accent/25 mb-1">Compare to</p>
+            <p className="tabular-nums text-[9px] uppercase text-accent/45 mb-1 tracking-wider font-medium">Compare to</p>
             {kb.length === 0 ? (
-              <p className="font-mono text-[11px] text-accent/25">—</p>
+              <p className="tabular-nums text-[11px] text-accent/45">—</p>
             ) : (
               <div className="max-h-32 overflow-y-auto">
                 <table className="w-full">
                   <tbody className="divide-y divide-line/10">
                     {kb.map((b) => (
                       <tr key={b.date}>
-                        <td className="py-1 font-mono text-[11px] text-accent/35">{fmtLabel(b.date, groupBy)}</td>
-                        <td className="py-1 font-mono text-[11px] text-accent/50 text-right">{fmt(dataKey === "netSales" ? b.netSales : b.orders)}</td>
+                        <td className="py-1 tabular-nums text-[11px] text-accent/35">{fmtLabel(b.date, groupBy)}</td>
+                        <td className="py-1 tabular-nums text-[11px] text-accent/70 text-right">{fmt(dataKey === "netSales" ? b.netSales : b.orders)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -348,11 +349,10 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-1">ADMIN // ANALYTICS</p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-fg">Analytics</h1>
+          <h1 className="font-semibold text-fg text-[22px] tracking-tight">Analytics</h1>
         </div>
         {loading && (
-          <span className="flex items-center gap-1.5 font-mono text-[11px] text-accent/40">
+          <span className="flex items-center gap-1.5 tabular-nums text-[11px] text-accent/60">
             <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
             Loading…
           </span>
@@ -360,17 +360,17 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Date Range Filter */}
-      <div className="bg-panel border border-line/30 p-4 space-y-3">
-        <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-accent/40">Date Range</p>
+      <div className="bg-panel border border-line/30 p-4 space-y-3 rounded-lg">
+        <p className="tabular-nums text-[10px] uppercase text-accent/60 tracking-wider font-medium">Date Range</p>
         <div className="flex flex-wrap gap-1.5">
           {PRESETS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setPreset(key)}
-              className={`px-3 py-1.5 font-mono text-[11px] tracking-wide border transition-colors ${
+              className={`px-3 py-1.5 tabular-nums text-[11px] tracking-wide border transition-colors ${
                 preset === key
                   ? "bg-primary/10 border-primary text-primary"
-                  : "border-line/30 text-accent/50 hover:text-fg hover:border-line/60"
+                  : "border-line/30 text-accent/70 hover:text-fg hover:border-line/60"
               }`}
             >
               {label}
@@ -378,15 +378,15 @@ export default function AnalyticsPage() {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-line/20 mt-1">
-          <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-accent/40">Compare to</span>
+          <span className="tabular-nums text-[10px] uppercase text-accent/60 tracking-wider font-medium">Compare to</span>
           {(["none", "previous_period", "previous_year"] as CompareMode[]).map((mode) => (
             <button
               key={mode}
               onClick={() => setCompareMode(mode)}
-              className={`px-3 py-1.5 font-mono text-[11px] tracking-wide border transition-colors ${
+              className={`px-3 py-1.5 tabular-nums text-[11px] tracking-wide border transition-colors ${
                 compareMode === mode
                   ? "bg-primary/10 border-primary text-primary"
-                  : "border-line/30 text-accent/50 hover:text-fg hover:border-line/60"
+                  : "border-line/30 text-accent/70 hover:text-fg hover:border-line/60"
               }`}
             >
               {mode === "none" ? "None" : mode === "previous_period" ? "Previous period" : "Previous year"}
@@ -397,22 +397,22 @@ export default function AnalyticsPage() {
 
       {/* Performance KPIs */}
       <div>
-        <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-accent/30 mb-3">Performance</p>
+        <p className="tabular-nums text-[10px] uppercase text-accent/50 mb-3 tracking-wider font-medium">Performance</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {KPI.map(({ label, value, compare, pct, icon }) => {
             const up = pct?.startsWith("+");
             return (
-              <div key={label} className="bg-panel border border-line/30 p-4">
-                <div className="flex items-center gap-1.5 font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-2">
+              <div key={label} className="bg-panel border border-line/30 p-4 rounded-lg">
+                <div className="flex items-center gap-1.5 tabular-nums text-[10px] text-accent/60 uppercase mb-2 tracking-wider font-medium">
                   <span className="material-symbols-outlined text-[13px]">{icon}</span>
                   {label}
                 </div>
-                <p className="font-inter font-black text-[22px] text-fg leading-none">{value}</p>
+                <p className="font-semibold text-[22px] text-fg leading-none">{value}</p>
                 {compare && pct && (
                   <div className="flex items-center gap-1.5 mt-2">
-                    <span className="font-mono text-[11px] text-accent/30">{compare}</span>
+                    <span className="tabular-nums text-[11px] text-accent/50">{compare}</span>
                     <span
-                      className={`font-mono text-[10px] flex items-center gap-0.5 ${up ? "text-green-400" : "text-red-400"}`}
+                      className={`tabular-nums text-[10px] flex items-center gap-0.5 ${up ? "text-green-400" : "text-red-400"}`}
                     >
                       <span className="material-symbols-outlined text-[10px]">{up ? "arrow_upward" : "arrow_downward"}</span>
                       {pct}
@@ -428,15 +428,15 @@ export default function AnalyticsPage() {
       {/* Charts */}
       <div>
         <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
-          <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-accent/30">Charts</p>
+          <p className="tabular-nums text-[10px] uppercase text-accent/50 tracking-wider font-medium">Charts</p>
           <div className="flex items-center gap-2">
             <div className="flex border border-line/30 overflow-hidden">
               {(["day", "week"] as GroupBy[]).map((g) => (
                 <button
                   key={g}
                   onClick={() => setGroupBy(g)}
-                  className={`px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition-colors border-r border-line/30 last:border-r-0 ${
-                    groupBy === g ? "bg-primary/10 text-primary" : "text-accent/40 hover:text-fg"
+                  className={`px-3 py-1.5 tabular-nums text-[10px] uppercase transition-colors border-r border-line/30 last:border-r-0 tracking-wider font-medium ${
+                    groupBy === g ? "bg-primary/10 text-primary" : "text-accent/60 hover:text-fg"
                   }`}
                 >
                   By {g}
@@ -448,8 +448,8 @@ export default function AnalyticsPage() {
                 <button
                   key={t}
                   onClick={() => setChartType(t)}
-                  className={`px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition-colors border-r border-line/30 last:border-r-0 flex items-center gap-1 ${
-                    chartType === t ? "bg-primary/10 text-primary" : "text-accent/40 hover:text-fg"
+                  className={`px-3 py-1.5 tabular-nums text-[10px] uppercase transition-colors border-r border-line/30 last:border-r-0 flex items-center gap-1 tracking-wider font-medium ${
+                    chartType === t ? "bg-primary/10 text-primary" : "text-accent/60 hover:text-fg"
                   }`}
                 >
                   <span className="material-symbols-outlined text-[12px]">
@@ -490,44 +490,44 @@ export default function AnalyticsPage() {
             groupBy={groupBy}
             hasCompare={hasCompare}
             fmt={(v) => v.toLocaleString()}
-            color="#60a5fa"
-            dimColor="rgba(96,165,250,0.35)"
+            color="#9085e9"
+            dimColor="rgba(144,133,233,0.35)"
           />
         </div>
       </div>
 
       {/* Leaderboards */}
       <div>
-        <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-accent/30 mb-4">Leaderboards</p>
+        <p className="tabular-nums text-[10px] uppercase text-accent/50 mb-4 tracking-wider font-medium">Leaderboards</p>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Top Brands */}
-          <div className="bg-panel border border-line/30">
+          <div className="bg-panel border border-line/30 rounded-lg">
             <div className="px-5 py-3 border-b border-line/20 flex items-center gap-2">
               <span className="material-symbols-outlined text-[13px] text-primary">storefront</span>
-              <p className="font-mono text-[11px] tracking-widest uppercase text-fg">Top Brands — Items Sold</p>
+              <p className="tabular-nums text-[11px] text-fg font-medium">Top Brands — Items Sold</p>
             </div>
             {!data || data.topBrands.length === 0 ? (
               <div className="px-5 py-10 text-center">
                 <span className="material-symbols-outlined text-[28px] text-accent/15 block mb-2">storefront</span>
-                <p className="font-mono text-[11px] text-accent/30">No data for this period.</p>
+                <p className="tabular-nums text-[11px] text-accent/50">No data for this period.</p>
               </div>
             ) : (
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-line/20">
-                    <th className="px-5 py-2 font-mono text-[9px] uppercase tracking-widest text-accent/30 text-left w-8">#</th>
-                    <th className="px-3 py-2 font-mono text-[9px] uppercase tracking-widest text-accent/30 text-left">Brand</th>
-                    <th className="px-3 py-2 font-mono text-[9px] uppercase tracking-widest text-accent/30 text-right">Items Sold</th>
-                    <th className="px-5 py-2 font-mono text-[9px] uppercase tracking-widest text-accent/30 text-right">Net Sales</th>
+                    <th className="px-5 py-2 tabular-nums text-[9px] uppercase text-accent/50 text-left w-8 tracking-wider font-medium">#</th>
+                    <th className="px-3 py-2 tabular-nums text-[9px] uppercase text-accent/50 text-left tracking-wider font-medium">Brand</th>
+                    <th className="px-3 py-2 tabular-nums text-[9px] uppercase text-accent/50 text-right tracking-wider font-medium">Items Sold</th>
+                    <th className="px-5 py-2 tabular-nums text-[9px] uppercase text-accent/50 text-right tracking-wider font-medium">Net Sales</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line/10">
                   {data.topBrands.map((row, i) => (
                     <tr key={row.brand} className="hover:bg-fg/[0.05] transition-colors">
-                      <td className="px-5 py-3 font-mono text-[11px] text-accent/25">{i + 1}</td>
-                      <td className="px-3 py-3 font-inter font-semibold text-[13px] text-fg">{row.brand}</td>
-                      <td className="px-3 py-3 font-mono text-[12px] text-accent/60 text-right">{row.itemsSold.toLocaleString()}</td>
-                      <td className="px-5 py-3 font-mono text-[12px] text-fg text-right">{peso(row.netSales)}</td>
+                      <td className="px-5 py-3 tabular-nums text-[11px] text-accent/45">{i + 1}</td>
+                      <td className="px-3 py-3 font-semibold text-[13px] text-fg">{row.brand}</td>
+                      <td className="px-3 py-3 tabular-nums text-[12px] text-accent/60 text-right">{row.itemsSold.toLocaleString()}</td>
+                      <td className="px-5 py-3 tabular-nums text-[12px] text-fg text-right">{peso(row.netSales)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -536,35 +536,35 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Top Products */}
-          <div className="bg-panel border border-line/30">
+          <div className="bg-panel border border-line/30 rounded-lg">
             <div className="px-5 py-3 border-b border-line/20 flex items-center gap-2">
               <span className="material-symbols-outlined text-[13px] text-primary">inventory_2</span>
-              <p className="font-mono text-[11px] tracking-widest uppercase text-fg">Top Products — Items Sold</p>
+              <p className="tabular-nums text-[11px] text-fg font-medium">Top Products — Items Sold</p>
             </div>
             {!data || data.topProducts.length === 0 ? (
               <div className="px-5 py-10 text-center">
                 <span className="material-symbols-outlined text-[28px] text-accent/15 block mb-2">inventory_2</span>
-                <p className="font-mono text-[11px] text-accent/30">No data for this period.</p>
+                <p className="tabular-nums text-[11px] text-accent/50">No data for this period.</p>
               </div>
             ) : (
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-line/20">
-                    <th className="px-5 py-2 font-mono text-[9px] uppercase tracking-widest text-accent/30 text-left w-8">#</th>
-                    <th className="px-3 py-2 font-mono text-[9px] uppercase tracking-widest text-accent/30 text-left">Product</th>
-                    <th className="px-3 py-2 font-mono text-[9px] uppercase tracking-widest text-accent/30 text-right">Items Sold</th>
-                    <th className="px-5 py-2 font-mono text-[9px] uppercase tracking-widest text-accent/30 text-right">Net Sales</th>
+                    <th className="px-5 py-2 tabular-nums text-[9px] uppercase text-accent/50 text-left w-8 tracking-wider font-medium">#</th>
+                    <th className="px-3 py-2 tabular-nums text-[9px] uppercase text-accent/50 text-left tracking-wider font-medium">Product</th>
+                    <th className="px-3 py-2 tabular-nums text-[9px] uppercase text-accent/50 text-right tracking-wider font-medium">Items Sold</th>
+                    <th className="px-5 py-2 tabular-nums text-[9px] uppercase text-accent/50 text-right tracking-wider font-medium">Net Sales</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line/10">
                   {data.topProducts.map((row, i) => (
                     <tr key={row.product} className="hover:bg-fg/[0.05] transition-colors">
-                      <td className="px-5 py-3 font-mono text-[11px] text-accent/25">{i + 1}</td>
-                      <td className="px-3 py-3 font-inter font-semibold text-[13px] text-fg max-w-[200px]">
+                      <td className="px-5 py-3 tabular-nums text-[11px] text-accent/45">{i + 1}</td>
+                      <td className="px-3 py-3 font-semibold text-[13px] text-fg max-w-[200px]">
                         <span className="block truncate">{row.product}</span>
                       </td>
-                      <td className="px-3 py-3 font-mono text-[12px] text-accent/60 text-right">{row.itemsSold.toLocaleString()}</td>
-                      <td className="px-5 py-3 font-mono text-[12px] text-fg text-right">{peso(row.netSales)}</td>
+                      <td className="px-3 py-3 tabular-nums text-[12px] text-accent/60 text-right">{row.itemsSold.toLocaleString()}</td>
+                      <td className="px-5 py-3 tabular-nums text-[12px] text-fg text-right">{peso(row.netSales)}</td>
                     </tr>
                   ))}
                 </tbody>

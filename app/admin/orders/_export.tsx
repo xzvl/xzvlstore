@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import type { Order } from "@/lib/supabase";
 import { fullAddress } from "./page";
 
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5";
+const LABEL = "block tabular-nums text-[10px] uppercase text-accent/60 mb-1.5 tracking-wider font-medium";
 
 export type ExportFormat = "xlsx" | "csv";
 export type ExportMode = "orders" | "products";
@@ -178,27 +178,27 @@ export function ExportOrdersModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md bg-canvas border border-line/60 shadow-2xl"
+        className="w-full max-w-md bg-canvas border border-line/60 shadow-2xl rounded-lg"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-line/30">
           <div>
-            <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Orders // Export</p>
-            <h2 className="font-inter font-black text-[18px] uppercase text-fg">Export Orders</h2>
+            <p className="tabular-nums text-[13px] font-semibold text-fg">Orders // Export</p>
+            <h2 className="font-semibold text-[18px] text-fg font-medium">Export Orders</h2>
           </div>
-          <button onClick={onClose} className="text-accent/30 hover:text-primary transition-colors">
+          <button onClick={onClose} className="text-accent/50 hover:text-primary transition-colors">
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
 
         {/* Modal body */}
         <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-          <p className="font-mono text-[11px] text-accent/40">
+          <p className="tabular-nums text-[11px] text-accent/60">
             Exports the <span className="text-fg">{orders.length}</span> order{orders.length === 1 ? "" : "s"} matching your current filters.
           </p>
           {productFilter !== "all" && (
-            <p className="font-mono text-[11px] text-primary/80 flex items-start gap-1.5">
+            <p className="tabular-nums text-[11px] text-primary/80 flex items-start gap-1.5">
               <span className="material-symbols-outlined text-[13px] flex-shrink-0">filter_alt</span>
               Only “{productFilter}” line items will be included.
             </p>
@@ -213,10 +213,10 @@ export function ExportOrdersModal({
                   key={f}
                   type="button"
                   onClick={() => setFormat(f)}
-                  className={`px-4 py-2.5 font-mono text-[11px] tracking-widest uppercase border transition-colors ${
+                  className={`px-4 py-2.5 tabular-nums text-[11px] border transition-colors font-medium ${
                     format === f
                       ? "border-primary text-primary bg-primary/10"
-                      : "border-line text-accent/50 hover:text-fg"
+                      : "border-line text-accent/70 hover:text-fg"
                   }`}
                 >
                   {f === "xlsx" ? "Excel (.xlsx)" : "CSV (.csv)"}
@@ -236,10 +236,10 @@ export function ExportOrdersModal({
                   mode === "orders" ? "border-primary bg-primary/10" : "border-line hover:bg-panel"
                 }`}
               >
-                <p className={`font-mono text-[12px] uppercase tracking-widest ${mode === "orders" ? "text-primary" : "text-fg"}`}>
+                <p className={`tabular-nums text-[12px] font-medium ${mode === "orders" ? "text-primary" : "text-fg"}`}>
                   Order List
                 </p>
-                <p className="font-mono text-[10px] text-accent/40 mt-0.5">
+                <p className="tabular-nums text-[10px] text-accent/60 mt-0.5">
                   One row per order — customer, shipping &amp; order details.
                 </p>
               </button>
@@ -250,10 +250,10 @@ export function ExportOrdersModal({
                   mode === "products" ? "border-primary bg-primary/10" : "border-line hover:bg-panel"
                 }`}
               >
-                <p className={`font-mono text-[12px] uppercase tracking-widest ${mode === "products" ? "text-primary" : "text-fg"}`}>
+                <p className={`tabular-nums text-[12px] font-medium ${mode === "products" ? "text-primary" : "text-fg"}`}>
                   Product Summary
                 </p>
-                <p className="font-mono text-[10px] text-accent/40 mt-0.5">
+                <p className="tabular-nums text-[10px] text-accent/60 mt-0.5">
                   Totals combined across all orders, one row per product.
                 </p>
               </button>
@@ -265,7 +265,7 @@ export function ExportOrdersModal({
             <label className={LABEL}>Columns to Include</label>
             <div className="grid grid-cols-2 gap-2">
               {fieldsForMode(mode).map((f) => (
-                <label key={f.key} className="flex items-center gap-2 font-mono text-[11px] text-fg cursor-pointer">
+                <label key={f.key} className="flex items-center gap-2 tabular-nums text-[11px] text-fg cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selected.includes(f.key)}
@@ -277,20 +277,20 @@ export function ExportOrdersModal({
               ))}
             </div>
             {selected.length === 0 && (
-              <p className="font-mono text-[10px] text-red-400 mt-2">Select at least one column.</p>
+              <p className="tabular-nums text-[10px] text-red-400 mt-2">Select at least one column.</p>
             )}
           </div>
         </div>
 
         {/* Modal footer */}
         <div className="px-6 py-4 border-t border-line/30 flex items-center justify-end gap-3">
-          <button onClick={onClose} className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors px-4 py-2">
+          <button onClick={onClose} className="tabular-nums text-[11px] text-accent/70 hover:text-fg transition-colors px-4 py-2">
             Cancel
           </button>
           <button
             onClick={handleExport}
             disabled={selected.length === 0 || orders.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary/10 border border-primary text-primary font-mono text-[11px] tracking-widest uppercase hover:bg-primary/20 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors disabled:opacity-50 font-medium shadow-sm"
           >
             <span className="material-symbols-outlined text-[14px]">download</span>
             Export

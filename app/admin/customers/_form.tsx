@@ -7,8 +7,8 @@ import Link from "next/link";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
-const INPUT = "w-full bg-deep border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5";
+const INPUT = "w-full bg-deep border border-line text-fg tabular-nums text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/40 rounded-md focus:ring-2 focus:ring-primary/20";
+const LABEL = "block tabular-nums text-[10px] uppercase text-accent/60 mb-1.5 tracking-wider font-medium";
 
 type FormState = {
   first_name: string;
@@ -62,9 +62,9 @@ function AddressBlock({
 }) {
   const f = (field: string) => `${prefix}_${field}` as keyof FormState;
   return (
-    <div className="bg-panel border border-line/30 p-5 space-y-3">
+    <div className="bg-panel border border-line/30 p-5 space-y-3 rounded-lg">
       <div className="flex items-center justify-between">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">{title}</p>
+        <p className="tabular-nums text-[13px] font-semibold text-fg">{title}</p>
         {extra}
       </div>
       <div>
@@ -187,7 +187,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-12">
+      <div className="flex items-center gap-2 tabular-nums text-[12px] text-accent/60 py-12">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading…
       </div>
@@ -199,21 +199,18 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Link href="/admin/customers" className="inline-flex items-center gap-1 font-mono text-[10px] text-accent/40 hover:text-primary transition-colors mb-3">
+          <Link href="/admin/customers" className="inline-flex items-center gap-1 tabular-nums text-[10px] text-accent/60 hover:text-primary transition-colors mb-3">
             <span className="material-symbols-outlined text-[13px]">arrow_back</span>
             Back to Customers
           </Link>
-          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
-            ADMIN // CUSTOMERS / {isNew ? "NEW" : "EDIT"}
-          </p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-fg">
+          <h1 className="font-semibold text-fg text-[22px] tracking-tight">
             {isNew ? "New Customer" : `${form.first_name} ${form.last_name}`.trim() || "Edit Customer"}
           </h1>
         </div>
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary/10 border border-primary text-primary font-mono text-[11px] tracking-widest uppercase hover:bg-primary/20 transition-colors disabled:opacity-50 flex-shrink-0 mt-8"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors disabled:opacity-50 flex-shrink-0 mt-8 font-medium shadow-sm"
         >
           {saving
             ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
@@ -224,8 +221,8 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
       </div>
 
       {/* Personal info */}
-      <div className="bg-panel border border-line/30 p-5 space-y-4">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Personal Information</p>
+      <div className="bg-panel border border-line/30 p-5 space-y-4 rounded-lg">
+        <p className="tabular-nums text-[13px] font-semibold text-fg">Personal Information</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className={LABEL}>First Name</label>
@@ -236,7 +233,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
             <input value={form.last_name} onChange={e => set$("last_name", e.target.value)} placeholder="dela Cruz" className={INPUT} />
           </div>
           <div>
-            <label className={LABEL}>Email <span className="text-primary">*</span></label>
+            <label className={LABEL}>Email <span className="text-red-400">*</span></label>
             <input
               type="email"
               value={form.email}
@@ -247,7 +244,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
           </div>
           {isNew && (
             <div>
-              <label className={LABEL}>Password <span className="text-primary">*</span></label>
+              <label className={LABEL}>Password <span className="text-red-400">*</span></label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -259,7 +256,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-accent/30 hover:text-primary transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-accent/50 hover:text-primary transition-colors"
                 >
                   <span className="material-symbols-outlined text-[16px]">
                     {showPassword ? "visibility_off" : "visibility"}
@@ -272,8 +269,8 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
       </div>
 
       {/* Account Status */}
-      <div className="bg-panel border border-line/30 p-5 space-y-4">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Account Status</p>
+      <div className="bg-panel border border-line/30 p-5 space-y-4 rounded-lg">
+        <p className="tabular-nums text-[13px] font-semibold text-fg">Account Status</p>
         <button
           type="button"
           onClick={() => setForm(f => ({ ...f, is_blocked: !f.is_blocked }))}
@@ -284,8 +281,8 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
           }`}
         >
           <div>
-            <p className="font-mono text-[11px] tracking-widest uppercase text-left text-fg">Block Account</p>
-            <p className="font-mono text-[10px] text-accent/40 text-left mt-0.5">
+            <p className="tabular-nums text-[11px] text-left text-fg font-medium">Block Account</p>
+            <p className="tabular-nums text-[10px] text-accent/60 text-left mt-0.5">
               Blocked customers cannot sign in or place orders
             </p>
           </div>
@@ -299,7 +296,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
 
         {form.is_blocked && (
           <div>
-            <label className="block font-mono text-[10px] tracking-[0.15em] uppercase text-red-400/70 mb-1.5">
+            <label className="block tabular-nums text-[10px] uppercase text-red-400/70 mb-1.5 tracking-wider font-medium">
               Reason Block
             </label>
             <RichTextEditor value={form.block_reason} onChange={(html) => set$("block_reason", html)} />
@@ -319,7 +316,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
             <button
               type="button"
               onClick={copyBillingToShipping}
-              className="flex items-center gap-1 font-mono text-[10px] text-accent/40 hover:text-primary transition-colors"
+              className="flex items-center gap-1 tabular-nums text-[10px] text-accent/60 hover:text-primary transition-colors"
             >
               <span className="material-symbols-outlined text-[12px]">content_copy</span>
               Same as billing
@@ -329,8 +326,8 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
       </div>
 
       {/* Social Media */}
-      <div className="bg-panel border border-line/30 p-5 space-y-3">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">Social Media</p>
+      <div className="bg-panel border border-line/30 p-5 space-y-3 rounded-lg">
+        <p className="tabular-nums text-[13px] font-semibold text-fg">Social Media</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
             { key: "facebook_url" as keyof FormState, label: "Facebook", placeholder: "https://facebook.com/username", icon: "group" },
@@ -357,7 +354,7 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
         </div>
       </div>
 
-      {error && <p className="font-mono text-[11px] text-red-400">{error}</p>}
+      {error && <p className="tabular-nums text-[11px] text-red-400">{error}</p>}
     </div>
   );
 }

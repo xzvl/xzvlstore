@@ -4,9 +4,8 @@
 
 /* Theme colors as "r g b" channels (see lib/theme.ts). These are the built-in
    dark palette; the root layout overrides them per mode with the palettes from
-   /admin/content → Colors. The admin panel (.admin-theme) always uses the dark one. */
-:root,
-.admin-theme {
+   /admin/content → Colors. */
+:root {
   color-scheme: dark;
   --c-primary: 237 13 17;
   --c-accent: 235 187 180;
@@ -17,6 +16,25 @@
   --c-line: 96 62 57;
   --c-header: 19 19 19;
   --c-header-fg: 226 226 226;
+}
+
+/* ERP dashboard theme for /admin and /account. Its palette is the default
+   mode's from /admin/content → Colors, set on .erp-theme by themeCss() in
+   lib/theme.ts. */
+@layer base {
+  /* Rounded controls by default; any rounded-* utility (incl. rounded-none) wins. */
+  :where(.erp-theme) :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea, button) {
+    border-radius: 6px;
+  }
+}
+
+/* The storefront's scanline overlay and primary-colored scrollbars don't belong in the back office. */
+body:has(.erp-theme) .scanline {
+  display: none;
+}
+body:has(.erp-theme) ::-webkit-scrollbar-thumb {
+  background: rgb(var(--c-line) / 0.7);
+  border-radius: 8px;
 }
 
 /* Hero slides: each slide sets --hero-{bg,fg}-{dark,light} inline (see

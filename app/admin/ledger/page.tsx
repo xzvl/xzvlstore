@@ -26,9 +26,9 @@ const MONTHS = [
 
 const now = new Date();
 
-const INPUT = "w-full bg-deep border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/20";
-const LABEL = "block font-mono text-[10px] tracking-[0.15em] uppercase text-accent/60 mb-1.5";
-const SELECT = "w-full bg-deep border border-line text-fg font-mono text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors";
+const INPUT = "w-full bg-deep border border-line text-fg tabular-nums text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/40 rounded-md focus:ring-2 focus:ring-primary/20";
+const LABEL = "block tabular-nums text-[10px] uppercase text-accent/60 mb-1.5 tracking-wider font-medium";
+const SELECT = "w-full bg-deep border border-line text-fg tabular-nums text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20";
 
 // Returns current time in Asia/Manila as a datetime-local string (YYYY-MM-DDTHH:mm)
 function nowPH(): string {
@@ -167,12 +167,11 @@ export default function LedgerPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-1">ADMIN // LEDGER</p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-fg">Ledger</h1>
+          <h1 className="font-semibold text-fg text-[22px] tracking-tight">Ledger</h1>
         </div>
         <button
           onClick={openNew}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary/10 border border-primary text-primary font-mono text-[11px] tracking-widest uppercase hover:bg-primary/20 transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors font-medium shadow-sm"
         >
           <span className="material-symbols-outlined text-[14px]">add</span>
           Add Entry
@@ -181,26 +180,26 @@ export default function LedgerPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-panel border border-line/30 p-5">
-          <div className="flex items-center gap-1.5 font-mono text-[10px] text-green-400/70 uppercase tracking-widest mb-2">
+        <div className="bg-panel border border-line/30 p-5 rounded-lg">
+          <div className="flex items-center gap-1.5 tabular-nums text-[10px] text-green-400/70 uppercase mb-2 tracking-wider font-medium">
             <span className="material-symbols-outlined text-[13px]">arrow_downward</span>
             Total Incoming
           </div>
-          <p className="font-inter font-black text-[26px] text-green-400">₱{totalIncoming.toLocaleString("en-US")}</p>
+          <p className="font-semibold text-green-400 text-[22px] tracking-tight">₱{totalIncoming.toLocaleString("en-US")}</p>
         </div>
-        <div className="bg-panel border border-line/30 p-5">
-          <div className="flex items-center gap-1.5 font-mono text-[10px] text-red-400/70 uppercase tracking-widest mb-2">
+        <div className="bg-panel border border-line/30 p-5 rounded-lg">
+          <div className="flex items-center gap-1.5 tabular-nums text-[10px] text-red-400/70 uppercase mb-2 tracking-wider font-medium">
             <span className="material-symbols-outlined text-[13px]">arrow_upward</span>
             Total Outgoing
           </div>
-          <p className="font-inter font-black text-[26px] text-red-400">₱{totalOutgoing.toLocaleString("en-US")}</p>
+          <p className="font-semibold text-red-400 text-[22px] tracking-tight">₱{totalOutgoing.toLocaleString("en-US")}</p>
         </div>
-        <div className="bg-panel border border-line/30 p-5">
-          <div className="flex items-center gap-1.5 font-mono text-[10px] text-accent/50 uppercase tracking-widest mb-2">
+        <div className="bg-panel border border-line/30 p-5 rounded-lg">
+          <div className="flex items-center gap-1.5 tabular-nums text-[10px] text-accent/70 uppercase mb-2 tracking-wider font-medium">
             <span className="material-symbols-outlined text-[13px]">account_balance</span>
             Balance
           </div>
-          <p className={`font-inter font-black text-[26px] ${balance >= 0 ? "text-green-400" : "text-red-400"}`}>
+          <p className={` font-semibold text-[22px] tracking-tight ${balance >= 0 ? "text-green-400" : "text-red-400"}`}>
             {balance < 0 ? "−" : ""}₱{Math.abs(balance).toLocaleString("en-US")}
           </p>
         </div>
@@ -211,7 +210,7 @@ export default function LedgerPage() {
         <select
           value={filterMonth}
           onChange={e => setFilterMonth(e.target.value)}
-          className="bg-panel border border-line/40 text-fg font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+          className="bg-panel border border-line/40 text-fg tabular-nums text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors rounded-lg focus:ring-2 focus:ring-primary/20"
         >
           <option value="all">All Months</option>
           {MONTHS.map((m, i) => (
@@ -221,7 +220,7 @@ export default function LedgerPage() {
         <select
           value={filterYear}
           onChange={e => setFilterYear(e.target.value)}
-          className="bg-panel border border-line/40 text-fg font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+          className="bg-panel border border-line/40 text-fg tabular-nums text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors rounded-lg focus:ring-2 focus:ring-primary/20"
         >
           <option value="">All Years</option>
           {years.map(y => (
@@ -231,7 +230,7 @@ export default function LedgerPage() {
         <select
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
-          className="bg-panel border border-line/40 text-fg font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+          className="bg-panel border border-line/40 text-fg tabular-nums text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors rounded-lg focus:ring-2 focus:ring-primary/20"
         >
           <option value="all">All Types</option>
           <option value="incoming">Incoming</option>
@@ -240,39 +239,39 @@ export default function LedgerPage() {
         <select
           value={filterSource}
           onChange={e => setFilterSource(e.target.value)}
-          className="bg-panel border border-line/40 text-fg font-mono text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+          className="bg-panel border border-line/40 text-fg tabular-nums text-[12px] px-4 py-2 focus:outline-none focus:border-primary transition-colors rounded-lg focus:ring-2 focus:ring-primary/20"
         >
           <option value="all">All Source</option>
           {sources.map(s => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
-        <span className="font-mono text-[11px] text-accent/30">{filtered.length} {filtered.length === 1 ? "entry" : "entries"}</span>
+        <span className="tabular-nums text-[11px] text-accent/50">{filtered.length} {filtered.length === 1 ? "entry" : "entries"}</span>
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
+        <div className="flex items-center gap-2 tabular-nums text-[12px] text-accent/60 py-8">
           <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
           Loading…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-panel border border-line/20 p-12 text-center">
-          <span className="material-symbols-outlined text-[32px] text-accent/20 block mb-3">account_balance_wallet</span>
-          <p className="font-mono text-[12px] text-accent/30">No entries for this period.</p>
+        <div className="bg-panel border border-line/20 p-12 text-center rounded-lg">
+          <span className="material-symbols-outlined text-[32px] text-accent/40 block mb-3">account_balance_wallet</span>
+          <p className="tabular-nums text-[12px] text-accent/50">No entries for this period.</p>
         </div>
       ) : (
         <>
           {/* ── Mobile cards (hidden on md+) ── */}
           <div className="md:hidden space-y-2">
             {filtered.map(entry => (
-              <div key={entry.id} className="bg-panel border border-line/20">
+              <div key={entry.id} className="bg-panel border border-line/20 rounded-lg">
                 <div className="px-4 py-3 space-y-1">
                   {/* Row 1: title */}
-                  <p className="font-inter font-semibold text-[13px] text-fg truncate">{entry.title}</p>
+                  <p className="font-semibold text-[13px] text-fg truncate">{entry.title}</p>
 
                   {/* Row 2: source | date and time */}
-                  <p className="font-mono text-[11px] text-accent/40 flex items-center gap-1.5">
+                  <p className="tabular-nums text-[11px] text-accent/60 flex items-center gap-1.5">
                     <span>{entry.source || "—"}</span>
                     <span className="text-line/60">|</span>
                     <span>{formatDate(entry.entry_date)}</span>
@@ -280,7 +279,7 @@ export default function LedgerPage() {
 
                   {/* Row 3: type | amount | pencil | trash */}
                   <div className="flex items-center gap-2 pt-0.5">
-                    <span className={`inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-widest border px-1.5 py-px ${
+                    <span className={`inline-flex items-center gap-1 tabular-nums text-[9px] uppercase border px-1.5 py-px tracking-wider font-medium rounded ${
                       entry.type === "incoming"
                         ? "text-green-400 border-green-400/30 bg-green-400/10"
                         : "text-red-400 border-red-400/30 bg-red-400/10"
@@ -290,15 +289,15 @@ export default function LedgerPage() {
                       </span>
                       {entry.type}
                     </span>
-                    <span className="text-line/60 font-mono text-[11px]">|</span>
-                    <span className={`font-mono font-bold text-[13px] ${entry.type === "incoming" ? "text-green-400" : "text-red-400"}`}>
+                    <span className="text-line/60 tabular-nums text-[11px]">|</span>
+                    <span className={`tabular-nums font-bold text-[13px] ${entry.type === "incoming" ? "text-green-400" : "text-red-400"}`}>
                       {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString("en-US")}
                     </span>
                     <span className="flex-1" />
-                    <button onClick={() => openEdit(entry)} className="text-accent/30 hover:text-primary transition-colors" title="Edit">
+                    <button onClick={() => openEdit(entry)} className="text-accent/50 hover:text-primary transition-colors" title="Edit">
                       <span className="material-symbols-outlined text-[16px]">edit</span>
                     </button>
-                    <button onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)} className="text-accent/30 hover:text-red-400 transition-colors" title="Delete">
+                    <button onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)} className="text-accent/50 hover:text-red-400 transition-colors" title="Delete">
                       <span className="material-symbols-outlined text-[16px]">delete</span>
                     </button>
                   </div>
@@ -306,13 +305,13 @@ export default function LedgerPage() {
 
                 {/* Delete confirmation */}
                 {confirmId === entry.id && (
-                  <div className="border-t border-red-900/30 bg-primary/[0.06] px-4 py-3">
-                    <p className="font-mono text-[11px] text-red-300 mb-2">
+                  <div className="border-t border-red-900/30 bg-red-500/[0.06] px-4 py-3">
+                    <p className="tabular-nums text-[11px] text-red-300 mb-2">
                       Delete <span className="text-white">{entry.title}</span>? Cannot be undone.
                     </p>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors">Cancel</button>
-                      <button onClick={() => handleDelete(entry.id)} disabled={deletingId === entry.id} className="flex items-center gap-1.5 px-3 py-1 bg-red-600/20 border border-red-600/50 text-red-400 font-mono text-[11px] uppercase tracking-widest hover:bg-red-600/30 transition-colors disabled:opacity-50">
+                      <button onClick={() => setConfirmId(null)} className="tabular-nums text-[11px] text-accent/70 hover:text-fg transition-colors">Cancel</button>
+                      <button onClick={() => handleDelete(entry.id)} disabled={deletingId === entry.id} className="flex items-center gap-1.5 px-3 py-1 bg-red-600/20 border border-red-600/50 text-red-400 tabular-nums text-[11px] hover:bg-red-600/30 transition-colors disabled:opacity-50 font-medium">
                         {deletingId === entry.id ? <span className="material-symbols-outlined animate-spin text-[13px]">progress_activity</span> : <span className="material-symbols-outlined text-[13px]">delete</span>}
                         {deletingId === entry.id ? "Deleting…" : "Delete"}
                       </button>
@@ -329,7 +328,7 @@ export default function LedgerPage() {
             <thead>
               <tr className="border-b border-line/40">
                 {["Title", "Source", "Type", "Amount", "Date", ""].map((h, i) => (
-                  <th key={i} className={`text-left font-mono text-[10px] tracking-[0.15em] uppercase text-accent/40 px-3 py-3 whitespace-nowrap ${i >= 3 ? "text-right" : "text-left"} ${i === 0 ? "w-[240px]" : ""}`}>
+                  <th key={i} className={`text-left tabular-nums text-[10px] uppercase text-accent/60 px-3 py-3 whitespace-nowrap tracking-wider font-medium ${i >= 3 ? "text-right" : "text-left"} ${i === 0 ? "w-[240px]" : ""}`}>
                     {h}
                   </th>
                 ))}
@@ -339,14 +338,14 @@ export default function LedgerPage() {
               {filtered.map(entry => (
                 <Fragment key={entry.id}>
                   <tr className="border-b border-line/15 hover:bg-panel transition-colors">
-                    <td className="px-3 py-3 font-inter font-semibold text-[13px] text-fg max-w-[240px] truncate" title={entry.title}>
+                    <td className="px-3 py-3 font-semibold text-[13px] text-fg max-w-[240px] truncate" title={entry.title}>
                       {entry.title}
                     </td>
-                    <td className="px-3 py-3 font-mono text-[12px] text-accent/60 whitespace-nowrap">
+                    <td className="px-3 py-3 tabular-nums text-[12px] text-accent/60 whitespace-nowrap">
                       {entry.source || "—"}
                     </td>
                     <td className="px-3 py-3">
-                      <span className={`inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest border px-2 py-0.5 ${
+                      <span className={`inline-flex items-center gap-1 tabular-nums text-[10px] uppercase border px-2 py-0.5 tracking-wider font-medium rounded ${
                         entry.type === "incoming"
                           ? "text-green-400 border-green-400/30 bg-green-400/10"
                           : "text-red-400 border-red-400/30 bg-red-400/10"
@@ -357,26 +356,26 @@ export default function LedgerPage() {
                         {entry.type}
                       </span>
                     </td>
-                    <td className={`px-3 py-3 font-mono font-bold text-[13px] text-right whitespace-nowrap ${
+                    <td className={`px-3 py-3 tabular-nums font-bold text-[13px] text-right whitespace-nowrap ${
                       entry.type === "incoming" ? "text-green-400" : "text-red-400"
                     }`}>
                       {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString("en-US")}
                     </td>
-                    <td className="px-3 py-3 font-mono text-[11px] text-accent/40 text-right whitespace-nowrap">
+                    <td className="px-3 py-3 tabular-nums text-[11px] text-accent/60 text-right whitespace-nowrap">
                       {formatDate(entry.entry_date)}
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           onClick={() => openEdit(entry)}
-                          className="p-1.5 text-accent/30 hover:text-primary transition-colors"
+                          className="p-1.5 text-accent/50 hover:text-primary transition-colors"
                           title="Edit"
                         >
                           <span className="material-symbols-outlined text-[16px]">edit</span>
                         </button>
                         <button
                           onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)}
-                          className="p-1.5 text-accent/30 hover:text-red-400 transition-colors"
+                          className="p-1.5 text-accent/50 hover:text-red-400 transition-colors"
                           title="Delete"
                         >
                           <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -386,20 +385,20 @@ export default function LedgerPage() {
                   </tr>
 
                   {confirmId === entry.id && (
-                    <tr className="border-b border-line/15 bg-primary/[0.06]">
+                    <tr className="border-b border-line/15 bg-red-500/[0.06]">
                       <td colSpan={6} className="px-5 py-3">
                         <div className="flex items-center justify-between gap-4">
-                          <p className="font-mono text-[11px] text-red-300">
+                          <p className="tabular-nums text-[11px] text-red-300">
                             Delete <span className="text-white">{entry.title}</span>? This cannot be undone.
                           </p>
                           <div className="flex items-center gap-3 flex-shrink-0">
-                            <button onClick={() => setConfirmId(null)} className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors">
+                            <button onClick={() => setConfirmId(null)} className="tabular-nums text-[11px] text-accent/70 hover:text-fg transition-colors">
                               Cancel
                             </button>
                             <button
                               onClick={() => handleDelete(entry.id)}
                               disabled={deletingId === entry.id}
-                              className="flex items-center gap-1.5 px-4 py-1.5 bg-red-600/20 border border-red-600/50 text-red-400 font-mono text-[11px] uppercase tracking-widest hover:bg-red-600/30 transition-colors disabled:opacity-50"
+                              className="flex items-center gap-1.5 px-4 py-1.5 bg-red-600/20 border border-red-600/50 text-red-400 tabular-nums text-[11px] hover:bg-red-600/30 transition-colors disabled:opacity-50 font-medium"
                             >
                               {deletingId === entry.id
                                 ? <span className="material-symbols-outlined animate-spin text-[13px]">progress_activity</span>
@@ -425,19 +424,19 @@ export default function LedgerPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm">
           <div
             ref={modalRef}
-            className="w-full max-w-md bg-canvas border border-line/60 shadow-2xl"
+            className="w-full max-w-md bg-canvas border border-line/60 shadow-2xl rounded-lg"
           >
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-line/30">
               <div>
-                <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
+                <p className="tabular-nums text-[13px] font-semibold text-fg">
                   {editing ? "Edit Entry" : "New Entry"}
                 </p>
-                <h2 className="font-inter font-black text-[18px] uppercase text-fg">
+                <h2 className="font-semibold text-[18px] text-fg font-medium">
                   {editing ? editing.title : "Add Ledger Entry"}
                 </h2>
               </div>
-              <button onClick={closeModal} className="text-accent/30 hover:text-primary transition-colors">
+              <button onClick={closeModal} className="text-accent/50 hover:text-primary transition-colors">
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
@@ -445,7 +444,7 @@ export default function LedgerPage() {
             {/* Modal body */}
             <div className="px-6 py-5 space-y-4">
               <div>
-                <label className={LABEL}>Title <span className="text-primary">*</span></label>
+                <label className={LABEL}>Title <span className="text-red-400">*</span></label>
                 <input
                   value={form.title}
                   onChange={e => set$("title", e.target.value)}
@@ -465,14 +464,14 @@ export default function LedgerPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={LABEL}>Type <span className="text-primary">*</span></label>
+                  <label className={LABEL}>Type <span className="text-red-400">*</span></label>
                   <select value={form.type} onChange={e => set$("type", e.target.value as "incoming" | "outgoing")} className={SELECT}>
                     <option value="incoming">Incoming</option>
                     <option value="outgoing">Outgoing</option>
                   </select>
                 </div>
                 <div>
-                  <label className={LABEL}>Amount (₱) <span className="text-primary">*</span></label>
+                  <label className={LABEL}>Amount (₱) <span className="text-red-400">*</span></label>
                   <input
                     type="number"
                     min="0"
@@ -495,7 +494,7 @@ export default function LedgerPage() {
               </div>
 
               {formError && (
-                <p className="font-mono text-[11px] text-red-400 flex items-center gap-1">
+                <p className="tabular-nums text-[11px] text-red-400 flex items-center gap-1">
                   <span className="material-symbols-outlined text-[13px]">error</span>
                   {formError}
                 </p>
@@ -504,13 +503,13 @@ export default function LedgerPage() {
 
             {/* Modal footer */}
             <div className="px-6 py-4 border-t border-line/30 flex items-center justify-end gap-3">
-              <button onClick={closeModal} className="font-mono text-[11px] text-accent/50 hover:text-fg transition-colors px-4 py-2">
+              <button onClick={closeModal} className="tabular-nums text-[11px] text-accent/70 hover:text-fg transition-colors px-4 py-2">
                 Cancel
               </button>
               <button
                 onClick={save}
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2.5 bg-primary/10 border border-primary text-primary font-mono text-[11px] tracking-widest uppercase hover:bg-primary/20 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors disabled:opacity-50 font-medium shadow-sm"
               >
                 {saving
                   ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>

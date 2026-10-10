@@ -37,21 +37,26 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-canvas cyber-grid flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-2 uppercase">
-          XZVL_STORE // ADMIN
-        </p>
-        <h1 className="font-inter font-black text-[32px] uppercase text-fg mb-8">
-          Sign In
-        </h1>
+    <main className="min-h-screen bg-deep flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-panel border border-line/40 rounded-xl p-6 sm:p-8 shadow-2xl shadow-black/40">
+        <div className="flex items-center gap-2.5 mb-6">
+          <span className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-[15px] shadow-sm shadow-primary/30">
+            X
+          </span>
+          <div className="leading-tight">
+            <p className="text-[13px] font-semibold text-fg">xzvl.store</p>
+            <p className="text-[11px] text-accent/60">Back office</p>
+          </div>
+        </div>
+        <h1 className="font-semibold text-fg text-[20px] tracking-tight">Sign in</h1>
+        <p className="text-[13px] text-accent/60 mt-1 mb-6">Enter the admin password to continue.</p>
 
         {!mounted ? (
           <div className="h-[188px]" aria-hidden />
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block font-mono text-[11px] tracking-[0.15em] uppercase text-accent/70 mb-2">
+              <label className="block tabular-nums text-[11px] text-accent/70 mb-2 font-medium">
                 Password
               </label>
               <input
@@ -59,13 +64,13 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
-                className="w-full bg-fg/[0.05] border border-line text-fg font-mono text-[13px] px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                className="w-full bg-fg/[0.05] border border-line text-fg tabular-nums text-[13px] px-3.5 py-2.5 focus:outline-none focus:border-primary transition-colors focus:ring-2 focus:ring-primary/20"
                 placeholder="••••••••"
               />
             </div>
 
             {error && (
-              <p className="flex items-center gap-1.5 font-mono text-[12px] text-primary">
+              <p className="flex items-center gap-1.5 tabular-nums text-[12px] text-red-400">
                 <span className="material-symbols-outlined text-[14px]">error</span>
                 {error}
               </p>
@@ -74,9 +79,9 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full px-6 py-3 bg-primary text-white font-mono text-[12px] tracking-[0.15em] uppercase hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-2.5 bg-primary text-white text-[13px] hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm"
             >
-              {loading ? "Signing in…" : "Enter Admin"}
+              {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
         )}

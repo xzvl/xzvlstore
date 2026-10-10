@@ -63,7 +63,7 @@ export default function HeroTab({
     <div className="space-y-6">
       <div className={CARD}>
         <p className={CARD_TITLE}>Hero Slider</p>
-        <p className="font-mono text-[11px] text-accent/40">
+        <p className="tabular-nums text-[11px] text-accent/60">
           The three slides at the top of the homepage. Pick a slide, edit it, then save.
         </p>
         <div className="flex gap-2 flex-wrap">
@@ -72,10 +72,10 @@ export default function HeroTab({
               key={s.id}
               type="button"
               onClick={() => setActive(i)}
-              className={`px-4 py-2 border font-mono text-[10px] tracking-widest uppercase transition-colors ${
+              className={`px-4 py-2 border tabular-nums text-[10px] uppercase transition-colors tracking-wider font-medium ${
                 active === i
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-line/50 text-accent/50 hover:border-accent/40 hover:text-fg"
+                  : "border-line/50 text-accent/70 hover:border-accent/40 hover:text-fg"
               }`}
             >
               Slide {i + 1}
@@ -149,7 +149,7 @@ export default function HeroTab({
             onChange={(background) => update({ background })}
           />
         </div>
-        <p className="font-mono text-[11px] text-accent/40">
+        <p className="tabular-nums text-[11px] text-accent/60">
           Background color fills the slide and fades the images into it. Text color is used for the main title line, the
           description and the slide controls. The red title line and button always use the Primary color from the Colors tab.
         </p>
@@ -158,7 +158,7 @@ export default function HeroTab({
             const c = slide.colors[mode];
             return (
               <div key={mode} className="space-y-3">
-                <p className="flex items-center gap-2 font-mono text-[10px] tracking-[0.15em] uppercase text-fg">
+                <p className="flex items-center gap-2 tabular-nums text-[10px] uppercase text-fg tracking-wider font-medium">
                   <span className="material-symbols-outlined text-[16px]">{MODE_META[mode].icon}</span>
                   {MODE_META[mode].title}
                 </p>
@@ -170,16 +170,16 @@ export default function HeroTab({
                   style={{ backgroundColor: isHexColor(c.background) ? c.background : undefined }}
                 >
                   <p
-                    className="font-inter font-black uppercase text-[16px] leading-tight"
+                    className="font-semibold text-[16px] leading-tight font-medium"
                     style={{ color: isHexColor(c.text) ? c.text : undefined }}
                   >
                     {slide.titleWhite || "Title"}
                   </p>
-                  <p className="font-inter font-black uppercase text-[16px] leading-tight text-primary">
+                  <p className="font-semibold text-[16px] leading-tight text-primary font-medium">
                     {slide.titleRed}
                   </p>
                   <p
-                    className="font-mono text-[10px] mt-1 line-clamp-2"
+                    className="tabular-nums text-[10px] mt-1 line-clamp-2"
                     style={{ color: isHexColor(c.text) ? c.text : undefined, opacity: 0.65 }}
                   >
                     {slide.description}

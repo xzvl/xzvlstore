@@ -38,10 +38,10 @@ const STATUS_COLORS: Record<string, string> = {
   "hold pre-order": "text-fuchsia-400 border-fuchsia-400/30 bg-fuchsia-400/10",
   processing: "text-orange-400 border-orange-400/30 bg-orange-400/10",
   confirmed: "text-blue-400 border-blue-400/30 bg-blue-400/10",
-  shipped: "text-green-400 border-green-400/30 bg-green-400/10",
-  completed: "text-primary border-primary/30 bg-primary/10",
-  cancelled: "text-accent/40 border-accent/20 bg-accent/5",
-  refunded: "text-accent/40 border-accent/20 bg-accent/5",
+  shipped: "text-cyan-400 border-cyan-400/30 bg-cyan-400/10",
+  completed: "text-emerald-400 border-emerald-400/30 bg-emerald-400/10",
+  cancelled: "text-accent/60 border-accent/20 bg-accent/5",
+  refunded: "text-accent/60 border-accent/20 bg-accent/5",
 };
 
 const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed", "cancelled", "refunded"];
@@ -138,12 +138,12 @@ function ProductFilterCombobox({
 
   if (selected) {
     return (
-      <div className="flex items-center gap-2 bg-deep border border-primary/40 px-3 py-1.5 min-w-[220px]">
-        <span className="font-mono text-[12px] text-fg flex-1 truncate">{selected}</span>
+      <div className="flex items-center gap-2 bg-deep border border-primary/40 px-3 py-1.5 min-w-[220px] rounded-md">
+        <span className="tabular-nums text-[12px] text-fg flex-1 truncate">{selected}</span>
         <button
           type="button"
           onClick={() => { onSelect(null); setQuery(""); }}
-          className="flex-shrink-0 text-accent/40 hover:text-primary transition-colors"
+          className="flex-shrink-0 text-accent/60 hover:text-primary transition-colors"
         >
           <span className="material-symbols-outlined text-[15px]">close</span>
         </button>
@@ -153,28 +153,28 @@ function ProductFilterCombobox({
 
   return (
     <div ref={ref} className="relative min-w-[220px]">
-      <div className="flex items-center gap-2 bg-deep border border-line focus-within:border-primary transition-colors px-3">
-        <span className="material-symbols-outlined text-accent/30 text-[15px] flex-shrink-0">search</span>
+      <div className="flex items-center gap-2 bg-deep border border-line focus-within:border-primary transition-colors px-3 rounded-md">
+        <span className="material-symbols-outlined text-accent/50 text-[15px] flex-shrink-0">search</span>
         <input
           type="text"
           placeholder="Search product…"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          className="flex-1 bg-transparent text-fg font-mono text-[12px] py-1.5 focus:outline-none placeholder:text-accent/20"
+          className="flex-1 bg-transparent text-fg tabular-nums text-[12px] py-1.5 focus:outline-none placeholder:text-accent/40"
         />
       </div>
       {open && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-panel border border-line max-h-[200px] overflow-y-auto shadow-xl shadow-black/60">
+        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-panel border border-line max-h-[200px] overflow-y-auto shadow-xl shadow-black/60 rounded-lg">
           {filtered.length === 0 ? (
-            <div className="px-3 py-4 font-mono text-[11px] text-accent/30 text-center">No products found.</div>
+            <div className="px-3 py-4 tabular-nums text-[11px] text-accent/50 text-center">No products found.</div>
           ) : (
             filtered.map((name) => (
               <button
                 key={name}
                 type="button"
                 onClick={() => { onSelect(name); setQuery(""); setOpen(false); }}
-                className="w-full text-left px-3 py-2.5 font-mono text-[12px] text-fg hover:bg-fg/[0.06] border-b border-line/10 transition-colors truncate"
+                className="w-full text-left px-3 py-2.5 tabular-nums text-[12px] text-fg hover:bg-fg/[0.06] border-b border-line/10 transition-colors truncate"
               >
                 {name}
               </button>
@@ -219,12 +219,12 @@ function CustomerFilterCombobox({
 
   if (selected) {
     return (
-      <div className="flex items-center gap-2 bg-deep border border-primary/40 px-3 py-1.5 min-w-[220px]">
-        <span className="font-mono text-[12px] text-fg flex-1 truncate">{displayName(selected)}</span>
+      <div className="flex items-center gap-2 bg-deep border border-primary/40 px-3 py-1.5 min-w-[220px] rounded-md">
+        <span className="tabular-nums text-[12px] text-fg flex-1 truncate">{displayName(selected)}</span>
         <button
           type="button"
           onClick={() => { onSelect(null); setQuery(""); }}
-          className="flex-shrink-0 text-accent/40 hover:text-primary transition-colors"
+          className="flex-shrink-0 text-accent/60 hover:text-primary transition-colors"
         >
           <span className="material-symbols-outlined text-[15px]">close</span>
         </button>
@@ -234,28 +234,28 @@ function CustomerFilterCombobox({
 
   return (
     <div ref={ref} className="relative min-w-[220px]">
-      <div className="flex items-center gap-2 bg-deep border border-line focus-within:border-primary transition-colors px-3">
-        <span className="material-symbols-outlined text-accent/30 text-[15px] flex-shrink-0">search</span>
+      <div className="flex items-center gap-2 bg-deep border border-line focus-within:border-primary transition-colors px-3 rounded-md">
+        <span className="material-symbols-outlined text-accent/50 text-[15px] flex-shrink-0">search</span>
         <input
           type="text"
           placeholder="Filter by registered customer"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          className="flex-1 bg-transparent text-fg font-mono text-[12px] py-1.5 focus:outline-none placeholder:text-accent/20"
+          className="flex-1 bg-transparent text-fg tabular-nums text-[12px] py-1.5 focus:outline-none placeholder:text-accent/40"
         />
       </div>
       {open && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-panel border border-line max-h-[200px] overflow-y-auto shadow-xl shadow-black/60">
+        <div className="absolute top-full left-0 right-0 z-50 mt-px bg-panel border border-line max-h-[200px] overflow-y-auto shadow-xl shadow-black/60 rounded-lg">
           {filtered.length === 0 ? (
-            <div className="px-3 py-4 font-mono text-[11px] text-accent/30 text-center">No customers found.</div>
+            <div className="px-3 py-4 tabular-nums text-[11px] text-accent/50 text-center">No customers found.</div>
           ) : (
             filtered.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => { onSelect(c.id); setQuery(""); setOpen(false); }}
-                className="w-full text-left px-3 py-2.5 font-mono text-[12px] text-fg hover:bg-fg/[0.06] border-b border-line/10 transition-colors truncate"
+                className="w-full text-left px-3 py-2.5 tabular-nums text-[12px] text-fg hover:bg-fg/[0.06] border-b border-line/10 transition-colors truncate"
               >
                 {displayName(c)}
               </button>
@@ -273,7 +273,7 @@ function OrderTotalInline({ order }: { order: Order }) {
   const downPayment = order.down_payment ?? 0;
   if (downPayment <= 0 || order.status === "completed") {
     return (
-      <span className="font-mono text-[13px] text-primary font-bold">
+      <span className="tabular-nums text-[13px] text-primary font-bold">
         ₱{order.estimated_total.toLocaleString()}
       </span>
     );
@@ -282,10 +282,10 @@ function OrderTotalInline({ order }: { order: Order }) {
   return (
     <div className="leading-tight">
       <div className="flex items-center gap-1.5">
-        <span className="font-mono text-[10px] text-accent/40 line-through">₱{order.estimated_total.toLocaleString()}</span>
-        <span className="font-mono text-[13px] text-primary font-bold">₱{remaining.toLocaleString()}</span>
+        <span className="tabular-nums text-[10px] text-accent/60 line-through">₱{order.estimated_total.toLocaleString()}</span>
+        <span className="tabular-nums text-[13px] text-primary font-bold">₱{remaining.toLocaleString()}</span>
       </div>
-      <p className="font-mono text-[9px] text-accent/30">DP ₱{downPayment.toLocaleString()} paid</p>
+      <p className="tabular-nums text-[9px] text-accent/50">DP ₱{downPayment.toLocaleString()} paid</p>
     </div>
   );
 }
@@ -404,7 +404,7 @@ function CopyIconButton({
       type="button"
       onClick={handleCopy}
       title={title}
-      className={`text-accent/30 hover:text-primary transition-colors flex-shrink-0 ${className}`}
+      className={`text-accent/50 hover:text-primary transition-colors flex-shrink-0 ${className}`}
     >
       <span className="material-symbols-outlined" style={{ fontSize: size }}>{copied ? "check" : "content_copy"}</span>
     </button>
@@ -428,7 +428,7 @@ function CopyTextButton({ text, label }: { text: string; label: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/40 text-primary font-mono text-[10px] tracking-widest uppercase hover:bg-primary/20 transition-colors"
+      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/40 text-primary tabular-nums text-[10px] uppercase hover:bg-primary/20 transition-colors tracking-wider font-medium"
     >
       <span className="material-symbols-outlined text-[13px]">{copied ? "check" : "content_copy"}</span>
       {copied ? "Copied" : label}
@@ -438,7 +438,7 @@ function CopyTextButton({ text, label }: { text: string; label: string }) {
 
 function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
   return (
-    <div className="w-[30px] h-[30px] relative bg-deep border border-line/20 overflow-hidden flex-shrink-0">
+    <div className="w-[30px] h-[30px] relative bg-deep border border-line/20 overflow-hidden flex-shrink-0 rounded-md">
       {src ? (
         <Image
           src={sizedImageUrl(src, "small") ?? src}
@@ -452,7 +452,7 @@ function ItemThumb({ src, alt }: { src?: string | null; alt: string }) {
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
-          <span className="material-symbols-outlined text-[13px] text-accent/20">image</span>
+          <span className="material-symbols-outlined text-[13px] text-accent/40">image</span>
         </div>
       )}
     </div>
@@ -631,21 +631,20 @@ function AdminOrdersPageInner() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="font-mono text-[10px] tracking-[0.2em] text-primary mb-1 uppercase">ADMIN // ORDERS</p>
-          <h1 className="font-inter font-black text-[28px] uppercase text-fg">Orders</h1>
+          <h1 className="font-semibold text-fg text-[22px] tracking-tight">Orders</h1>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             type="button"
             onClick={() => setExportOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-panel border border-line text-fg font-mono text-[11px] tracking-widest uppercase hover:border-primary hover:text-primary transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-panel border border-line text-fg tabular-nums text-[11px] hover:border-primary hover:text-primary transition-colors font-medium rounded-lg"
           >
             <span className="material-symbols-outlined text-[14px]">download</span>
             Export
           </button>
           <Link
             href="/admin/orders/new"
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 border border-primary text-primary font-mono text-[11px] tracking-widest uppercase hover:bg-primary/20 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors font-medium shadow-sm"
           >
             <span className="material-symbols-outlined text-[14px]">add</span>
             New Order
@@ -662,12 +661,12 @@ function AdminOrdersPageInner() {
             { label: "Pre-Order", value: stats.preOrderOrders, icon: "schedule" },
             { label: "Shipped", value: stats.shippedOrders, icon: "local_shipping" },
           ].map((s) => (
-            <div key={s.label} className="bg-panel border border-line/30 p-4 space-y-1">
-              <div className="flex items-center gap-1.5 font-mono text-[10px] text-accent/50 uppercase tracking-widest">
+            <div key={s.label} className="bg-panel border border-line/30 p-4 space-y-1 rounded-lg">
+              <div className="flex items-center gap-1.5 tabular-nums text-[10px] text-accent/70 uppercase tracking-wider font-medium">
                 <span className="material-symbols-outlined text-[12px]">{s.icon}</span>
                 {s.label}
               </div>
-              <p className="font-inter font-black text-[22px] text-fg">{s.value}</p>
+              <p className="font-semibold text-[22px] text-fg">{s.value}</p>
             </div>
           ))}
         </div>
@@ -684,10 +683,10 @@ function AdminOrdersPageInner() {
                 onClick={() => setParam("status", tab.value, "default")}
                 title={tab.label}
                 aria-label={tab.label}
-                className={`relative flex items-center gap-2 px-3 py-2.5 font-mono text-[11px] tracking-widest uppercase transition-colors whitespace-nowrap flex-shrink-0 md:w-full md:justify-center lg:justify-start border-b-2 -mb-px md:mb-0 md:border-b-0 md:border-l-2 ${
+                className={`relative flex items-center gap-2 px-3 py-2.5 tabular-nums text-[11px] transition-colors whitespace-nowrap flex-shrink-0 md:w-full md:justify-center lg:justify-start border-b-2 -mb-px md:mb-0 md:border-b-0 md:border-l-2 font-medium rounded-none ${
                   status === tab.value
                     ? "text-primary border-primary md:bg-primary/5"
-                    : "text-accent/50 border-transparent hover:text-fg md:hover:bg-panel"
+                    : "text-accent/70 border-transparent hover:text-fg md:hover:bg-panel"
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
@@ -708,7 +707,7 @@ function AdminOrdersPageInner() {
             <select
               value={dateFilter}
               onChange={(e) => setParam("dateFilter", e.target.value, "default")}
-              className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+              className="bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">All Dates</option>
               <option value="default">Default</option>
@@ -723,14 +722,14 @@ function AdminOrdersPageInner() {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setParam("dateFrom", e.target.value, "")}
-                  className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+                  className="bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20"
                 />
-                <span className="font-mono text-[10px] text-accent/30">to</span>
+                <span className="tabular-nums text-[10px] text-accent/50">to</span>
                 <input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setParam("dateTo", e.target.value, "")}
-                  className="bg-deep border border-line text-fg font-mono text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors"
+                  className="bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20"
                 />
               </>
             )}
@@ -752,12 +751,12 @@ function AdminOrdersPageInner() {
             {filteredProductStats && (
               <div className="flex items-center gap-4 border-l border-line/30 pl-4">
                 <div>
-                  <p className="font-mono text-[9px] text-accent/30 uppercase tracking-widest">Total Qty</p>
-                  <p className="font-mono text-[14px] font-bold text-fg">{filteredProductStats.qty}</p>
+                  <p className="tabular-nums text-[9px] text-accent/50 uppercase tracking-wider font-medium">Total Qty</p>
+                  <p className="tabular-nums text-[14px] font-bold text-fg">{filteredProductStats.qty}</p>
                 </div>
                 <div>
-                  <p className="font-mono text-[9px] text-accent/30 uppercase tracking-widest">Total Amount</p>
-                  <p className="font-mono text-[14px] font-bold text-primary">₱{filteredProductStats.total.toLocaleString()}</p>
+                  <p className="tabular-nums text-[9px] text-accent/50 uppercase tracking-wider font-medium">Total Amount</p>
+                  <p className="tabular-nums text-[14px] font-bold text-primary">₱{filteredProductStats.total.toLocaleString()}</p>
                 </div>
               </div>
             )}
@@ -765,18 +764,18 @@ function AdminOrdersPageInner() {
 
           {/* Orders list */}
           {loading ? (
-            <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
+            <div className="flex items-center gap-2 tabular-nums text-[12px] text-accent/60 py-8">
               <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
               Loading orders…
             </div>
           ) : visibleOrders.length === 0 ? (
-            <div className="text-center py-16 font-mono text-[13px] text-accent/30">No orders found.</div>
+            <div className="text-center py-16 tabular-nums text-[13px] text-accent/50">No orders found.</div>
           ) : (
             <div className="space-y-2">
               {visibleOrders.map((order) => {
                 const facebookUrl = order.facebook || (order.customer_id ? customerMap[order.customer_id]?.facebook_url ?? undefined : undefined);
                 return (
-                <div key={order.id} className="bg-panel border border-line/30 overflow-hidden">
+                <div key={order.id} className="bg-panel border border-line/30 overflow-hidden rounded-lg">
 
                   {/* ── Mobile layout (hidden on md+) ── */}
                   <div className="md:hidden px-4 py-3">
@@ -785,21 +784,21 @@ function AdminOrdersPageInner() {
                       className="cursor-pointer hover:opacity-80 transition-opacity mb-2"
                       onClick={() => setExpanded(expanded === order.id ? null : order.id)}
                     >
-                      <p className="font-inter font-bold text-[14px] text-fg truncate flex items-center gap-1">
+                      <p className="font-bold text-[14px] text-fg truncate flex items-center gap-1">
                         {order.order_number != null && (
-                          <span className="text-accent/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
+                          <span className="text-accent/60 tabular-nums font-normal text-[12px] mr-1">#{order.order_number}</span>
                         )}
                         <span className="truncate"><CustomerNameLink order={order} facebookUrl={facebookUrl} /></span>
                         <CopyIconButton text={order.name} />
                       </p>
                       {order.location && (
-                        <p className="font-mono text-[11px] text-accent/40 mt-0.5">{order.location}</p>
+                        <p className="tabular-nums text-[11px] text-accent/60 mt-0.5">{order.location}</p>
                       )}
                       {order.items.length > 0 && (
                         <div className="mt-1 space-y-1">
                           {order.items.map((it, i) => (
                             <div key={i} className="flex items-center gap-1.5">
-                              <p className="font-mono text-[10px] text-accent/30 truncate">
+                              <p className="tabular-nums text-[10px] text-accent/50 truncate">
                                 {it.product} ×{it.qty}
                               </p>
                             </div>
@@ -811,14 +810,14 @@ function AdminOrdersPageInner() {
                     {/* Row 2: total · status badge · select · edit · delete */}
                     <div className="flex items-center gap-[0.4rem] flex-wrap">
                       <OrderTotalInline order={order} />
-                      <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-accent/40"}`}>
+                      <span className={`tabular-nums text-[10px] uppercase px-2 py-1 border tracking-wider font-medium ${STATUS_COLORS[order.status] ?? "text-accent/60"}`}>
                         {order.status}
                       </span>
                       <select
                         value={order.status}
                         onChange={(e) => updateStatus(order.id, e.target.value as OrderStatus)}
                         disabled={updating === order.id}
-                        className="bg-deep border border-line text-fg font-mono text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
+                        className="bg-deep border border-line text-fg tabular-nums text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50 rounded-md focus:ring-2 focus:ring-primary/20"
                       >
                         {ALL_STATUSES.map(s => (
                           <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -829,23 +828,23 @@ function AdminOrdersPageInner() {
                           text={orderSummaryText(order)}
                           title="Copy name, phone & address"
                           size={18}
-                          className="text-accent/40"
+                          className="text-accent/60"
                         />
-                        <button onClick={() => setQuickEdit(order)} className="text-accent/40 hover:text-primary transition-colors" title="Quick edit">
+                        <button onClick={() => setQuickEdit(order)} className="text-accent/60 hover:text-primary transition-colors" title="Quick edit">
                           <span className="material-symbols-outlined !text-[20px]">bolt</span>
                         </button>
-                        <Link href={`/admin/orders/${order.id}`} className="text-accent/40 hover:text-primary transition-colors" title="Edit order">
+                        <Link href={`/admin/orders/${order.id}`} className="text-accent/60 hover:text-primary transition-colors" title="Edit order">
                           <span className="material-symbols-outlined !text-[20px]">edit</span>
                         </Link>
                         {confirmDelete === order.id ? (
                           <div className="flex items-center gap-1">
-                            <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50">
+                            <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="tabular-nums text-[10px] text-red-400 border border-red-500/50 px-2 py-1 hover:bg-red-500/10 transition-colors disabled:opacity-50">
                               {deleting === order.id ? "…" : "Yes"}
                             </button>
-                            <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-accent/40 border border-line/40 px-2 py-1 hover:text-fg transition-colors">No</button>
+                            <button onClick={() => setConfirmDelete(null)} className="tabular-nums text-[10px] text-accent/60 border border-line/40 px-2 py-1 hover:text-fg transition-colors">No</button>
                           </div>
                         ) : (
-                          <button onClick={() => setConfirmDelete(order.id)} className="text-accent/30 hover:text-primary transition-colors" title="Delete order">
+                          <button onClick={() => setConfirmDelete(order.id)} className="text-accent/50 hover:text-red-400 transition-colors" title="Delete order">
                             <span className="material-symbols-outlined !text-[20px]">delete</span>
                           </button>
                         )}
@@ -858,28 +857,28 @@ function AdminOrdersPageInner() {
                     className="hidden md:flex flex-wrap items-center gap-3 px-4 py-3 cursor-pointer hover:bg-fg/[0.06] transition-colors"
                     onClick={() => setExpanded(expanded === order.id ? null : order.id)}
                   >
-                    <span className="material-symbols-outlined text-[14px] text-accent/30 flex-shrink-0">
+                    <span className="material-symbols-outlined text-[14px] text-accent/50 flex-shrink-0">
                       {expanded === order.id ? "expand_less" : "expand_more"}
                     </span>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2 truncate">
-                        <p className="font-inter font-bold text-[14px] text-fg truncate flex items-center gap-1">
+                        <p className="font-bold text-[14px] text-fg truncate flex items-center gap-1">
                           {order.order_number != null && (
-                            <span className="text-accent/40 font-mono font-normal text-[12px] mr-1">#{order.order_number}</span>
+                            <span className="text-accent/60 tabular-nums font-normal text-[12px] mr-1">#{order.order_number}</span>
                           )}
                           <span className="truncate"><CustomerNameLink order={order} facebookUrl={facebookUrl} /></span>
                           <CopyIconButton text={order.name} />
                         </p>
                         {order.location && (
-                          <p className="font-mono text-[11px] text-accent/40 flex-shrink-0">{order.location}</p>
+                          <p className="tabular-nums text-[11px] text-accent/60 flex-shrink-0">{order.location}</p>
                         )}
                       </div>
                       {order.items.length > 0 && (
                         <div className="flex items-center gap-3 mt-0.5 overflow-hidden">
                           {order.items.map((it, i) => (
                             <div key={i} className="flex items-center gap-1.5 flex-shrink-0 min-w-0">
-                              <span className="font-mono text-[10px] text-accent/30 truncate lg:max-w-[240px] max-w-[160px]">
+                              <span className="tabular-nums text-[10px] text-accent/50 truncate lg:max-w-[240px] max-w-[160px]">
                                 {it.product} ×{it.qty}
                               </span>
                             </div>
@@ -892,7 +891,7 @@ function AdminOrdersPageInner() {
                       <OrderTotalInline order={order} />
                     </div>
 
-                    <span className={`font-mono text-[10px] tracking-widest uppercase px-2 py-1 border ${STATUS_COLORS[order.status] ?? "text-accent/40"}`}>
+                    <span className={`tabular-nums text-[10px] uppercase px-2 py-1 border tracking-wider font-medium ${STATUS_COLORS[order.status] ?? "text-accent/60"}`}>
                       {order.status}
                     </span>
 
@@ -901,7 +900,7 @@ function AdminOrdersPageInner() {
                       onChange={(e) => { e.stopPropagation(); updateStatus(order.id, e.target.value as OrderStatus); }}
                       disabled={updating === order.id}
                       onClick={(e) => e.stopPropagation()}
-                      className="bg-deep border border-line text-fg font-mono text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
+                      className="bg-deep border border-line text-fg tabular-nums text-[11px] px-2 py-1 focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50 rounded-md focus:ring-2 focus:ring-primary/20"
                     >
                       {ALL_STATUSES.map(s => (
                         <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -912,12 +911,12 @@ function AdminOrdersPageInner() {
                       text={orderSummaryText(order)}
                       title="Copy name, phone & address"
                       size={18}
-                      className="text-accent/40"
+                      className="text-accent/60"
                     />
 
                     <button
                       onClick={e => { e.stopPropagation(); setQuickEdit(order); }}
-                      className="text-accent/40 hover:text-primary transition-colors flex-shrink-0"
+                      className="text-accent/60 hover:text-primary transition-colors flex-shrink-0"
                       title="Quick edit"
                     >
                       <span className="material-symbols-outlined text-[16px]">bolt</span>
@@ -926,7 +925,7 @@ function AdminOrdersPageInner() {
                     <Link
                       href={`/admin/orders/${order.id}`}
                       onClick={e => e.stopPropagation()}
-                      className="text-accent/40 hover:text-primary transition-colors flex-shrink-0"
+                      className="text-accent/60 hover:text-primary transition-colors flex-shrink-0"
                       title="Edit order"
                     >
                       <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -934,13 +933,13 @@ function AdminOrdersPageInner() {
 
                     {confirmDelete === order.id ? (
                       <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="font-mono text-[10px] text-primary border border-primary/50 px-2 py-1 hover:bg-primary/10 transition-colors disabled:opacity-50">
+                        <button onClick={() => deleteOrder(order.id)} disabled={deleting === order.id} className="tabular-nums text-[10px] text-red-400 border border-red-500/50 px-2 py-1 hover:bg-red-500/10 transition-colors disabled:opacity-50">
                           {deleting === order.id ? "…" : "Yes"}
                         </button>
-                        <button onClick={() => setConfirmDelete(null)} className="font-mono text-[10px] text-accent/40 border border-line/40 px-2 py-1 hover:text-fg transition-colors">No</button>
+                        <button onClick={() => setConfirmDelete(null)} className="tabular-nums text-[10px] text-accent/60 border border-line/40 px-2 py-1 hover:text-fg transition-colors">No</button>
                       </div>
                     ) : (
-                      <button onClick={e => { e.stopPropagation(); setConfirmDelete(order.id); }} className="text-accent/30 hover:text-primary transition-colors flex-shrink-0" title="Delete order">
+                      <button onClick={e => { e.stopPropagation(); setConfirmDelete(order.id); }} className="text-accent/50 hover:text-red-400 transition-colors flex-shrink-0" title="Delete order">
                         <span className="material-symbols-outlined text-[16px]">delete</span>
                       </button>
                     )}
@@ -956,63 +955,63 @@ function AdminOrdersPageInner() {
                           { label: "Order Date", value: formatDate(order.created_at), copy: undefined },
                         ].map((f) => (
                           <div key={f.label}>
-                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5 flex items-center gap-1">
+                            <p className="tabular-nums text-[10px] text-accent/60 uppercase mb-0.5 flex items-center gap-1 tracking-wider font-medium">
                               {f.label}
                               {f.copy && <CopyIconButton text={f.copy} />}
                             </p>
-                            <p className="font-mono text-[12px] text-fg">{f.value}</p>
+                            <p className="tabular-nums text-[12px] text-fg">{f.value}</p>
                           </div>
                         ))}
                         {order.official_receipt && (
                           <div>
-                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Official Receipt</p>
-                            <p className="font-mono text-[12px] text-fg">{order.official_receipt}</p>
+                            <p className="tabular-nums text-[10px] text-accent/60 uppercase mb-0.5 tracking-wider font-medium">Official Receipt</p>
+                            <p className="tabular-nums text-[12px] text-fg">{order.official_receipt}</p>
                           </div>
                         )}
                         {order.delivery_method && (
                           <div>
-                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Delivery</p>
-                            <p className="font-mono text-[12px] text-fg">{order.delivery_method}</p>
+                            <p className="tabular-nums text-[10px] text-accent/60 uppercase mb-0.5 tracking-wider font-medium">Delivery</p>
+                            <p className="tabular-nums text-[12px] text-fg">{order.delivery_method}</p>
                           </div>
                         )}
                         {order.delivery_method && order.delivery_method !== "Pickup" && (
                           <div>
-                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Shipping Fee</p>
-                            <p className="font-mono text-[12px] text-fg">
+                            <p className="tabular-nums text-[10px] text-accent/60 uppercase mb-0.5 tracking-wider font-medium">Shipping Fee</p>
+                            <p className="tabular-nums text-[12px] text-fg">
                               {order.shipping_fee != null ? `₱${order.shipping_fee.toLocaleString()}` : "TBA"}
                             </p>
                           </div>
                         )}
                         {order.payment_method && (
                           <div>
-                            <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Payment</p>
-                            <p className="font-mono text-[12px] text-fg">{order.payment_method}</p>
+                            <p className="tabular-nums text-[10px] text-accent/60 uppercase mb-0.5 tracking-wider font-medium">Payment</p>
+                            <p className="tabular-nums text-[12px] text-fg">{order.payment_method}</p>
                           </div>
                         )}
                         <div>
-                          <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-0.5">Payment Date</p>
-                          <p className="font-mono text-[12px] text-fg">{formatDate(order.payment_date ?? order.created_at)}</p>
+                          <p className="tabular-nums text-[10px] text-accent/60 uppercase mb-0.5 tracking-wider font-medium">Payment Date</p>
+                          <p className="tabular-nums text-[12px] text-fg">{formatDate(order.payment_date ?? order.created_at)}</p>
                         </div>
                       </div>
 
                       <div>
-                        <p className="font-mono text-[10px] text-accent/40 uppercase tracking-widest mb-2">Items</p>
+                        <p className="tabular-nums text-[10px] text-accent/60 uppercase mb-2 tracking-wider font-medium">Items</p>
                         <table className="w-full text-[12px]">
                           <thead>
                             <tr className="border-b border-line/20">
                               <th className="pb-2 w-[30px]"></th>
-                              <th className="text-left font-mono text-[10px] text-accent/40 uppercase tracking-widest pb-2">Product</th>
-                              <th className="text-center font-mono text-[10px] text-accent/40 uppercase tracking-widest pb-2">Qty</th>
-                              <th className="text-right font-mono text-[10px] text-accent/40 uppercase tracking-widest pb-2">Subtotal</th>
+                              <th className="text-left tabular-nums text-[10px] text-accent/60 uppercase pb-2 tracking-wider font-medium">Product</th>
+                              <th className="text-center tabular-nums text-[10px] text-accent/60 uppercase pb-2 tracking-wider font-medium">Qty</th>
+                              <th className="text-right tabular-nums text-[10px] text-accent/60 uppercase pb-2 tracking-wider font-medium">Subtotal</th>
                             </tr>
                           </thead>
                           <tbody>
                             {order.items.map((item, i) => (
                               <tr key={i} className="border-b border-line/10">
                                 <td className="py-2 pr-2"><ItemThumb src={item.image} alt={item.product} /></td>
-                                <td className="py-2 font-mono text-fg">{item.product}</td>
-                                <td className="py-2 text-center font-mono text-accent/60">{item.qty}</td>
-                                <td className="py-2 text-right font-mono text-primary">₱{item.subtotal.toLocaleString()}</td>
+                                <td className="py-2 tabular-nums text-fg">{item.product}</td>
+                                <td className="py-2 text-center tabular-nums text-accent/60">{item.qty}</td>
+                                <td className="py-2 text-right tabular-nums text-primary">₱{item.subtotal.toLocaleString()}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1021,26 +1020,26 @@ function AdminOrdersPageInner() {
 
                       <div className="space-y-1 max-w-xs ml-auto">
                         {order.discount > 0 && (
-                          <div className="flex justify-between font-mono text-[12px]">
-                            <span className="text-accent/50">Discount</span>
+                          <div className="flex justify-between tabular-nums text-[12px]">
+                            <span className="text-accent/70">Discount</span>
                             <span className="text-green-400">−₱{order.discount.toLocaleString()}</span>
                           </div>
                         )}
                         {(order.down_payment ?? 0) > 0 && order.status !== "completed" && (
-                          <div className="flex justify-between font-mono text-[12px]">
-                            <span className="text-accent/50">Down Payment</span>
+                          <div className="flex justify-between tabular-nums text-[12px]">
+                            <span className="text-accent/70">Down Payment</span>
                             <span className="text-blue-400">₱{(order.down_payment ?? 0).toLocaleString()}</span>
                           </div>
                         )}
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-[11px] text-accent/40 uppercase tracking-widest">
+                          <span className="tabular-nums text-[11px] text-accent/60 font-medium">
                             {(order.down_payment ?? 0) > 0 && order.status !== "completed" ? "Remaining Balance" : "Total"}
                           </span>
                           <div className="text-right">
                             {(order.down_payment ?? 0) > 0 && order.status !== "completed" && (
-                              <p className="font-mono text-[12px] text-accent/40 line-through">₱{order.estimated_total.toLocaleString()}</p>
+                              <p className="tabular-nums text-[12px] text-accent/60 line-through">₱{order.estimated_total.toLocaleString()}</p>
                             )}
-                            <span className="font-inter font-black text-[20px] text-primary">
+                            <span className="font-semibold text-[20px] text-primary">
                               ₱{((order.down_payment ?? 0) > 0 && order.status !== "completed"
                                 ? Math.max(0, order.estimated_total - (order.down_payment ?? 0))
                                 : order.estimated_total
@@ -1091,7 +1090,7 @@ function AdminOrdersPageInner() {
 export default function AdminOrdersPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center gap-2 font-mono text-[12px] text-accent/40 py-8">
+      <div className="flex items-center gap-2 tabular-nums text-[12px] text-accent/60 py-8">
         <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
         Loading orders…
       </div>
