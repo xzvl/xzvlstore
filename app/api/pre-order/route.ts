@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { adjustStock } from "@/lib/stock";
 import { getPurchasedQtyMap, PURCHASE_LIMIT_WINDOW_DAYS } from "@/lib/purchase-limit";
 import { downPaymentPerUnit } from "@/lib/store-types";
+import { getBundlesByIds } from "@/lib/bundles";
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
@@ -254,7 +255,7 @@ function buildCheckoutEmailHtml(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, location, phone, email, facebook, items, estimatedTotal, payment_method, status, customer_id, billing, shipping, order_type } = body as {
+    const { name, location, phone, email, facebook, items, estimatedTotal, payment_method, status, customer_id, billing, shipping, order_type, bundles } = body as {
       name: string;
       location: string;
       phone: string;
@@ -268,6 +269,8 @@ export async function POST(req: NextRequest) {
       billing?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
       shipping?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
       order_type?: "checkout" | "pre-order";
+      /** Bundles in the cart. Their products are already expanded into `items`. */
+      bundles?: { id: string; qty: number }[];
     };
 
     const isCheckout = order_type === "checkout";
@@ -367,6 +370,56 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Bundles: the order stores the individual products at their normal price;
+    // the bundle's price off becomes the order discount, plus a note naming the
+    // bundle. Prices and contents come from the bundle rows, never the client.
+    let bundleDiscount = 0;
+    const bundleReqs = (Array.isArray(bundles) ? bundles : [])
+      .map((b) => ({ id: String(b?.id ?? ""), qty: Math.floor(Number(b?.qty)) }))
+      .filter((b) => b.id && b.qty > 0);
+    if (bundleReqs.length > 0) {
+      const resolved = new Map(
+        (await getBundlesByIds(Array.from(new Set(bundleReqs.map((b) => b.id))))).map((b) => [b.id, b])
+      );
+      const required = new Map<string, number>();
+      for (const req of bundleReqs) {
+        const b = resolved.get(req.id);
+        if (!b || b.status !== "active" || !b.available) {
+          return NextResponse.json(
+            { error: `${b ? `"${b.name}"` : "A bundle in your cart"} is no longer available.` },
+            { status: 400 }
+          );
+        }
+        if (req.qty > b.stock) {
+          return NextResponse.json({ error: `Only ${b.stock} of "${b.name}" left in stock.` }, { status: 400 });
+        }
+        bundleDiscount += b.discount * req.qty;
+        for (const c of b.components) {
+          required.set(c.product_id, (required.get(c.product_id) ?? 0) + c.qty * req.qty);
+        }
+        orderNotes.push(
+          `Ordered as bundle: ${b.name}${req.qty > 1 ? ` ×${req.qty}` : ""}${
+            b.discount > 0 ? ` (₱${(b.discount * req.qty).toLocaleString()} off)` : ""
+          }`
+        );
+      }
+      // The bundle's products must actually be on the order to earn its discount.
+      for (const [productId, need] of required) {
+        const have = items
+          .filter((it) => it.product_id === productId)
+          .reduce((s, it) => s + (Number(it.qty) || 0), 0);
+        if (have < need) {
+          return NextResponse.json(
+            { error: "The bundles in your cart have changed — please review your cart and try again." },
+            { status: 400 }
+          );
+        }
+      }
+    }
+    const orderTotal = bundleReqs.length > 0
+      ? Math.max(0, items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0) - bundleDiscount)
+      : estimatedTotal;
+
     const date = new Date().toLocaleDateString("en-PH", {
       year: "numeric",
       month: "long",
@@ -381,21 +434,22 @@ export async function POST(req: NextRequest) {
         to: "xzviel@gmail.com",
         subject: isCheckout ? `New Order from ${name}` : `New Pre-Order from ${name}`,
         html: isCheckout
-          ? buildCheckoutEmailHtml(name, location, phone, email, facebook?.trim() || "", payment_method || null, items, estimatedTotal, date)
-          : buildPreOrderEmailHtml(name, location, phone, email, facebook?.trim() || "", items, estimatedTotal, date),
+          ? buildCheckoutEmailHtml(name, location, phone, email, facebook?.trim() || "", payment_method || null, items, orderTotal, date)
+          : buildPreOrderEmailHtml(name, location, phone, email, facebook?.trim() || "", items, orderTotal, date),
       }),
       getResend().emails.send({
         from: process.env.RESEND_FROM ?? "xzvl.store <onboarding@resend.dev>",
         to: email,
         subject: isCheckout ? "Thanks for your order! - xzvl.store" : "Thanks for your pre-order! - xzvl.store",
-        html: buildCustomerEmailHtml(isCheckout, name, items, estimatedTotal, date),
+        html: buildCustomerEmailHtml(isCheckout, name, items, orderTotal, date),
       }),
       supabase.from("orders").insert({
         name, email, phone, location,
         facebook: facebook?.trim() || null,
         status: orderStatus,
         notes: orderNotes,
-        estimated_total: estimatedTotal,
+        estimated_total: orderTotal,
+        discount: bundleDiscount,
         items,
         payment_method: payment_method || null,
         customer_id: customer_id || null,

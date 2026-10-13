@@ -9,6 +9,8 @@ import HeroSlider from "@/components/HeroSlider";
 import ProductCard from "@/components/ProductCard";
 import ProductTeaserCarousel from "@/components/ProductTeaserCarousel";
 import MobileProductCarousel from "@/components/MobileProductCarousel";
+import BundleCard from "@/components/BundleCard";
+import { getStoreBundles } from "@/lib/bundles";
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
 
@@ -143,9 +145,10 @@ function ProductGrid({ products }: { products: StoreProduct[] }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const [siteContent, newReleases, preOrders, sneakPeeks, ttProducts, hasbroProducts] = await Promise.all([
+  const [siteContent, newReleases, bundles, preOrders, sneakPeeks, ttProducts, hasbroProducts] = await Promise.all([
     getSiteContent(),
     getNewReleases(5),
+    getStoreBundles(),
     getPreOrders(),
     getSneakPeeks(),
     getProductsByBrand("takara-tomy", 5),
@@ -178,6 +181,33 @@ export default async function HomePage() {
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
               </Link>
             </div>
+          </section>
+        )}
+
+        {/* ── Bundles ── */}
+        {bundles.length > 0 && (
+          <section className="max-w-[1440px] mx-auto px-4 md:px-16 py-16 border-t border-line/20">
+            <SectionHeader
+              tag="// Save More"
+              title="Bundle Deals"
+              href={bundles.length > 4 ? "/bundles" : undefined}
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {bundles.slice(0, 4).map((b) => (
+                <BundleCard key={b.id} bundle={b} />
+              ))}
+            </div>
+            {bundles.length > 4 && (
+              <div className="mt-6 md:hidden text-center">
+                <Link
+                  href="/bundles"
+                  className="inline-flex items-center gap-2 font-mono text-[11px] tracking-widest uppercase text-fg/50 hover:text-primary transition-colors"
+                >
+                  View All
+                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </Link>
+              </div>
+            )}
           </section>
         )}
 

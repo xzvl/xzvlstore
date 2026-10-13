@@ -56,7 +56,13 @@ export type Order = {
   shipping_region: string;
   shipping_phone: string;
   notes: string[];
+  /** Proof of payment / purchase screenshots. Missing until the column is added. */
+  proof_images?: OrderProofImage[];
 };
+
+export type OrderProofType = "payment" | "purchase";
+
+export type OrderProofImage = { url: string; type: OrderProofType; uploaded_at: string };
 
 export type TaxonomyType = "brand" | "category" | "tag";
 

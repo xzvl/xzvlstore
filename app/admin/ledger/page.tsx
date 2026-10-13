@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
+import type { Order } from "@/lib/supabase";
 
 type LedgerEntry = {
   id: string;
@@ -10,6 +12,12 @@ type LedgerEntry = {
   amount: number;
   entry_date: string;
 };
+
+type EntryKind = "custom" | "order" | "dp";
+
+// A ledger row: either a custom entry from the ledger table, or a read-only
+// entry derived from an order (completed sale, or a pre-order's down payment).
+type Row = LedgerEntry & { kind: EntryKind; order?: Order };
 
 type FormState = {
   title: string;
@@ -25,6 +33,64 @@ const MONTHS = [
 ];
 
 const now = new Date();
+
+const ORDER_SOURCE = "Facebook / Website";
+
+const KIND_FILTERS: { value: "all" | "orders" | "custom"; label: string }[] = [
+  { value: "all", label: "All Entries" },
+  { value: "orders", label: "Orders Only" },
+  { value: "custom", label: "Custom Entry" },
+];
+
+function orderShippingFee(o: Order): number {
+  return o.delivery_method && o.delivery_method !== "Pickup" ? (o.shipping_fee ?? 0) : 0;
+}
+
+// "#123 Juan (SKU-1, SKU-2)" — the DP prefix is rendered separately so it can be highlighted.
+function orderLabel(o: Order, skuById: Map<string, string>): string {
+  const num = o.order_number != null ? `#${o.order_number}` : `#${o.id.slice(0, 8)}`;
+  const firstName = o.name.trim().split(/\s+/)[0] ?? "";
+  const skus = Array.from(new Set(
+    o.items.map(it => (it.product_id ? skuById.get(it.product_id) : undefined)).filter(Boolean) as string[]
+  ));
+  return `${num} ${firstName}${skus.length ? ` (${skus.join(", ")})` : ""}`;
+}
+
+// Completed orders count in full (total + shipping); pre-orders count only
+// their down payment, dated by payment date (falls back to the order date).
+function ordersToRows(orders: Order[], skuById: Map<string, string>): Row[] {
+  return orders.flatMap((o): Row[] => {
+    const date = o.payment_date ?? o.created_at;
+    if (o.status === "completed") {
+      return [{
+        id: `order-${o.id}`, kind: "order", order: o,
+        title: orderLabel(o, skuById), source: ORDER_SOURCE, type: "incoming",
+        amount: o.estimated_total + orderShippingFee(o), entry_date: date,
+      }];
+    }
+    if (o.status === "pre-order" && (o.down_payment ?? 0) > 0) {
+      return [{
+        id: `dp-${o.id}`, kind: "dp", order: o,
+        title: orderLabel(o, skuById), source: ORDER_SOURCE, type: "incoming",
+        amount: o.down_payment, entry_date: date,
+      }];
+    }
+    return [];
+  });
+}
+
+function RowTitle({ row }: { row: Row }) {
+  return (
+    <>
+      {row.kind === "dp" && (
+        <span className="inline-flex items-center tabular-nums text-[9px] font-bold uppercase tracking-wider px-1.5 py-px rounded bg-amber-400/15 text-amber-400 border border-amber-400/40 mr-1.5 align-middle">
+          DP
+        </span>
+      )}
+      {row.title}
+    </>
+  );
+}
 
 const INPUT = "w-full bg-deep border border-line text-fg tabular-nums text-[13px] px-4 py-2.5 focus:outline-none focus:border-primary transition-colors placeholder:text-accent/40 rounded-md focus:ring-2 focus:ring-primary/20";
 const LABEL = "block tabular-nums text-[10px] uppercase text-accent/60 mb-1.5 tracking-wider font-medium";
@@ -51,13 +117,16 @@ function emptyForm(): FormState {
 }
 
 export default function LedgerPage() {
-  const [entries, setEntries] = useState<LedgerEntry[]>([]);
+  const [entries, setEntries] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>(String(now.getFullYear()));
   const [filterType, setFilterType] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
+  const [filterKind, setFilterKind] = useState<"all" | "orders" | "custom">("all");
+
+  const [viewOrder, setViewOrder] = useState<Row | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<LedgerEntry | null>(null);
@@ -72,9 +141,28 @@ export default function LedgerPage() {
 
   const load = () => {
     setLoading(true);
-    fetch("/api/admin/ledger")
-      .then(r => r.json())
-      .then(data => { setEntries(Array.isArray(data) ? data : []); setLoading(false); });
+    const json = (url: string) => fetch(url, { cache: "no-store" }).then(r => r.json()).catch(() => []);
+    const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? v : []);
+    Promise.all([
+      json("/api/admin/ledger"),
+      json("/api/admin/orders?status=completed"),
+      json("/api/admin/orders?status=pre-order"),
+      json("/api/admin/products"),
+    ]).then(([ledger, completed, preOrders, products]) => {
+      const skuById = new Map<string, string>(
+        arr<{ id: string; sku: string | null }>(products)
+          .filter(p => p.sku?.trim())
+          .map(p => [p.id, p.sku!.trim()])
+      );
+      const custom: Row[] = arr<LedgerEntry>(ledger).map(e => ({ ...e, kind: "custom" }));
+      const orderRows = ordersToRows([...arr<Order>(completed), ...arr<Order>(preOrders)], skuById);
+      setEntries(
+        [...custom, ...orderRows].sort(
+          (a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
+        )
+      );
+      setLoading(false);
+    });
   };
 
   useEffect(() => { load(); }, []);
@@ -86,7 +174,10 @@ export default function LedgerPage() {
     const yearMatch = filterYear === "" || d.getFullYear() === Number(filterYear);
     const typeMatch = filterType === "all" || e.type === filterType;
     const sourceMatch = filterSource === "all" || e.source === filterSource;
-    return monthMatch && yearMatch && typeMatch && sourceMatch;
+    const kindMatch =
+      filterKind === "all" ||
+      (filterKind === "custom" ? e.kind === "custom" : e.kind !== "custom");
+    return monthMatch && yearMatch && typeMatch && sourceMatch && kindMatch;
   });
 
   const sources = Array.from(new Set(entries.map(e => e.source).filter(Boolean))).sort();
@@ -102,7 +193,7 @@ export default function LedgerPage() {
     setModalOpen(true);
   };
 
-  const openEdit = (entry: LedgerEntry) => {
+  const openEdit = (entry: Row) => {
     setEditing(entry);
     setForm({
       title: entry.title,
@@ -207,6 +298,19 @@ export default function LedgerPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
+        <div className="inline-flex bg-panel border border-line/40 rounded-lg p-0.5">
+          {KIND_FILTERS.map(k => (
+            <button
+              key={k.value}
+              onClick={() => setFilterKind(k.value)}
+              className={`tabular-nums text-[12px] px-3 py-1.5 rounded-md transition-colors font-medium ${
+                filterKind === k.value ? "bg-primary text-white shadow-sm" : "text-accent/70 hover:text-fg"
+              }`}
+            >
+              {k.label}
+            </button>
+          ))}
+        </div>
         <select
           value={filterMonth}
           onChange={e => setFilterMonth(e.target.value)}
@@ -265,10 +369,16 @@ export default function LedgerPage() {
           {/* ── Mobile cards (hidden on md+) ── */}
           <div className="md:hidden space-y-2">
             {filtered.map(entry => (
-              <div key={entry.id} className="bg-panel border border-line/20 rounded-lg">
+              <div
+                key={entry.id}
+                onClick={entry.order ? () => setViewOrder(entry) : undefined}
+                className={`bg-panel border rounded-lg ${entry.order ? "cursor-pointer" : ""} ${
+                  entry.kind === "dp" ? "border-amber-400/40" : "border-line/20"
+                }`}
+              >
                 <div className="px-4 py-3 space-y-1">
                   {/* Row 1: title */}
-                  <p className="font-semibold text-[13px] text-fg truncate">{entry.title}</p>
+                  <p className="font-semibold text-[13px] text-fg truncate"><RowTitle row={entry} /></p>
 
                   {/* Row 2: source | date and time */}
                   <p className="tabular-nums text-[11px] text-accent/60 flex items-center gap-1.5">
@@ -294,12 +404,18 @@ export default function LedgerPage() {
                       {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString("en-US")}
                     </span>
                     <span className="flex-1" />
-                    <button onClick={() => openEdit(entry)} className="text-accent/50 hover:text-primary transition-colors" title="Edit">
-                      <span className="material-symbols-outlined text-[16px]">edit</span>
-                    </button>
-                    <button onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)} className="text-accent/50 hover:text-red-400 transition-colors" title="Delete">
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                    </button>
+                    {entry.order ? (
+                      <span className="material-symbols-outlined text-[16px] text-accent/40" title="View order">receipt_long</span>
+                    ) : (
+                      <>
+                        <button onClick={() => openEdit(entry)} className="text-accent/50 hover:text-primary transition-colors" title="Edit">
+                          <span className="material-symbols-outlined text-[16px]">edit</span>
+                        </button>
+                        <button onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)} className="text-accent/50 hover:text-red-400 transition-colors" title="Delete">
+                          <span className="material-symbols-outlined text-[16px]">delete</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -337,9 +453,14 @@ export default function LedgerPage() {
             <tbody>
               {filtered.map(entry => (
                 <Fragment key={entry.id}>
-                  <tr className="border-b border-line/15 hover:bg-panel transition-colors">
-                    <td className="px-3 py-3 font-semibold text-[13px] text-fg max-w-[240px] truncate" title={entry.title}>
-                      {entry.title}
+                  <tr
+                    onClick={entry.order ? () => setViewOrder(entry) : undefined}
+                    className={`border-b border-line/15 hover:bg-panel transition-colors ${entry.order ? "cursor-pointer" : ""} ${
+                      entry.kind === "dp" ? "bg-amber-400/[0.05]" : ""
+                    }`}
+                  >
+                    <td className="px-3 py-3 font-semibold text-[13px] text-fg max-w-[240px] truncate" title={entry.kind === "dp" ? `DP ${entry.title}` : entry.title}>
+                      <RowTitle row={entry} />
                     </td>
                     <td className="px-3 py-3 tabular-nums text-[12px] text-accent/60 whitespace-nowrap">
                       {entry.source || "—"}
@@ -365,22 +486,28 @@ export default function LedgerPage() {
                       {formatDate(entry.entry_date)}
                     </td>
                     <td className="px-3 py-3">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button
-                          onClick={() => openEdit(entry)}
-                          className="p-1.5 text-accent/50 hover:text-primary transition-colors"
-                          title="Edit"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">edit</span>
-                        </button>
-                        <button
-                          onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)}
-                          className="p-1.5 text-accent/50 hover:text-red-400 transition-colors"
-                          title="Delete"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">delete</span>
-                        </button>
-                      </div>
+                      {entry.order ? (
+                        <div className="flex items-center justify-end p-1.5 text-accent/40" title="View order">
+                          <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 justify-end">
+                          <button
+                            onClick={() => openEdit(entry)}
+                            className="p-1.5 text-accent/50 hover:text-primary transition-colors"
+                            title="Edit"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">edit</span>
+                          </button>
+                          <button
+                            onClick={() => setConfirmId(confirmId === entry.id ? null : entry.id)}
+                            className="p-1.5 text-accent/50 hover:text-red-400 transition-colors"
+                            title="Delete"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
 
@@ -417,6 +544,11 @@ export default function LedgerPage() {
           </table>
           </div>
         </>
+      )}
+
+      {/* Order details */}
+      {viewOrder?.order && (
+        <OrderModal row={viewOrder} order={viewOrder.order} onClose={() => setViewOrder(null)} formatDate={formatDate} />
       )}
 
       {/* Modal */}
@@ -521,6 +653,109 @@ export default function LedgerPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function OrderModal({
+  row, order, onClose, formatDate,
+}: {
+  row: Row;
+  order: Order;
+  onClose: () => void;
+  formatDate: (iso: string) => string;
+}) {
+  const shippingFee = orderShippingFee(order);
+  const discount = order.discount ?? 0;
+  const downPayment = order.down_payment ?? 0;
+  const itemsTotal = order.items.reduce((s, it) => s + it.subtotal, 0);
+  const grandTotal = order.estimated_total + shippingFee;
+  const peso = (n: number) => `₱${n.toLocaleString("en-US")}`;
+
+  const details: [string, string][] = [
+    ["Customer", order.name],
+    ["Status", order.status],
+    ["Order Date", formatDate(order.created_at)],
+    ["Payment Date", formatDate(order.payment_date ?? order.created_at)],
+    ["Payment Method", order.payment_method || "—"],
+    ["Delivery", order.delivery_method || "—"],
+    ["Phone", order.phone || "—"],
+    ["Email", order.email || "—"],
+  ];
+  if (order.official_receipt) details.push(["Official Receipt", order.official_receipt]);
+  if (order.tracking_number) details.push(["Tracking #", order.tracking_number]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div
+        onClick={e => e.stopPropagation()}
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-canvas border border-line/60 shadow-2xl rounded-lg"
+      >
+        <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-line/30">
+          <div className="min-w-0">
+            <p className="tabular-nums text-[13px] font-semibold text-fg">
+              {row.kind === "dp" ? "Pre-order Down Payment" : "Completed Order"}
+            </p>
+            <h2 className="font-semibold text-[18px] text-fg truncate"><RowTitle row={row} /></h2>
+          </div>
+          <button onClick={onClose} className="text-accent/50 hover:text-primary transition-colors">
+            <span className="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+            {details.map(([k, v]) => (
+              <div key={k} className="min-w-0">
+                <dt className={LABEL}>{k}</dt>
+                <dd className="text-[13px] text-fg break-words">{v}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div>
+            <p className={LABEL}>Items</p>
+            <div className="border border-line/30 rounded-md divide-y divide-line/20">
+              {order.items.map((it, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 px-3 py-2 text-[13px]">
+                  <span className="text-fg min-w-0 truncate">{it.product} <span className="text-accent/60">×{it.qty}</span></span>
+                  <span className="tabular-nums text-fg whitespace-nowrap">{peso(it.subtotal)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5 tabular-nums text-[12px]">
+            <div className="flex justify-between text-accent/70"><span>Items</span><span>{peso(itemsTotal)}</span></div>
+            {discount > 0 && <div className="flex justify-between text-accent/70"><span>Discount</span><span>−{peso(discount)}</span></div>}
+            {shippingFee > 0 && <div className="flex justify-between text-accent/70"><span>Shipping Fee</span><span>{peso(shippingFee)}</span></div>}
+            <div className="flex justify-between text-fg font-semibold"><span>Total</span><span>{peso(grandTotal)}</span></div>
+            {downPayment > 0 && (
+              <div className={`flex justify-between ${row.kind === "dp" ? "text-amber-400 font-semibold" : "text-accent/70"}`}>
+                <span>Down Payment</span><span>{peso(downPayment)}</span>
+              </div>
+            )}
+            {row.kind === "dp" && (
+              <div className="flex justify-between text-accent/70">
+                <span>Remaining Balance</span><span>{peso(Math.max(0, grandTotal - downPayment))}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-line/30 flex items-center justify-end gap-3">
+          <button onClick={onClose} className="tabular-nums text-[11px] text-accent/70 hover:text-fg transition-colors px-4 py-2">
+            Close
+          </button>
+          <Link
+            href={`/admin/orders/${order.id}`}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors font-medium shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+            Open Order
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

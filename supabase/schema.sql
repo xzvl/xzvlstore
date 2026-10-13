@@ -262,3 +262,28 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- down_payment_price per unit upfront and the order is saved as "hold pre-order".
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS down_payment_required boolean NOT NULL DEFAULT false;
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS down_payment_price numeric;
+
+-- ─── Bundle products (run this against the live DB) ───────────────────────────
+-- A bundle groups several products under one price. `items` is
+-- [{ "product_id": "...", "qty": 1 }, ...]. Bundles have no stock of their own:
+-- availability is the lowest stock among the included products. Ordering a
+-- bundle saves the individual products on the order (at their normal price) plus
+-- a discount for the price difference and a note naming the bundle.
+-- CREATE TABLE IF NOT EXISTS bundles (
+--   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+--   name text NOT NULL,
+--   price numeric NOT NULL DEFAULT 0,
+--   image text,
+--   items jsonb NOT NULL DEFAULT '[]',
+--   status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+--   sort_order integer NOT NULL DEFAULT 0,
+--   created_at timestamptz DEFAULT now() NOT NULL,
+--   updated_at timestamptz DEFAULT now() NOT NULL
+-- );
+-- ALTER TABLE bundles ENABLE ROW LEVEL SECURITY;
+
+-- ─── Order proof images (run this against the live DB) ────────────────────────
+-- Proof of payment / proof of purchase screenshots uploaded in /admin/orders/[id].
+-- Each entry: { "url": "...", "type": "payment" | "purchase", "uploaded_at": "<iso>" }.
+-- Files live in the product-images bucket under order-proofs/.
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS proof_images jsonb NOT NULL DEFAULT '[]';

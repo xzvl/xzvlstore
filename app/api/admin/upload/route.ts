@@ -38,7 +38,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const base = `products/${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // Order proofs (payment/purchase screenshots) get their own folder so they
+    // stay out of the product media library, which lists "products/" only.
+    const folder = formData.get("folder") === "order-proofs" ? "order-proofs" : "products";
+    const base = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const filename = `${base}.${ext}`;
 
     const { data, error } = await supabase.storage

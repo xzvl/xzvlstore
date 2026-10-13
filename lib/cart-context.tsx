@@ -9,17 +9,37 @@ import {
   type ReactNode,
 } from "react";
 import { supabaseClient } from "@/lib/supabase-client";
+import { bundleCartPrices, parseBundleCartId } from "@/lib/bundle-types";
+
+export type CartBundleItem = { product_id: string; name: string; qty: number; unit_price: number };
 
 export type CartItem = {
+  /** Product id, or `bundle:<id>` for a bundle line (see bundleCartId). */
   id: string;
   slug: string;
   name: string;
+  /** For a bundle: the products' combined normal price. */
   price: number;
+  /** For a bundle: the bundle price. */
   sale_price: number | null;
   image: string;
   qty: number;
   stock?: number;
   max_purchase_limit?: number | null;
+  /** Set on bundle lines — the products one bundle contains. */
+  bundle?: { id: string; items: CartBundleItem[] };
+};
+
+type FreshBundle = {
+  id: string;
+  name: string;
+  status: "active" | "inactive";
+  available: boolean;
+  stock: number;
+  price: number;
+  regular_total: number;
+  image: string | null;
+  components: CartBundleItem[];
 };
 
 type FreshProduct = {
@@ -205,24 +225,73 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (items.length === 0) return { changed: false, messages: [] };
 
     let fresh: FreshProduct[] = [];
+    let freshBundles: FreshBundle[] = [];
     try {
-      const ids = items.map((i) => i.id).join(",");
+      const productIds = items.filter((i) => !i.bundle).map((i) => i.id);
+      const bundleIds = items.map((i) => parseBundleCartId(i.id)).filter((id): id is string => !!id);
       const { data: { session } } = await supabaseClient.auth.getSession();
       const headers: HeadersInit = session ? { Authorization: `Bearer ${session.access_token}` } : {};
-      const res = await fetch(`/api/products/status?ids=${encodeURIComponent(ids)}`, { headers });
-      if (!res.ok) return { changed: false, messages: [] };
-      fresh = await res.json();
+      const [productRes, bundleRes] = await Promise.all([
+        productIds.length
+          ? fetch(`/api/products/status?ids=${encodeURIComponent(productIds.join(","))}`, { headers })
+          : null,
+        bundleIds.length
+          ? fetch(`/api/bundles/status?ids=${encodeURIComponent(bundleIds.join(","))}`)
+          : null,
+      ]);
+      if ((productRes && !productRes.ok) || (bundleRes && !bundleRes.ok)) return { changed: false, messages: [] };
+      if (productRes) fresh = await productRes.json();
+      if (bundleRes) freshBundles = await bundleRes.json();
     } catch {
       return { changed: false, messages: [] };
     }
 
     const freshMap = new Map(fresh.map((p) => [p.id, p]));
+    const bundleMap = new Map(freshBundles.map((b) => [b.id, b]));
     const messages: string[] = [];
     let changed = false;
 
     setItems((prev) => {
       const next: CartItem[] = [];
       for (const item of prev) {
+        const bundleId = parseBundleCartId(item.id);
+        if (bundleId) {
+          const b = bundleMap.get(bundleId);
+          if (!b || b.status !== "active" || !b.available || b.stock <= 0) {
+            messages.push(
+              b && b.available && b.status === "active"
+                ? `${item.name} is out of stock and was removed from your cart.`
+                : `${item.name} is no longer available and was removed from your cart.`
+            );
+            changed = true;
+            continue;
+          }
+          let qty = item.qty;
+          if (qty > b.stock) {
+            qty = b.stock;
+            messages.push(`Quantity for ${item.name} was reduced to ${b.stock} (maximum allowed).`);
+            changed = true;
+          }
+          const prices = bundleCartPrices(b);
+          if (prices.price !== item.price || prices.sale_price !== item.sale_price) {
+            messages.push(`The price of ${b.name} was updated.`);
+            changed = true;
+          } else if (JSON.stringify(b.components) !== JSON.stringify(item.bundle?.items ?? [])) {
+            messages.push(`The products in ${b.name} were updated.`);
+            changed = true;
+          }
+          next.push({
+            ...item,
+            qty,
+            name: b.name,
+            ...prices,
+            image: b.image || item.image,
+            stock: b.stock,
+            bundle: { id: b.id, items: b.components },
+          });
+          continue;
+        }
+
         const p = freshMap.get(item.id);
         if (!p || p.status !== "active" || p.sneak_peek) {
           messages.push(`${item.name} is no longer available and was removed from your cart.`);

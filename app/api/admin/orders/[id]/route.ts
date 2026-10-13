@@ -36,7 +36,7 @@ export async function PATCH(
     "billing_postcode", "billing_region", "billing_phone",
     "shipping_address_1", "shipping_address_2", "shipping_city", "shipping_state",
     "shipping_postcode", "shipping_region", "shipping_phone",
-    "notes",
+    "notes", "proof_images",
   ];
   for (const f of fields) {
     if (body[f] !== undefined) updates[f] = body[f];

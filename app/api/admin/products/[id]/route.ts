@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { revalidateStorefront } from "@/lib/revalidate";
+import { disableBundlesWithProduct } from "@/lib/bundles";
 
 export async function GET(
   _req: NextRequest,
@@ -92,6 +93,8 @@ export async function PATCH(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // A product that becomes a pre-order or sneak peek disables the bundles it's in.
+  if (data.pre_order || data.sneak_peek) await disableBundlesWithProduct(id);
   revalidateStorefront();
   return NextResponse.json(data);
 }

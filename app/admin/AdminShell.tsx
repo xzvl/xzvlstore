@@ -26,6 +26,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
     group: "Catalog",
     items: [
       { href: "/admin/products", label: "Products", icon: "inventory_2" },
+      { href: "/admin/bundle-products", label: "Bundle Products", icon: "package_2" },
       { href: "/admin/taxonomy", label: "Taxonomy", icon: "account_tree" },
     ],
   },

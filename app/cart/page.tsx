@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useCart } from "@/lib/cart-context";
+import { useCart, type CartItem as CartLine } from "@/lib/cart-context";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlockedBanner from "@/components/BlockedBanner";
@@ -95,13 +95,14 @@ function CartItem({
   onQtyChange,
   onRemove,
 }: {
-  item: { id: string; slug: string; name: string; price: number; sale_price: number | null; image: string; qty: number; stock?: number; max_purchase_limit?: number | null };
+  item: CartLine;
   onQtyChange: (qty: number) => void;
   onRemove: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
   const unitPrice = item.sale_price ?? item.price;
   const subtotal = unitPrice * item.qty;
+  const href = item.bundle ? "/bundles" : `/product/${item.slug}`;
 
   const purchaseLimitBinding =
     item.max_purchase_limit != null &&
@@ -121,7 +122,7 @@ function CartItem({
   return (
     <div className="flex gap-4 bg-panel border border-line/25 p-4">
       {/* Image */}
-      <Link href={`/product/${item.slug}`} className="shrink-0">
+      <Link href={href} className="shrink-0">
         <div className="relative w-20 h-20 bg-canvas border border-line/20 overflow-hidden">
           <Image
             src={item.image}
@@ -136,11 +137,25 @@ function CartItem({
       {/* Info */}
       <div className="flex-1 min-w-0 flex flex-col justify-between">
         <div>
-          <Link href={`/product/${item.slug}`}>
+          <Link href={href}>
             <h3 className="font-inter font-bold text-[13px] text-fg leading-snug hover:text-primary transition-colors line-clamp-2">
+              {item.bundle && (
+                <span className="inline-block bg-primary px-1.5 py-px mr-1.5 font-mono text-[9px] text-white tracking-widest uppercase align-middle">
+                  Bundle
+                </span>
+              )}
               {item.name}
             </h3>
           </Link>
+          {item.bundle && (
+            <ul className="mt-1 space-y-0.5">
+              {item.bundle.items.map((b) => (
+                <li key={b.product_id} className="font-mono text-[10px] text-accent/50 truncate">
+                  {b.qty}× {b.name}
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="flex items-baseline gap-2 mt-1">
             <span className="font-mono text-[12px] text-primary">
               ₱{unitPrice.toLocaleString()}
@@ -148,6 +163,11 @@ function CartItem({
             {item.sale_price && (
               <span className="font-mono text-[10px] text-fg/25 line-through">
                 ₱{item.price.toLocaleString()}
+              </span>
+            )}
+            {item.bundle && item.sale_price != null && item.price > item.sale_price && (
+              <span className="font-mono text-[10px] text-green-500">
+                Save ₱{(item.price - item.sale_price).toLocaleString()}
               </span>
             )}
           </div>

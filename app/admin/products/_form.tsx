@@ -17,7 +17,7 @@ const SELECT = "w-full bg-fg/[0.05] border border-line text-fg tabular-nums text
 
 // ─── Image uploader ───────────────────────────────────────────────────────────
 
-function ImageUploader({
+export function ImageUploader({
   value,
   onChange,
   label,

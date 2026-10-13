@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { DbProduct, OrderStatus } from "@/lib/supabase";
+import type { DbProduct, OrderProofImage, OrderStatus } from "@/lib/supabase";
+import OrderProofs from "./_proofs";
 
 export const DELIVERY_METHODS = ["J&T Express", "LBC", "Shopee Express", "Grab Express", "Lalamove", "Pickup", "Other"];
 export const PAYMENT_METHODS = ["GCash", "Maya", "Bank Transfer", "Cash on Delivery", "Cash", "PayPal", "Other"];
@@ -397,6 +398,9 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
   const [loading, setLoading] = useState(!!orderId);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [proofs, setProofs] = useState<OrderProofImage[]>([]);
+  // Only send proof_images once the column exists, so saving keeps working before the migration.
+  const [hasProofColumn, setHasProofColumn] = useState(false);
   const [shippingCopied, setShippingCopied] = useState(false);
   // While linked, the payment date follows the order date and is saved as null
   // ("not set"), which BIR/analytics resolve to the order date. Editing the
@@ -454,6 +458,8 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             })),
             notes: Array.isArray(order.notes) ? order.notes : [],
           });
+          setProofs(Array.isArray(order.proof_images) ? order.proof_images : []);
+          setHasProofColumn("proof_images" in order);
           setLoading(false);
         });
     }
@@ -598,6 +604,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
           subtotal: parseFloat(it.subtotal) || 0,
         })),
         notes: form.notes.length > 0 ? form.notes : null,
+        ...(orderId && (hasProofColumn || proofs.length > 0) ? { proof_images: proofs } : {}),
       };
       const res = await fetch(
         orderId ? `/api/admin/orders/${orderId}` : "/api/admin/orders",
@@ -888,6 +895,9 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
           </div>
         </div>
       </div>
+
+      {/* Proof of payment / purchase */}
+      {orderId && <OrderProofs value={proofs} onChange={setProofs} />}
 
       {/* Notes */}
       <div className="bg-panel border border-line/30 p-5 space-y-3 rounded-lg">

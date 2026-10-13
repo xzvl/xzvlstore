@@ -329,14 +329,29 @@ export default function CheckoutPage() {
     }
 
     try {
-      const orderItems = items.map((item) => ({
-        product_id: item.id,
-        product: item.name,
-        qty: item.qty,
-        unit_price: item.sale_price ?? item.price,
-        subtotal: (item.sale_price ?? item.price) * item.qty,
-      }));
-      const estimatedTotal = orderItems.reduce((s, i) => s + i.subtotal, 0);
+      // Bundles are saved as their individual products at normal price; the
+      // server turns the bundle's price off into the order discount.
+      const orderItems = items.flatMap((item) =>
+        item.bundle
+          ? item.bundle.items.map((b) => ({
+              product_id: b.product_id,
+              product: b.name,
+              qty: b.qty * item.qty,
+              unit_price: b.unit_price,
+              subtotal: b.unit_price * b.qty * item.qty,
+            }))
+          : [{
+              product_id: item.id,
+              product: item.name,
+              qty: item.qty,
+              unit_price: item.sale_price ?? item.price,
+              subtotal: (item.sale_price ?? item.price) * item.qty,
+            }]
+      );
+      const bundles = items
+        .filter((item) => item.bundle)
+        .map((item) => ({ id: item.bundle!.id, qty: item.qty }));
+      const estimatedTotal = total;
 
       const deliveryAddress = form.ship_to_different
         ? formatAddress(form.shipping)
@@ -358,6 +373,7 @@ export default function CheckoutPage() {
           billing: form.billing,
           shipping: form.ship_to_different ? form.shipping : form.billing,
           items: orderItems,
+          bundles,
           estimatedTotal,
         }),
       });
@@ -736,11 +752,21 @@ export default function CheckoutPage() {
                           </p>
                           <p className="font-mono text-[10px] text-accent/40 mt-0.5">
                             × {item.qty}
+                            {item.bundle && (
+                              <span className="ml-1.5">· Bundle of {item.bundle.items.reduce((s, b) => s + b.qty, 0)}</span>
+                            )}
                           </p>
                         </div>
-                        <span className="font-mono text-[12px] text-fg shrink-0">
-                          ₱{((item.sale_price ?? item.price) * item.qty).toLocaleString()}
-                        </span>
+                        <div className="shrink-0 text-right leading-tight">
+                          <span className="font-mono text-[12px] text-fg">
+                            ₱{((item.sale_price ?? item.price) * item.qty).toLocaleString()}
+                          </span>
+                          {item.bundle && item.sale_price != null && item.sale_price < item.price && (
+                            <p className="font-mono text-[10px] text-fg/30 line-through">
+                              ₱{(item.price * item.qty).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
