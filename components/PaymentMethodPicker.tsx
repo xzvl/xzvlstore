@@ -7,16 +7,19 @@ import { sizedImageUrl } from "@/lib/image-sizes";
 
 // Storefront picker for the payment methods configured in /admin/content →
 // Payment. Shows a radio-style button per method and, for the selected one,
-// its account details and QR code so the customer can pay right away.
+// its QR code and account details so the customer can pay right away.
 export default function PaymentMethodPicker({
   methods,
   value,
   onChange,
+  proof,
 }: {
   methods: PaymentMethod[];
   /** The selected method's id. */
   value: string;
   onChange: (id: string) => void;
+  /** Shown to the right of the QR code and details, e.g. the proof-of-payment upload. */
+  proof?: React.ReactNode;
 }) {
   const selected = methods.find((m) => m.id === value) ?? null;
 
@@ -45,12 +48,12 @@ export default function PaymentMethodPicker({
           ))}
         </div>
       )}
-      {selected && <PaymentMethodDetails method={selected} />}
+      {selected && <PaymentMethodDetails method={selected} proof={proof} />}
     </div>
   );
 }
 
-function PaymentMethodDetails({ method }: { method: PaymentMethod }) {
+function PaymentMethodDetails({ method, proof }: { method: PaymentMethod; proof?: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
   const hasDetails = method.accountName || method.accountNumber || method.qrCode;
 
@@ -63,7 +66,27 @@ function PaymentMethodDetails({ method }: { method: PaymentMethod }) {
   };
 
   return (
-    <div className="border border-line/40 bg-panel p-4 flex flex-col sm:flex-row gap-4">
+    <div className={`border border-line/40 bg-panel p-4 flex flex-col gap-4 ${proof ? "md:flex-row" : "sm:flex-row"}`}>
+      {method.qrCode && (
+        <a
+          href={method.qrCode}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-48 mx-auto sm:mx-0 sm:w-40 aspect-square relative border border-line/30 bg-white flex-shrink-0 self-start"
+          title="Open QR code"
+        >
+          <Image
+            src={sizedImageUrl(method.qrCode, "medium") ?? method.qrCode}
+            alt={`${method.company} QR code`}
+            fill
+            sizes="192px"
+            className="object-contain"
+            onError={(e) => {
+              if (e.currentTarget.src !== method.qrCode) e.currentTarget.src = method.qrCode;
+            }}
+          />
+        </a>
+      )}
       <div className="flex-1 min-w-0 space-y-3">
         <div>
           <p className="font-mono text-[10px] tracking-widest uppercase text-accent/50 mb-0.5">Pay via</p>
@@ -96,26 +119,7 @@ function PaymentMethodDetails({ method }: { method: PaymentMethod }) {
           <p className="font-mono text-[11px] text-accent/40">Payment details will be sent after your order is confirmed.</p>
         )}
       </div>
-      {method.qrCode && (
-        <a
-          href={method.qrCode}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-48 mx-auto sm:mx-0 sm:w-40 aspect-square relative border border-line/30 bg-white flex-shrink-0"
-          title="Open QR code"
-        >
-          <Image
-            src={sizedImageUrl(method.qrCode, "medium") ?? method.qrCode}
-            alt={`${method.company} QR code`}
-            fill
-            sizes="192px"
-            className="object-contain"
-            onError={(e) => {
-              if (e.currentTarget.src !== method.qrCode) e.currentTarget.src = method.qrCode;
-            }}
-          />
-        </a>
-      )}
+      {proof && <div className="w-full md:w-60 flex-shrink-0">{proof}</div>}
     </div>
   );
 }

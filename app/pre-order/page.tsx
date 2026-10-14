@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlockedBanner from "@/components/BlockedBanner";
 import PaymentMethodPicker from "@/components/PaymentMethodPicker";
+import PaymentProofUpload, { type UploadedPaymentProof } from "@/components/PaymentProofUpload";
 import { useSiteContent } from "@/components/SiteContentProvider";
 import { activePaymentMethods } from "@/lib/site-content";
 import { downPaymentPerUnit } from "@/lib/store-types";
@@ -458,10 +459,13 @@ export default function PreOrderPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submittedProducts, setSubmittedProducts] = useState<Product[]>([]);
   const [submittedDownPayment, setSubmittedDownPayment] = useState(0);
+  const [submittedVerified, setSubmittedVerified] = useState(false);
   const [error, setError] = useState("");
+  const [proof, setProof] = useState<UploadedPaymentProof | null>(null);
+  const [proofError, setProofError] = useState("");
 
-  // Only the default payment method is offered for down payments (falls back to
-  // the first enabled one if the default is disabled).
+  // Only the default payment method is offered for pre-order payments (falls
+  // back to the first enabled one if the default is disabled).
   const selectedPaymentMethod = activePaymentMethods(useSiteContent().payment)[0] ?? null;
 
   useEffect(() => {
@@ -554,6 +558,13 @@ export default function PreOrderPage() {
   // Only show products with pre_order flag active
   const preOrderProducts = products.filter((p) => p.pre_order === true);
   const downPaymentDue = requiredDownPayment(rows, preOrderProducts);
+  const orderTotal = rows.reduce((sum, r) => {
+    const p = preOrderProducts.find((x) => x.id === r.productId);
+    return sum + (p ? (p.sale_price ?? p.price) * r.qty : 0);
+  }, 0);
+  // The proof of payment must show the down payment if one is required,
+  // otherwise the full total.
+  const amountDue = downPaymentDue > 0 ? downPaymentDue : orderTotal;
 
   const setContact$ = (field: keyof ContactForm, value: string) =>
     setContact((prev) => ({ ...prev, [field]: value }));
@@ -577,6 +588,11 @@ export default function PreOrderPage() {
 
     const filledRows = rows.filter((r) => r.productId);
     if (filledRows.length === 0) { setError("Please select at least one product."); return; }
+    if (!proof) {
+      setProofError("Please upload a screenshot of your payment.");
+      setError("Proof of payment is required.");
+      return;
+    }
 
     setError("");
     setSubmitting(true);
@@ -610,15 +626,15 @@ export default function PreOrderPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...contact, items: orderItems, estimatedTotal, billing, shipping, order_type: "pre-order", customer_id: userId,
-          payment_method: downPaymentDue > 0 ? selectedPaymentMethod?.company : undefined,
+          payment_method: selectedPaymentMethod?.company,
+          payment_proof_url: proof.url,
         }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to submit order.");
-      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to submit order.");
       setSubmittedProducts(filledRows.map((r) => preOrderProducts.find((p) => p.id === r.productId)!));
       setSubmittedDownPayment(downPaymentDue);
+      setSubmittedVerified(!!data.verified);
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -645,24 +661,29 @@ export default function PreOrderPage() {
               </p>
             </div>
 
-            {submittedDownPayment > 0 && (
+            {submittedVerified ? (
+              <div className="w-full border border-green-400/40 bg-green-400/5 px-4 py-4 text-left space-y-2">
+                <p className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase text-green-400">
+                  <span className="material-symbols-outlined text-[16px]">verified</span>
+                  Payment Verified
+                </p>
+                <p className="font-mono text-[12px] text-accent/70 leading-relaxed">
+                  Your {submittedDownPayment > 0 ? "down payment" : "payment"} was verified and your pre-order is confirmed.
+                </p>
+              </div>
+            ) : (
               <div className="w-full border border-orange-400/40 bg-orange-400/5 px-4 py-4 text-left space-y-2">
                 <p className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase text-orange-400">
                   <span className="material-symbols-outlined text-[16px]">pending</span>
-                  On Hold — Down Payment Needed
+                  On Hold — Reviewing Payment
                 </p>
                 <p className="font-mono text-[12px] text-accent/70 leading-relaxed">
-                  Pay the down payment of <span className="text-fg font-bold">₱{submittedDownPayment.toLocaleString()}</span>
-                  {selectedPaymentMethod ? <> via <span className="text-fg">{selectedPaymentMethod.company}</span></> : null}, then send a{" "}
-                  <span className="text-fg/80">screenshot of your payment</span> to{" "}
+                  We couldn&apos;t automatically verify your proof of payment, so your pre-order is on hold until we
+                  check it. If anything&apos;s wrong we&apos;ll message you, or reach us at{" "}
                   <a href="https://www.facebook.com/xzviel" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                     facebook.com/xzviel
-                  </a>{" "}
-                  to confirm your pre-order.
+                  </a>.
                 </p>
-                {selectedPaymentMethod && (
-                  <PaymentMethodPicker methods={[selectedPaymentMethod]} value={selectedPaymentMethod.id} onChange={() => {}} />
-                )}
               </div>
             )}
 
@@ -857,20 +878,44 @@ export default function PreOrderPage() {
             </section>
           )}
 
-          {/* ── Down Payment ── */}
-          {downPaymentDue > 0 && (
+          {/* ── Payment ── */}
+          {rows.some((r) => r.productId) && (
             <section className="animate-fade-up relative" style={{ animationDelay: "320ms" }}>
-              {sectionTitle("SECTION_04", "Down Payment")}
+              {sectionTitle("SECTION_04", downPaymentDue > 0 ? "Down Payment" : "Payment")}
               <p className="font-mono text-[12px] text-accent/60 leading-relaxed mb-4">
-                This pre-order requires a down payment of <span className="text-orange-400 font-bold">₱{downPaymentDue.toLocaleString()}</span>. Your
-                pre-order is put on hold until we receive it.
+                {downPaymentDue > 0 ? "This pre-order requires a down payment of " : "Pay the total of "}
+                <span className="text-orange-400 font-bold">₱{amountDue.toLocaleString()}</span>, then upload a screenshot
+                of your payment. Verified payments are confirmed right away; anything we can&apos;t verify is put on hold
+                until we check it.
               </p>
               {selectedPaymentMethod ? (
-                <PaymentMethodPicker methods={[selectedPaymentMethod]} value={selectedPaymentMethod.id} onChange={() => {}} />
+                <PaymentMethodPicker
+                  methods={[selectedPaymentMethod]}
+                  value={selectedPaymentMethod.id}
+                  onChange={() => {}}
+                  proof={
+                    <PaymentProofUpload
+                      expectedAmount={amountDue}
+                      value={proof}
+                      onChange={(p) => { setProof(p); if (p) { setProofError(""); setError(""); } }}
+                      error={proofError}
+                    />
+                  }
+                />
               ) : (
-                <p className="border border-line/40 bg-panel px-4 py-3 font-mono text-[12px] text-accent/50">
-                  Message us on Facebook for the payment details.
-                </p>
+                <div className="space-y-4">
+                  <p className="border border-line/40 bg-panel px-4 py-3 font-mono text-[12px] text-accent/50">
+                    Message us on Facebook for the payment details.
+                  </p>
+                  <div className="max-w-sm">
+                    <PaymentProofUpload
+                      expectedAmount={amountDue}
+                      value={proof}
+                      onChange={(p) => { setProof(p); if (p) { setProofError(""); setError(""); } }}
+                      error={proofError}
+                    />
+                  </div>
+                </div>
               )}
             </section>
           )}
@@ -899,13 +944,8 @@ export default function PreOrderPage() {
               <p className="font-mono text-[11px] tracking-widest uppercase text-orange-400/70">Important</p>
               <p className="font-mono text-[12px] text-accent/50 leading-relaxed">
                 After submitting, please take a{" "}
-                <span className="text-fg/80">screenshot of the confirmation/thank you message</span>
-                {downPaymentDue > 0 && (
-                  <>
-                    {" "}and a <span className="text-fg/80">screenshot of your down payment</span>
-                  </>
-                )}{" "}
-                and send {downPaymentDue > 0 ? "them" : "it"} to our official Facebook page{" "}
+                <span className="text-fg/80">screenshot of the confirmation/thank you message</span>{" "}
+                and send it to our official Facebook page{" "}
                 <a
                   href="https://www.facebook.com/xzviel"
                   target="_blank"
@@ -926,9 +966,7 @@ export default function PreOrderPage() {
               {submitting ? "Submitting…" : "Submit Pre-Order"}
             </button>
             <p className="mt-3 font-mono text-[11px] text-accent/40">
-              {downPaymentDue > 0
-                ? "Your pre-order is placed on hold until we confirm your down payment."
-                : "We'll contact you to confirm your order and provide payment details."}
+              A proof of payment is required. If it can&apos;t be verified automatically, your pre-order is placed on hold until we check it.
             </p>
           </div>
         </form>

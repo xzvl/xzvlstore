@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { PaymentVerification } from "@/lib/payment-proof";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -58,6 +59,10 @@ export type Order = {
   notes: string[];
   /** Proof of payment / purchase screenshots. Missing until the column is added. */
   proof_images?: OrderProofImage[];
+  /** Reference number read from the customer's proof of payment (OCR). */
+  payment_reference?: string | null;
+  /** What OCR read from the proof of payment and whether it matched. */
+  payment_verification?: PaymentVerification | null;
 };
 
 export type OrderProofType = "payment" | "purchase";

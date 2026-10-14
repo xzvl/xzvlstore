@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlockedBanner from "@/components/BlockedBanner";
 import PaymentMethodPicker from "@/components/PaymentMethodPicker";
+import PaymentProofUpload, { type UploadedPaymentProof } from "@/components/PaymentProofUpload";
 import { useSiteContent } from "@/components/SiteContentProvider";
 import { activePaymentMethods } from "@/lib/site-content";
 
@@ -232,6 +233,9 @@ export default function CheckoutPage() {
   const [submitted, setSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState("");
+  const [proof, setProof] = useState<UploadedPaymentProof | null>(null);
+  const [proofError, setProofError] = useState("");
+  const [paymentVerified, setPaymentVerified] = useState(false);
 
   useEffect(() => {
     supabaseClient.auth.getSession().then(async ({ data }) => {
@@ -305,7 +309,9 @@ export default function CheckoutPage() {
       if (shippingErr) newErrors.shipping = shippingErr;
     }
 
-    if (Object.keys(newErrors).length) {
+    setProofError(proof ? "" : "Please upload a screenshot of your payment.");
+
+    if (Object.keys(newErrors).length || !proof) {
       setErrors(newErrors);
       return;
     }
@@ -367,7 +373,7 @@ export default function CheckoutPage() {
           facebook: form.facebook,
           location: [form.billing.city, form.billing.state].filter(Boolean).join(", "),
           payment_method: configuredMethods.find((m) => m.id === form.payment_method)?.company ?? form.payment_method,
-          status: "pending",
+          payment_proof_url: proof.url,
           order_type: "checkout",
           customer_id: userId,
           billing: form.billing,
@@ -385,6 +391,7 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       setOrderNumber(data.order_number ?? null);
+      setPaymentVerified(!!data.verified);
       clearCart();
       setSubmitted(true);
     } catch (err) {
@@ -416,10 +423,17 @@ export default function CheckoutPage() {
                 Order #{String(orderNumber).padStart(5, "0")}
               </p>
             )}
-            <p className="font-mono text-[12px] text-accent/50 leading-relaxed mb-8">
-              Your order has been placed. We&apos;ll reach out via email or phone
-              to confirm your order and arrange payment.
-            </p>
+            {paymentVerified ? (
+              <p className="font-mono text-[12px] text-accent/50 leading-relaxed mb-8">
+                <span className="text-green-400">Payment verified — your order is confirmed.</span>{" "}
+                We&apos;ll reach out via email or phone about shipping.
+              </p>
+            ) : (
+              <p className="font-mono text-[12px] text-accent/50 leading-relaxed mb-8">
+                Your order has been placed and is <span className="text-orange-400">pending</span> while we
+                review your proof of payment. We&apos;ll reach out via email or phone once it&apos;s confirmed.
+              </p>
+            )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/"
@@ -468,6 +482,15 @@ export default function CheckoutPage() {
   }
 
   // ── Main form ───────────────────────────────────────────────────────────────
+
+  const proofUpload = (
+    <PaymentProofUpload
+      expectedAmount={total}
+      value={proof}
+      onChange={(p) => { setProof(p); if (p) setProofError(""); }}
+      error={proofError}
+    />
+  );
 
   return (
     <>
@@ -684,6 +707,7 @@ export default function CheckoutPage() {
                       methods={configuredMethods}
                       value={form.payment_method}
                       onChange={(id) => setField("payment_method", id)}
+                      proof={proofUpload}
                     />
                   ) : (
                     <>
@@ -712,9 +736,7 @@ export default function CheckoutPage() {
                           </button>
                         ))}
                       </div>
-                      <p className="font-mono text-[10px] text-accent/30 mt-4 leading-relaxed">
-                        Payment instructions will be sent after your order is confirmed.
-                      </p>
+                      <div className="mt-4 max-w-sm">{proofUpload}</div>
                     </>
                   )}
                 </div>

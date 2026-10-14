@@ -5,6 +5,11 @@ import { adjustStock } from "@/lib/stock";
 import { getPurchasedQtyMap, PURCHASE_LIMIT_WINDOW_DAYS } from "@/lib/purchase-limit";
 import { downPaymentPerUnit } from "@/lib/store-types";
 import { getBundlesByIds } from "@/lib/bundles";
+import { verifyPayment, verificationNote, type PaymentVerification } from "@/lib/payment-proof";
+import { loadPaymentProof, isDuplicateReference } from "@/lib/payment-proof-ocr";
+
+// Re-reading a payment screenshot (if its saved OCR result is missing) can take a while.
+export const maxDuration = 60;
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
@@ -42,6 +47,10 @@ function orderItemsRows(items: OrderItem[]) {
     .join("");
 }
 
+function paymentRow(payment: string) {
+  return `<tr><td style="padding:5px 0;color:#ebbbb4;vertical-align:top;">Payment</td><td style="padding:5px 0;">${payment}</td></tr>`;
+}
+
 function buildPreOrderEmailHtml(
   name: string,
   location: string,
@@ -50,7 +59,8 @@ function buildPreOrderEmailHtml(
   facebook: string,
   items: OrderItem[],
   estimatedTotal: number,
-  date: string
+  date: string,
+  payment: string
 ) {
   const rows = orderItemsRows(items);
 
@@ -73,6 +83,7 @@ function buildPreOrderEmailHtml(
         <tr><td style="padding:5px 0;color:#ebbbb4;">Phone</td><td style="padding:5px 0;">${phone || "—"}</td></tr>
         <tr><td style="padding:5px 0;color:#ebbbb4;">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
         <tr><td style="padding:5px 0;color:#ebbbb4;">Facebook</td><td style="padding:5px 0;">${facebook ? `<a href="${facebook}" style="color:#ed0d11;">${facebook}</a>` : "—"}</td></tr>
+        ${paymentRow(payment)}
       </table>
     </div>
 
@@ -188,7 +199,8 @@ function buildCheckoutEmailHtml(
   paymentMethod: string | null,
   items: OrderItem[],
   estimatedTotal: number,
-  date: string
+  date: string,
+  payment: string
 ) {
   const rows = orderItemsRows(items);
 
@@ -212,6 +224,7 @@ function buildCheckoutEmailHtml(
         <tr><td style="padding:5px 0;color:#ebbbb4;">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
         <tr><td style="padding:5px 0;color:#ebbbb4;">Facebook</td><td style="padding:5px 0;">${facebook ? `<a href="${facebook}" style="color:#ed0d11;">${facebook}</a>` : "—"}</td></tr>
         <tr><td style="padding:5px 0;color:#ebbbb4;">Payment Method</td><td style="padding:5px 0;">${paymentMethod || "—"}</td></tr>
+        ${paymentRow(payment)}
       </table>
     </div>
 
@@ -250,12 +263,35 @@ function buildCheckoutEmailHtml(
 </html>`;
 }
 
+// ─── Order insert ─────────────────────────────────────────────────────────────
+
+/**
+ * Inserts the order with its payment-proof columns. If those columns aren't in
+ * the database yet, saves the order without them (the proof summary is still
+ * in the notes) rather than losing it.
+ */
+async function insertOrder(
+  row: Record<string, unknown> & { notes: string[] },
+  proofFields: Record<string, unknown> & { proof_images: { url: string; type: string; uploaded_at: string }[] }
+) {
+  const first = await supabase.from("orders").insert({ ...row, ...proofFields });
+  if (!first.error) return first;
+  if (first.error.code !== "42703" && first.error.code !== "PGRST204") throw first.error;
+  console.error("[pre-order] Payment proof columns missing — run the migration in supabase/schema.sql:", first.error.message);
+  const retry = await supabase.from("orders").insert({
+    ...row,
+    notes: [...row.notes, `Proof of payment image: ${proofFields.proof_images[0].url}`],
+  });
+  if (retry.error) throw retry.error;
+  return retry;
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, location, phone, email, facebook, items, estimatedTotal, payment_method, status, customer_id, billing, shipping, order_type, bundles } = body as {
+    const { name, location, phone, email, facebook, items, estimatedTotal, payment_method, customer_id, billing, shipping, order_type, bundles, payment_proof_url } = body as {
       name: string;
       location: string;
       phone: string;
@@ -264,13 +300,14 @@ export async function POST(req: NextRequest) {
       items: OrderItem[];
       estimatedTotal: number;
       payment_method?: string;
-      status?: string;
       customer_id?: string;
       billing?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
       shipping?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
       order_type?: "checkout" | "pre-order";
       /** Bundles in the cart. Their products are already expanded into `items`. */
       bundles?: { id: string; qty: number }[];
+      /** Public URL returned by /api/payment-proof. Required. */
+      payment_proof_url?: string;
     };
 
     const isCheckout = order_type === "checkout";
@@ -280,6 +317,9 @@ export async function POST(req: NextRequest) {
     }
     if (!facebook?.trim()) {
       return NextResponse.json({ error: "Facebook link is required." }, { status: 400 });
+    }
+    if (!payment_proof_url) {
+      return NextResponse.json({ error: "Please upload your proof of payment." }, { status: 400 });
     }
 
     const phoneDigits = phone.replace(/[\s\-().+]/g, "");
@@ -346,27 +386,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Pre-order products that require a down payment put the whole order on
-    // hold until the admin verifies the payment screenshot. Decided here from
-    // the product rows, never from what the client sent.
-    let orderStatus = status || "pre-order";
+    // Pre-order products that require a down payment: only the down payment is
+    // due now. Decided here from the product rows, never from what the client sent.
     const orderNotes: string[] = [];
+    let requiredDp = 0;
     if (!isCheckout && orderedIds.length > 0) {
       const { data: dpProducts } = await supabase
         .from("products")
         .select("id, pre_order, down_payment_required, down_payment_price")
         .in("id", orderedIds)
         .eq("down_payment_required", true);
-      const requiredDp = (dpProducts ?? []).reduce((sum, p) => {
+      requiredDp = (dpProducts ?? []).reduce((sum, p) => {
         const perUnit = downPaymentPerUnit(p);
         const qty = items.filter((it) => it.product_id === p.id).reduce((s, it) => s + (Number(it.qty) || 0), 0);
         return sum + perUnit * qty;
       }, 0);
       if (requiredDp > 0) {
-        orderStatus = "hold pre-order";
-        orderNotes.push(
-          `Required down payment: ₱${requiredDp.toLocaleString()}${payment_method ? ` via ${payment_method}` : ""}. Awaiting payment screenshot on Facebook.`
-        );
+        orderNotes.push(`Required down payment: ₱${requiredDp.toLocaleString()}${payment_method ? ` via ${payment_method}` : ""}.`);
       }
     }
 
@@ -420,6 +456,39 @@ export async function POST(req: NextRequest) {
       ? Math.max(0, items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0) - bundleDiscount)
       : estimatedTotal;
 
+    // The amount the proof of payment must show, priced from the product rows
+    // (not the client's totals): the down payment if one is required,
+    // otherwise the full order total.
+    const { data: priced } = orderedIds.length
+      ? await supabase.from("products").select("id, price, sale_price").in("id", orderedIds)
+      : { data: [] };
+    const priceById = new Map((priced ?? []).map((p) => [p.id as string, Number(p.sale_price ?? p.price) || 0]));
+    const itemsTotal = items.reduce(
+      (s, it) => s + (it.product_id && priceById.has(it.product_id)
+        ? priceById.get(it.product_id)! * (Number(it.qty) || 0)
+        : Number(it.subtotal) || 0),
+      0
+    );
+    const expectedPayment = requiredDp > 0 ? requiredDp : Math.max(0, itemsTotal - bundleDiscount);
+
+    const proof = await loadPaymentProof(payment_proof_url);
+    if (!proof.found) {
+      return NextResponse.json({ error: "Your proof of payment couldn't be found. Please upload it again." }, { status: 400 });
+    }
+    const verification: PaymentVerification = verifyPayment(
+      proof.extraction,
+      expectedPayment,
+      await isDuplicateReference(proof.extraction?.reference ?? null)
+    );
+    const paymentNote = verificationNote(verification);
+    orderNotes.push(paymentNote);
+
+    // Verified: checkout → confirmed, pre-order → pre-order.
+    // Not verified: checkout → pending, pre-order → hold pre-order.
+    const orderStatus = isCheckout
+      ? (verification.verified ? "confirmed" : "pending")
+      : (verification.verified ? "pre-order" : "hold pre-order");
+
     const date = new Date().toLocaleDateString("en-PH", {
       year: "numeric",
       month: "long",
@@ -434,8 +503,8 @@ export async function POST(req: NextRequest) {
         to: "xzviel@gmail.com",
         subject: isCheckout ? `New Order from ${name}` : `New Pre-Order from ${name}`,
         html: isCheckout
-          ? buildCheckoutEmailHtml(name, location, phone, email, facebook?.trim() || "", payment_method || null, items, orderTotal, date)
-          : buildPreOrderEmailHtml(name, location, phone, email, facebook?.trim() || "", items, orderTotal, date),
+          ? buildCheckoutEmailHtml(name, location, phone, email, facebook?.trim() || "", payment_method || null, items, orderTotal, date, paymentNote)
+          : buildPreOrderEmailHtml(name, location, phone, email, facebook?.trim() || "", items, orderTotal, date, paymentNote),
       }),
       getResend().emails.send({
         from: process.env.RESEND_FROM ?? "xzvl.store <onboarding@resend.dev>",
@@ -443,7 +512,7 @@ export async function POST(req: NextRequest) {
         subject: isCheckout ? "Thanks for your order! - xzvl.store" : "Thanks for your pre-order! - xzvl.store",
         html: buildCustomerEmailHtml(isCheckout, name, items, orderTotal, date),
       }),
-      supabase.from("orders").insert({
+      insertOrder({
         name, email, phone, location,
         facebook: facebook?.trim() || null,
         status: orderStatus,
@@ -467,6 +536,12 @@ export async function POST(req: NextRequest) {
         shipping_postcode: shipping?.postcode || "",
         shipping_region: shipping?.region || "",
         shipping_phone: phone || "",
+      }, {
+        payment_reference: verification.reference,
+        payment_verification: verification,
+        proof_images: [{ url: payment_proof_url, type: "payment", uploaded_at: new Date().toISOString() }],
+        ...(verification.verified && !isCheckout && requiredDp > 0 ? { down_payment: requiredDp } : {}),
+        ...(verification.verified && verification.date ? { payment_date: `${verification.date}T00:00:00+08:00` } : {}),
       }),
     ]);
 
@@ -511,7 +586,10 @@ export async function POST(req: NextRequest) {
       if (syncError) console.error("[pre-order] Customer facebook sync error:", syncError);
     }
 
-    return NextResponse.json({ success: true, errors }, { status: 200 });
+    return NextResponse.json(
+      { success: true, errors, status: orderStatus, verified: verification.verified, flags: verification.flags },
+      { status: 200 }
+    );
   } catch (err) {
     console.error("Pre-order error:", err);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });

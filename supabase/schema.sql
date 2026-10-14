@@ -287,3 +287,14 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- Each entry: { "url": "...", "type": "payment" | "purchase", "uploaded_at": "<iso>" }.
 -- Files live in the product-images bucket under order-proofs/.
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS proof_images jsonb NOT NULL DEFAULT '[]';
+
+-- ─── Customer proof of payment + OCR verification (run this against the live DB) ─
+-- /checkout and /pre-order require a payment screenshot. It's read with
+-- Tesseract.js (amount, reference number, date); a match auto-confirms the order
+-- (checkout → confirmed, pre-order → pre-order), anything else goes to
+-- pending / hold pre-order. Files live in product-images under payment-proofs/.
+-- payment_reference is used to catch the same receipt on two orders.
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS proof_images jsonb NOT NULL DEFAULT '[]';
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_reference text;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_verification jsonb;
+-- CREATE INDEX IF NOT EXISTS orders_payment_reference_idx ON orders (payment_reference);
