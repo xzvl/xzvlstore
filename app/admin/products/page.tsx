@@ -51,6 +51,7 @@ function QuickEditModal({
   const [taxable, setTaxable] = useState(product.taxable);
   const [preOrder, setPreOrder] = useState(product.pre_order);
   const [sneakPeek, setSneakPeek] = useState(product.sneak_peek);
+  const [bundleOnly, setBundleOnly] = useState(product.bundle_only ?? false);
   const [newArrival, setNewArrival] = useState(product.new_arrival);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +90,7 @@ function QuickEditModal({
         taxable,
         pre_order: preOrder,
         sneak_peek: sneakPeek,
+        bundle_only: bundleOnly,
         new_arrival: newArrival,
       }),
     });
@@ -230,6 +232,14 @@ function QuickEditModal({
               subtitle="Feature this product as a new arrival"
               activeClass="border-green-400/50 bg-green-400/10"
               switchClass="bg-green-400"
+            />
+            <TogglePill
+              active={bundleOnly}
+              onClick={() => setBundleOnly((v) => !v)}
+              title="Bundle Product Only"
+              subtitle="Can't be added to the cart on its own — only available through a bundle"
+              activeClass="border-violet-400/50 bg-violet-400/10"
+              switchClass="bg-violet-400"
             />
             <TogglePill
               active={taxable}
@@ -405,6 +415,7 @@ function AdminProductsPageInner() {
         pre_order_note: p.pre_order_note,
         sneak_peek: p.sneak_peek,
         sneak_peek_note: p.sneak_peek_note,
+        bundle_only: p.bundle_only,
         taxable: p.taxable,
         main_image: p.main_image,
         gallery_images: p.gallery_images,

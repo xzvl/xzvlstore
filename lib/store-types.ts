@@ -11,6 +11,8 @@ export type StoreProduct = {
   /** Announced but not purchasable yet — never addable to cart or orderable. */
   sneak_peek?: boolean;
   sneak_peek_note?: string | null;
+  /** Only sold as part of a bundle — can't be added to the cart on its own. */
+  bundle_only?: boolean;
   stock?: number;
   max_purchase_enabled?: boolean;
   max_purchase_limit?: number | null;

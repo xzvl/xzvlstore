@@ -413,11 +413,12 @@ export async function POST(req: NextRequest) {
     const bundleReqs = (Array.isArray(bundles) ? bundles : [])
       .map((b) => ({ id: String(b?.id ?? ""), qty: Math.floor(Number(b?.qty)) }))
       .filter((b) => b.id && b.qty > 0);
+    // Units of each product covered by the bundles on this order.
+    const required = new Map<string, number>();
     if (bundleReqs.length > 0) {
       const resolved = new Map(
         (await getBundlesByIds(Array.from(new Set(bundleReqs.map((b) => b.id))))).map((b) => [b.id, b])
       );
-      const required = new Map<string, number>();
       for (const req of bundleReqs) {
         const b = resolved.get(req.id);
         if (!b || b.status !== "active" || !b.available) {
@@ -452,6 +453,28 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    // Bundle-only products can't be ordered on their own: every unit must come
+    // from a bundle on this order.
+    if (orderedIds.length > 0) {
+      const { data: bundleOnly } = await supabase
+        .from("products")
+        .select("id, name")
+        .in("id", orderedIds)
+        .eq("bundle_only", true);
+      for (const p of bundleOnly ?? []) {
+        const have = items
+          .filter((it) => it.product_id === p.id)
+          .reduce((s, it) => s + (Number(it.qty) || 0), 0);
+        if (have > (required.get(p.id) ?? 0)) {
+          return NextResponse.json(
+            { error: `"${p.name}" is only available as part of a bundle and can't be ordered on its own.` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const orderTotal = bundleReqs.length > 0
       ? Math.max(0, items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0) - bundleDiscount)
       : estimatedTotal;

@@ -129,6 +129,21 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
     );
   }
 
+  // Bundle-only products are sold only through a bundle, never on their own.
+  if (product.bundle_only) {
+    return (
+      <div className="flex flex-col gap-3">
+        <button
+          disabled
+          className="w-full py-4 font-mono text-[12px] tracking-[0.2em] uppercase bg-panel border border-violet-400/40 text-violet-400/70 cursor-not-allowed flex items-center justify-center gap-3"
+        >
+          <span className="material-symbols-outlined text-[18px]">package_2</span>
+          Bundle Only
+        </button>
+      </div>
+    );
+  }
+
   if (isBlocked) {
     return (
       <div className="flex flex-col gap-3">

@@ -46,6 +46,7 @@ type FreshProduct = {
   id: string;
   status: "active" | "inactive";
   sneak_peek?: boolean;
+  bundle_only?: boolean;
   stock: number;
   max_purchase_enabled: boolean;
   max_purchase_limit: number | null;
@@ -295,6 +296,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const p = freshMap.get(item.id);
         if (!p || p.status !== "active" || p.sneak_peek) {
           messages.push(`${item.name} is no longer available and was removed from your cart.`);
+          changed = true;
+          continue;
+        }
+        if (p.bundle_only) {
+          messages.push(`${item.name} is only available as part of a bundle and was removed from your cart.`);
           changed = true;
           continue;
         }

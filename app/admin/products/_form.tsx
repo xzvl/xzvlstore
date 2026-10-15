@@ -252,6 +252,7 @@ type FormState = {
   down_payment_price: string;
   sneak_peek: boolean;
   sneak_peek_note: string;
+  bundle_only: boolean;
   taxable: boolean;
   max_purchase_enabled: boolean;
   max_purchase_limit: string;
@@ -281,6 +282,7 @@ const EMPTY_FORM: FormState = {
   down_payment_price: "",
   sneak_peek: false,
   sneak_peek_note: "",
+  bundle_only: false,
   taxable: false,
   max_purchase_enabled: false,
   max_purchase_limit: "",
@@ -311,6 +313,7 @@ function productToForm(p: DbProduct): FormState {
     down_payment_price: p.down_payment_price != null ? String(p.down_payment_price) : "",
     sneak_peek: p.sneak_peek ?? false,
     sneak_peek_note: p.sneak_peek_note ?? "",
+    bundle_only: p.bundle_only ?? false,
     taxable: p.taxable ?? false,
     max_purchase_enabled: p.max_purchase_enabled ?? false,
     max_purchase_limit: p.max_purchase_limit ? String(p.max_purchase_limit) : "",
@@ -616,6 +619,17 @@ export default function ProductForm({ productId }: { productId?: string }) {
               />
             </div>
           )}
+
+          <div className="md:col-span-2">
+            <TogglePill
+              active={form.bundle_only}
+              onClick={() => set$("bundle_only", !form.bundle_only)}
+              title="Bundle Product Only"
+              subtitle="Can't be added to the cart on its own — only available through a bundle"
+              activeClass="border-violet-400/50 bg-violet-400/10"
+              switchClass="bg-violet-400"
+            />
+          </div>
 
           <div className="md:col-span-2">
             <TogglePill

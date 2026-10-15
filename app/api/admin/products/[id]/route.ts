@@ -39,6 +39,7 @@ export async function PATCH(
   if (updates.pre_order === false) updates.down_payment_required = false;
   if (body.sneak_peek !== undefined) updates.sneak_peek = Boolean(body.sneak_peek);
   if (body.sneak_peek_note !== undefined) updates.sneak_peek_note = body.sneak_peek_note || null;
+  if (body.bundle_only !== undefined) updates.bundle_only = Boolean(body.bundle_only);
   if (body.taxable !== undefined) updates.taxable = Boolean(body.taxable);
   if (body.max_purchase_enabled !== undefined) updates.max_purchase_enabled = Boolean(body.max_purchase_enabled);
   if (body.max_purchase_limit !== undefined) updates.max_purchase_limit = body.max_purchase_limit ? Number(body.max_purchase_limit) : null;

@@ -28,7 +28,7 @@ export default function ProductCard({
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();
-    if (product.sneak_peek) return;
+    if (product.sneak_peek || product.bundle_only) return;
     if (isBlocked) return;
     if (product.pre_order) {
       router.push(`/pre-order?product=${product.slug}`);
@@ -134,6 +134,13 @@ export default function ProductCard({
           >
             {sneakPeekLabel}
           </button>
+        ) : product.bundle_only ? (
+          <Link
+            href={`/product/${product.slug}`}
+            className="w-full py-2 text-center font-mono text-[10px] tracking-widest uppercase border border-violet-400/40 text-violet-400/80 hover:border-violet-400 transition-colors"
+          >
+            Bundle Only
+          </Link>
         ) : (
           <button
             onClick={handleAddToCart}

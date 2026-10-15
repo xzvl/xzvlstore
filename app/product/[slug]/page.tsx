@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import { downPaymentPerUnit, type StoreProduct } from "@/lib/store-types";
+import { getStoreBundles } from "@/lib/bundles";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
@@ -11,7 +12,7 @@ import AddToCartButton from "./AddToCartButton";
 import ProductImages from "./ProductImages";
 
 const FIELDS =
-  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, sneak_peek, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, sneak_peek, bundle_only, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
 
 function mapProduct(p: Record<string, unknown>): StoreProduct {
   return {
@@ -25,6 +26,7 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     down_payment_required: (p.down_payment_required as boolean | null) ?? false,
     down_payment_price: p.down_payment_price != null ? Number(p.down_payment_price) : null,
     sneak_peek: (p.sneak_peek as boolean) ?? false,
+    bundle_only: (p.bundle_only as boolean) ?? false,
     sneak_peek_note: (p.sneak_peek_note as string | null) ?? null,
     stock: (p.stock as number) ?? 0,
     max_purchase_enabled: (p.max_purchase_enabled as boolean) ?? false,
@@ -69,7 +71,7 @@ async function getRecommended(brandId: string | null, excludeId: string): Promis
 }
 
 const PRODUCT_SELECT =
-  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, pre_order_note, down_payment_required, down_payment_price, sneak_peek, sneak_peek_note, status, brand_id, brands, category_ids, tag_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, sku, description, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, pre_order_note, down_payment_required, down_payment_price, sneak_peek, sneak_peek_note, bundle_only, status, brand_id, brands, category_ids, tag_ids, max_purchase_enabled, max_purchase_limit";
 
 const nameToSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -166,6 +168,10 @@ export default async function ProductPage({
   const product = mapProduct(data as Record<string, unknown>);
   const allImages = [product.image, ...product.gallery_images];
   const recommended = await getRecommended(product.brand_id, product.id);
+  // Bundles a bundle-only product can be bought through.
+  const productBundles = product.bundle_only
+    ? (await getStoreBundles()).filter((b) => b.components.some((c) => c.product_id === product.id))
+    : [];
 
   const taxonomyTerms = await getTaxonomyTerms([
     ...product.category_ids,
@@ -225,6 +231,11 @@ export default async function ProductPage({
                     Sneak Peek
                   </span>
                 )}
+                {product.bundle_only && (
+                  <span className="bg-violet-500 px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
+                    Bundle Only
+                  </span>
+                )}
               </div>
 
               {/* Name */}
@@ -277,6 +288,35 @@ export default async function ProductPage({
 
               {/* Add to cart */}
               <AddToCartButton product={product} />
+
+              {/* Bundle-only notice */}
+              {product.bundle_only && !product.sneak_peek && (
+                <div className="flex items-start gap-3 border border-violet-400/30 bg-violet-400/5 px-4 py-3">
+                  <span className="material-symbols-outlined text-[18px] text-violet-400/80">package_2</span>
+                  <div className="flex flex-col gap-1.5">
+                    <p className="font-mono text-[10px] tracking-widest uppercase text-violet-400/70">Bundle Product Only</p>
+                    <p className="font-mono text-[12px] text-accent/70 leading-relaxed">
+                      This product can&apos;t be added to the cart on its own. It&apos;s only available as part of a bundle.
+                    </p>
+                    {productBundles.length > 0 ? (
+                      <div className="flex flex-col gap-1">
+                        <p className="font-mono text-[11px] text-accent/50">Available in:</p>
+                        {productBundles.map((b) => (
+                          <Link
+                            key={b.id}
+                            href="/bundles"
+                            className="font-mono text-[12px] text-primary hover:underline"
+                          >
+                            {b.name} — ₱{b.price.toLocaleString()}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="font-mono text-[11px] text-accent/50">No bundle with this product is available right now.</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Pre-order note */}
               {product.pre_order && product.pre_order_note && (

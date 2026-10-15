@@ -15,7 +15,7 @@ import { getStoreBundles } from "@/lib/bundles";
 // ─── Data helpers ─────────────────────────────────────────────────────────────
 
 const FIELDS =
-  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, sneak_peek, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
+  "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, sneak_peek, bundle_only, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
 
 function mapProduct(p: Record<string, unknown>): StoreProduct {
   return {
@@ -26,6 +26,7 @@ function mapProduct(p: Record<string, unknown>): StoreProduct {
     sale_price: (p.sale_price as number | null) ?? null,
     pre_order: (p.pre_order as boolean) ?? false,
     sneak_peek: (p.sneak_peek as boolean) ?? false,
+    bundle_only: (p.bundle_only as boolean) ?? false,
     stock: (p.stock as number) ?? 0,
     max_purchase_enabled: (p.max_purchase_enabled as boolean) ?? false,
     max_purchase_limit: (p.max_purchase_limit as number | null) ?? null,

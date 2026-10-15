@@ -282,6 +282,11 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- );
 -- ALTER TABLE bundles ENABLE ROW LEVEL SECURITY;
 
+-- ─── "Bundle Product Only" flag (run this against the live DB) ────────────────
+-- A bundle-only product can't be added to the cart or ordered on its own — only
+-- as part of a bundle that includes it.
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS bundle_only boolean NOT NULL DEFAULT false;
+
 -- ─── Order proof images (run this against the live DB) ────────────────────────
 -- Proof of payment / proof of purchase screenshots uploaded in /admin/orders/[id].
 -- Each entry: { "url": "...", "type": "payment" | "purchase", "uploaded_at": "<iso>" }.

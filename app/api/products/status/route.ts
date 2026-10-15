@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("products")
-    .select("id, status, sneak_peek, stock, max_purchase_enabled, max_purchase_limit")
+    .select("id, status, sneak_peek, bundle_only, stock, max_purchase_enabled, max_purchase_limit")
     .in("id", ids);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
     id: p.id as string,
     status: p.status as "active" | "inactive",
     sneak_peek: (p.sneak_peek as boolean | null) ?? false,
+    bundle_only: (p.bundle_only as boolean | null) ?? false,
     stock: (p.stock as number | null) ?? 0,
     max_purchase_enabled: (p.max_purchase_enabled as boolean | null) ?? false,
     max_purchase_limit: (p.max_purchase_limit as number | null) ?? null,
