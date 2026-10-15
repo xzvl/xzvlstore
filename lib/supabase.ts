@@ -111,6 +111,14 @@ export type DbProduct = {
   max_purchase_limit: number | null;
   new_arrival: boolean;
   new_arrival_until: string | null;
+  /** J&T pouch this product ships in. Null = priced by weight. */
+  pouch_size: "small" | "medium" | "large" | null;
+  /** Units (of this product) on one order that need a medium pouch instead. */
+  pouch_upgrade_medium_qty: number | null;
+  /** Units (of this product) on one order that need a large pouch instead. */
+  pouch_upgrade_large_qty: number | null;
+  /** Kilograms per unit. */
+  weight: number | null;
   status: "active" | "inactive";
   slug: string | null;
   description: string | null;

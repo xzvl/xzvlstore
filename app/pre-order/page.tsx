@@ -14,6 +14,8 @@ import PaymentProofUpload, { type UploadedPaymentProof } from "@/components/Paym
 import { useSiteContent } from "@/components/SiteContentProvider";
 import { activePaymentMethods } from "@/lib/site-content";
 import { downPaymentPerUnit } from "@/lib/store-types";
+import { DELIVERY_METHODS, type DeliveryMethod } from "@/lib/shipping";
+import { ProvinceCityFields, ShippingSummaryRow, useShippingQuote } from "@/components/AreaFields";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,12 +27,21 @@ type ProductRow = {
 
 type ContactForm = {
   name: string;
-  address: string;
-  location: string;
   phone: string;
   email: string;
   facebook: string;
+  /** Address line (house no., street). */
+  address_1: string;
+  barangay: string;
+  state: string;
+  /** J&T Express province id (from the province dropdown). */
+  province_id: string;
+  city: string;
+  /** J&T Express city id (from the city dropdown). */
+  city_id: string;
 };
+
+type AddressErrors = { address_1?: string; barangay?: string; state?: string; city?: string };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -256,10 +267,15 @@ const requiredDownPayment = (rows: ProductRow[], products: Product[]) =>
     return sum + (p ? downPaymentPerUnit(p) * row.qty : 0);
   }, 0);
 
-function OrderSummary({ rows, onProductClick, products }: {
+function OrderSummary({ rows, onProductClick, products, deliveryPicker, shippingRow, shippingFee }: {
   rows: ProductRow[];
   onProductClick: (product: Product, qty: number) => void;
   products: Product[];
+  /** Delivery option, shown below the product items. */
+  deliveryPicker: React.ReactNode;
+  shippingRow: React.ReactNode;
+  /** null = not known yet (TBA). */
+  shippingFee: number | null;
 }) {
   const filledRows = rows.filter((r) => r.productId);
   if (filledRows.length === 0) return null;
@@ -311,18 +327,23 @@ function OrderSummary({ rows, onProductClick, products }: {
         );
       })}
 
+      <div className="pt-2">{deliveryPicker}</div>
+
       <div className="border border-line/40 p-4 space-y-3 mt-2">
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-[12px] tracking-widest text-accent/60 uppercase">Shipping Fee</span>
-          <span className="font-mono text-[13px] text-accent/60 italic">TBA</span>
-        </div>
+        {shippingRow}
         <div className="h-px bg-line/30" />
         <div className="flex items-center justify-between">
           <div>
-            <span className="font-mono text-[12px] tracking-widest text-fg uppercase">Estimated Total</span>
-            <p className="font-mono text-[10px] text-accent/40 mt-0.5">Shipping fee not yet included</p>
+            <span className="font-mono text-[12px] tracking-widest text-fg uppercase">
+              {shippingFee == null ? "Estimated Total" : "Total"}
+            </span>
+            {shippingFee == null && (
+              <p className="font-mono text-[10px] text-accent/40 mt-0.5">Shipping fee not yet included</p>
+            )}
           </div>
-          <span className="font-inter font-black text-[22px] text-primary">₱{estimatedTotal.toLocaleString()}</span>
+          <span className="font-inter font-black text-[22px] text-primary">
+            ₱{(estimatedTotal + (shippingFee ?? 0)).toLocaleString()}
+          </span>
         </div>
         {downPaymentTotal > 0 && (
           <>
@@ -451,7 +472,12 @@ export default function PreOrderPage() {
   const [profileAddresses, setProfileAddresses] = useState<ProfileAddresses | null>(null);
   const [purchasedMap, setPurchasedMap] = useState<Record<string, number>>({});
 
-  const [contact, setContact] = useState<ContactForm>({ name: "", address: "", location: "", phone: "", email: "", facebook: "" });
+  const [contact, setContact] = useState<ContactForm>({
+    name: "", phone: "", email: "", facebook: "",
+    address_1: "", barangay: "", state: "", province_id: "", city: "", city_id: "",
+  });
+  const [delivery, setDelivery] = useState<DeliveryMethod>("jnt");
+  const [addressErrors, setAddressErrors] = useState<AddressErrors>({});
   const [rows, setRows] = useState<ProductRow[]>([{ id: uid(), productId: "", qty: 1 }]);
   const [selectedProductDetail, setSelectedProductDetail] = useState<{ product: Product; qty: number } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string; facebook?: string }>({});
@@ -466,7 +492,8 @@ export default function PreOrderPage() {
 
   // Only the default payment method is offered for pre-order payments (falls
   // back to the first enabled one if the default is disabled).
-  const selectedPaymentMethod = activePaymentMethods(useSiteContent().payment)[0] ?? null;
+  const siteContent = useSiteContent();
+  const selectedPaymentMethod = activePaymentMethods(siteContent.payment)[0] ?? null;
 
   useEffect(() => {
     // Fetch products
@@ -503,14 +530,18 @@ export default function PreOrderPage() {
       }
       const profile = await res.json();
       const name = [profile.first_name, profile.last_name].filter(Boolean).join(" ");
-      const location = [profile.billing_city, profile.billing_state].filter(Boolean).join(", ");
+      // Province/city ids are matched from these names once the J&T lists load.
       setContact({
         name: name || "",
         email: user.email ?? "",
         phone: profile.billing_phone || "",
-        address: profile.billing_address_1 || "",
-        location: location || "",
         facebook: profile.facebook_url || "",
+        address_1: profile.billing_address_1 || "",
+        barangay: profile.billing_address_2 || "",
+        state: profile.billing_state || "",
+        province_id: "",
+        city: profile.billing_city || "",
+        city_id: "",
       });
       setProfileAddresses({
         billing_address_1: profile.billing_address_1 || "",
@@ -562,9 +593,18 @@ export default function PreOrderPage() {
     const p = preOrderProducts.find((x) => x.id === r.productId);
     return sum + (p ? (p.sale_price ?? p.price) * r.qty : 0);
   }, 0);
-  // The proof of payment must show the down payment if one is required,
-  // otherwise the full total.
-  const amountDue = downPaymentDue > 0 ? downPaymentDue : orderTotal;
+  const isJnt = delivery === "jnt";
+  const shippingQuote = useShippingQuote({
+    enabled: isJnt,
+    provinceId: contact.province_id,
+    cityId: contact.city_id,
+    items: rows.filter((r) => r.productId && r.qty > 0).map((r) => ({ product_id: r.productId, qty: r.qty })),
+    goodsValue: orderTotal,
+  });
+  const shippingFee = isJnt ? shippingQuote.quote?.fee ?? null : 0;
+  // The proof of payment must show the down payment if one is required
+  // (shipping is paid with the balance), otherwise the full total + shipping.
+  const amountDue = downPaymentDue > 0 ? downPaymentDue : orderTotal + (shippingFee ?? 0);
 
   const setContact$ = (field: keyof ContactForm, value: string) =>
     setContact((prev) => ({ ...prev, [field]: value }));
@@ -586,6 +626,18 @@ export default function PreOrderPage() {
     const facebookErr = validateFacebook(contact.facebook);
     if (phoneErr || emailErr || facebookErr) { setFieldErrors({ phone: phoneErr, email: emailErr, facebook: facebookErr }); return; }
 
+    {
+      const addrErr: AddressErrors = {};
+      if (!contact.address_1.trim()) addrErr.address_1 = "Address line is required.";
+      if (!contact.barangay.trim()) addrErr.barangay = "Barangay is required.";
+      if (!contact.state.trim()) addrErr.state = "Province is required.";
+      else if (!contact.province_id) addrErr.state = "Pick your province from the list.";
+      if (!contact.city.trim()) addrErr.city = "City / municipality is required.";
+      else if (!contact.city_id) addrErr.city = "Pick your city / municipality from the list.";
+      setAddressErrors(addrErr);
+      if (Object.keys(addrErr).length) { setError("Please complete your address."); return; }
+    }
+
     const filledRows = rows.filter((r) => r.productId);
     if (filledRows.length === 0) { setError("Please select at least one product."); return; }
     if (!proof) {
@@ -603,29 +655,27 @@ export default function PreOrderPage() {
         return { product_id: p.id, product: p.name, qty: r.qty, unit_price: price, subtotal: price * r.qty };
       });
       const estimatedTotal = orderItems.reduce((s, i) => s + i.subtotal, 0);
-      const [destCity, ...destRest] = contact.location.split(",").map((s) => s.trim());
-      const destProvince = destRest.join(", ").trim();
-      const billing = {
-        address_1: contact.address.trim(),
-        address_2: profileAddresses?.billing_address_2 ?? "",
-        city: destCity ?? "",
-        state: destProvince,
+      const address = {
+        address_1: contact.address_1.trim(),
+        address_2: contact.barangay.trim(),
+        city: contact.city.trim(),
+        city_id: contact.city_id,
+        state: contact.state.trim(),
+        province_id: contact.province_id,
         postcode: profileAddresses?.billing_postcode ?? "",
-        region: profileAddresses?.billing_region ?? "Philippines",
+        region: "Philippines",
       };
-      const shipping = {
-        address_1: contact.address.trim(),
-        address_2: profileAddresses?.shipping_address_2 ?? "",
-        city: destCity ?? "",
-        state: destProvince,
-        postcode: profileAddresses?.shipping_postcode ?? "",
-        region: profileAddresses?.shipping_region ?? "Philippines",
-      };
+      // Pickup orders may have no address at all.
+      const location = [address.city, address.state].filter(Boolean).join(", ") || DELIVERY_METHODS.pickup;
       const res = await fetch("/api/pre-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...contact, items: orderItems, estimatedTotal, billing, shipping, order_type: "pre-order", customer_id: userId,
+          name: contact.name, phone: contact.phone, email: contact.email, facebook: contact.facebook, location,
+          items: orderItems, estimatedTotal, billing: address, shipping: address, order_type: "pre-order", customer_id: userId,
+          delivery_method: delivery,
+          shipping_name: contact.name.trim(),
+          shipping_fee: shippingFee,
           payment_method: selectedPaymentMethod?.company,
           payment_proof_url: proof.url,
         }),
@@ -829,15 +879,39 @@ export default function PreOrderPage() {
                   )}
                 </div>
               </div>
-              <div>
-                <label className={labelClass}>Address <span className="text-primary">*</span></label>
-                <input type="text" required placeholder="Street, Barangay" value={contact.address}
-                  onChange={(e) => setContact$("address", e.target.value)} className={inputClass()} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className={labelClass}>Address Line <span className="text-primary">*</span></label>
+                  <input type="text" required placeholder="House No., Street" value={contact.address_1}
+                    onChange={(e) => { setContact$("address_1", e.target.value); setAddressErrors((p) => ({ ...p, address_1: "" })); }}
+                    className={inputClass(!!addressErrors.address_1)} />
+                  {addressErrors.address_1 && (
+                    <p className="mt-1.5 font-mono text-[11px] text-primary flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">error</span>{addressErrors.address_1}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>Barangay <span className="text-primary">*</span></label>
+                  <input type="text" required placeholder="Barangay, Subdivision" value={contact.barangay}
+                    onChange={(e) => { setContact$("barangay", e.target.value); setAddressErrors((p) => ({ ...p, barangay: "" })); }}
+                    className={inputClass(!!addressErrors.barangay)} />
+                  {addressErrors.barangay && (
+                    <p className="mt-1.5 font-mono text-[11px] text-primary flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">error</span>{addressErrors.barangay}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div>
-                <label className={labelClass}>Destination <span className="text-primary">*</span></label>
-                <input type="text" required placeholder="City, Province" value={contact.location}
-                  onChange={(e) => setContact$("location", e.target.value)} className={inputClass()} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <ProvinceCityFields
+                  prefix="pre-order"
+                  value={contact}
+                  errors={addressErrors}
+                  onChange={(v) => { setContact((prev) => ({ ...prev, ...v })); setAddressErrors((p) => ({ ...p, state: "", city: "" })); }}
+                  inputClass={inputClass}
+                  labelClass={labelClass}
+                />
               </div>
             </div>
           </section>
@@ -874,7 +948,41 @@ export default function PreOrderPage() {
           {rows.some((r) => r.productId) && (
             <section className="animate-fade-up z-9 relative" style={{ animationDelay: "240ms" }}>
               {sectionTitle("SECTION_03", "Order Summary")}
-              <OrderSummary rows={rows} onProductClick={(p, qty) => setSelectedProductDetail({ product: p, qty })} products={preOrderProducts} />
+              <OrderSummary rows={rows} onProductClick={(p, qty) => setSelectedProductDetail({ product: p, qty })} products={preOrderProducts}
+                shippingFee={shippingFee}
+                deliveryPicker={
+                  <div className="space-y-3">
+                    <div>
+                      <label className={labelClass}>Delivery <span className="text-primary">*</span></label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {([
+                          { key: "jnt", icon: "local_shipping", hint: "Delivered to your address" },
+                          { key: "pickup", icon: "storefront", hint: "No shipping fee" },
+                        ] as const).map((m) => (
+                          <button key={m.key} type="button" onClick={() => setDelivery(m.key)}
+                            className={`flex items-center gap-3 py-3 px-4 border text-left transition-all ${
+                              delivery === m.key ? "border-primary bg-primary/5" : "border-line/40 hover:border-line"
+                            }`}>
+                            <span className={`material-symbols-outlined text-[20px] ${delivery === m.key ? "text-primary" : "text-accent/40"}`}>{m.icon}</span>
+                            <span>
+                              <span className={`block font-mono text-[12px] tracking-wide ${delivery === m.key ? "text-primary" : "text-fg/70"}`}>{DELIVERY_METHODS[m.key]}</span>
+                              <span className="block font-mono text-[10px] text-accent/40 mt-0.5">{m.hint}</span>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {!isJnt && (
+                      <div className="flex items-start gap-3 py-3 px-4 bg-panel border border-line/30">
+                        <span className="material-symbols-outlined text-[16px] text-primary/60 mt-0.5">storefront</span>
+                        <p className="font-mono text-[12px] text-accent/60 leading-relaxed whitespace-pre-line">
+                          {siteContent.shipping.pickupNote || "We'll message you with the pickup details."}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                }
+                shippingRow={<ShippingSummaryRow delivery={delivery} quote={shippingQuote} hasCity={!!contact.city_id} />} />
             </section>
           )}
 

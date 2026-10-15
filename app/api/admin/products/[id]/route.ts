@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { revalidateStorefront } from "@/lib/revalidate";
 import { disableBundlesWithProduct } from "@/lib/bundles";
+import { normalizeShippingFields } from "@/lib/shipping";
 
 export async function GET(
   _req: NextRequest,
@@ -67,6 +68,7 @@ export async function PATCH(
   if (body.gallery_images !== undefined) updates.gallery_images = body.gallery_images;
   if (body.social_image !== undefined) updates.social_image = body.social_image || null;
   if (body.sort_order !== undefined) updates.sort_order = Number(body.sort_order);
+  if (body.pouch_size !== undefined || body.weight !== undefined) Object.assign(updates, normalizeShippingFields(body));
 
   // Sneak Peek and Pre-Order are mutually exclusive. A request may only touch
   // one of the two flags, so check the result against the stored row.

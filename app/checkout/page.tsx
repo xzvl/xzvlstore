@@ -12,6 +12,8 @@ import PaymentMethodPicker from "@/components/PaymentMethodPicker";
 import PaymentProofUpload, { type UploadedPaymentProof } from "@/components/PaymentProofUpload";
 import { useSiteContent } from "@/components/SiteContentProvider";
 import { activePaymentMethods } from "@/lib/site-content";
+import { DELIVERY_METHODS, type DeliveryMethod } from "@/lib/shipping";
+import { ProvinceCityFields, ShippingSummaryRow, useShippingQuote } from "@/components/AreaFields";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,7 +21,11 @@ type AddressForm = {
   address_1: string;
   address_2: string;
   city: string;
+  /** J&T Express city id (from the city dropdown). */
+  city_id: string;
   state: string;
+  /** J&T Express province id (from the province dropdown). */
+  province_id: string;
   postcode: string;
   region: string;
 };
@@ -31,6 +37,8 @@ type CheckoutForm = {
   facebook: string;
   payment_method: string;
   billing: AddressForm;
+  delivery: DeliveryMethod;
+  receiver_name: string;
   ship_to_different: boolean;
   shipping: AddressForm;
 };
@@ -42,17 +50,22 @@ type FormErrors = {
   email?: string;
   phone?: string;
   facebook?: string;
+  receiver_name?: string;
   billing?: AddressErrors;
   shipping?: AddressErrors;
 };
+
+const REGION = "Philippines";
 
 const EMPTY_ADDRESS: AddressForm = {
   address_1: "",
   address_2: "",
   city: "",
+  city_id: "",
   state: "",
+  province_id: "",
   postcode: "",
-  region: "",
+  region: REGION,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -62,9 +75,6 @@ const inputClass = (err = false) =>
 
 const labelClass =
   "block font-mono text-[11px] tracking-[0.15em] uppercase text-accent/60 mb-2";
-
-const formatAddress = (a: AddressForm) =>
-  [a.address_1, a.address_2, a.city, a.state, a.postcode, a.region].filter(Boolean).join(", ");
 
 const validatePhone = (v: string) => {
   if (!v) return "Phone is required.";
@@ -140,36 +150,14 @@ function AddressFields({
           className={inputClass()}
         />
       </div>
-      <div>
-        <label className={labelClass} htmlFor={`${prefix}-city`}>
-          City <span className="text-primary">*</span>
-        </label>
-        <input
-          id={`${prefix}-city`}
-          value={value.city}
-          onChange={(e) => set("city", e.target.value)}
-          placeholder="Quezon City"
-          className={inputClass(!!errors.city)}
-        />
-        {errors.city && (
-          <p className="font-mono text-[10px] text-primary mt-1">{errors.city}</p>
-        )}
-      </div>
-      <div>
-        <label className={labelClass} htmlFor={`${prefix}-state`}>
-          State / Province <span className="text-primary">*</span>
-        </label>
-        <input
-          id={`${prefix}-state`}
-          value={value.state}
-          onChange={(e) => set("state", e.target.value)}
-          placeholder="Province"
-          className={inputClass(!!errors.state)}
-        />
-        {errors.state && (
-          <p className="font-mono text-[10px] text-primary mt-1">{errors.state}</p>
-        )}
-      </div>
+      <ProvinceCityFields
+        prefix={prefix}
+        value={value}
+        errors={errors}
+        onChange={(v) => onChange({ ...value, ...v })}
+        inputClass={inputClass}
+        labelClass={labelClass}
+      />
       <div>
         <label className={labelClass} htmlFor={`${prefix}-postcode`}>
           Postcode / ZIP <span className="text-primary">*</span>
@@ -191,10 +179,10 @@ function AddressFields({
         </label>
         <input
           id={`${prefix}-region`}
-          value={value.region}
-          onChange={(e) => set("region", e.target.value)}
-          placeholder="Philippines"
-          className={inputClass()}
+          value={REGION}
+          readOnly
+          tabIndex={-1}
+          className={`${inputClass()} opacity-60 cursor-not-allowed`}
         />
       </div>
     </div>
@@ -207,7 +195,9 @@ export default function CheckoutPage() {
   const { items, total, clearCart, revalidateCart, isBlocked } = useCart();
   // Methods from /admin/content → Payment; the built-in FALLBACK_PAYMENT_METHODS list is
   // the fallback until any are configured.
-  const configuredMethods = activePaymentMethods(useSiteContent().payment);
+  const siteContent = useSiteContent();
+  const configuredMethods = activePaymentMethods(siteContent.payment);
+  const shippingContent = siteContent.shipping;
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -225,6 +215,8 @@ export default function CheckoutPage() {
     facebook: "",
     payment_method: configuredMethods[0]?.id ?? "gcash",
     billing: { ...EMPTY_ADDRESS },
+    delivery: "jnt",
+    receiver_name: "",
     ship_to_different: false,
     shipping: { ...EMPTY_ADDRESS },
   });
@@ -259,13 +251,14 @@ export default function CheckoutPage() {
         email: user.email ?? f.email,
         phone: profile.billing_phone || f.phone,
         facebook: profile.facebook_url || f.facebook,
+        // Province/city ids are matched from these names once the J&T lists load.
         billing: {
+          ...f.billing,
           address_1: profile.billing_address_1 || f.billing.address_1,
           address_2: profile.billing_address_2 || f.billing.address_2,
           city: profile.billing_city || f.billing.city,
           state: profile.billing_state || f.billing.state,
           postcode: profile.billing_postcode || f.billing.postcode,
-          region: profile.billing_region || f.billing.region,
         },
       }));
       setAutoFilled(true);
@@ -274,19 +267,54 @@ export default function CheckoutPage() {
 
   function setField<K extends keyof CheckoutForm>(field: K, value: CheckoutForm[K]) {
     setForm((f) => ({ ...f, [field]: value }));
-    if (field !== "billing" && field !== "shipping" && field !== "ship_to_different") {
+    if (field !== "billing" && field !== "shipping" && field !== "ship_to_different" && field !== "delivery") {
       setErrors((e) => ({ ...e, [field]: "" }));
     }
   }
 
-  function validateAddress(addr: AddressForm): AddressErrors | undefined {
+  // The J&T rate needs the province and city picked from the lists (ids), not just typed.
+  function validateAddress(addr: AddressForm, forShipping: boolean): AddressErrors | undefined {
     const e: AddressErrors = {};
     if (!addr.address_1) e.address_1 = "Address line 1 is required.";
-    if (!addr.city) e.city = "City is required.";
     if (!addr.state) e.state = "Province is required.";
+    else if (forShipping && !addr.province_id) e.state = "Pick your province from the list.";
+    if (!addr.city) e.city = "City is required.";
+    else if (forShipping && !addr.city_id) e.city = "Pick your city from the list.";
     if (!addr.postcode) e.postcode = "Postcode is required.";
     return Object.keys(e).length ? e : undefined;
   }
+
+  // Bundles are saved as their individual products at normal price; the
+  // server turns the bundle's price off into the order discount.
+  const orderItems = items.flatMap((item) =>
+    item.bundle
+      ? item.bundle.items.map((b) => ({
+          product_id: b.product_id,
+          product: b.name,
+          qty: b.qty * item.qty,
+          unit_price: b.unit_price,
+          subtotal: b.unit_price * b.qty * item.qty,
+        }))
+      : [{
+          product_id: item.id,
+          product: item.name,
+          qty: item.qty,
+          unit_price: item.sale_price ?? item.price,
+          subtotal: (item.sale_price ?? item.price) * item.qty,
+        }]
+  );
+
+  const isJnt = form.delivery === "jnt";
+  const deliveryAddress = form.ship_to_different ? form.shipping : form.billing;
+  const shippingQuote = useShippingQuote({
+    enabled: isJnt,
+    provinceId: deliveryAddress.province_id,
+    cityId: deliveryAddress.city_id,
+    items: orderItems.map((i) => ({ product_id: i.product_id, qty: i.qty })),
+    goodsValue: total,
+  });
+  const shippingFee = isJnt ? shippingQuote.quote?.fee ?? null : 0;
+  const grandTotal = total + (shippingFee ?? 0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -301,12 +329,15 @@ export default function CheckoutPage() {
     const facebookErr = validateFacebook(form.facebook);
     if (facebookErr) newErrors.facebook = facebookErr;
 
-    const billingErr = validateAddress(form.billing);
+    const billingErr = validateAddress(form.billing, isJnt && !form.ship_to_different);
     if (billingErr) newErrors.billing = billingErr;
 
-    if (form.ship_to_different) {
-      const shippingErr = validateAddress(form.shipping);
-      if (shippingErr) newErrors.shipping = shippingErr;
+    if (isJnt) {
+      if (!(form.receiver_name.trim() || form.name.trim())) newErrors.receiver_name = "Receiver name is required.";
+      if (form.ship_to_different) {
+        const shippingErr = validateAddress(form.shipping, true);
+        if (shippingErr) newErrors.shipping = shippingErr;
+      }
     }
 
     setProofError(proof ? "" : "Please upload a screenshot of your payment.");
@@ -335,33 +366,10 @@ export default function CheckoutPage() {
     }
 
     try {
-      // Bundles are saved as their individual products at normal price; the
-      // server turns the bundle's price off into the order discount.
-      const orderItems = items.flatMap((item) =>
-        item.bundle
-          ? item.bundle.items.map((b) => ({
-              product_id: b.product_id,
-              product: b.name,
-              qty: b.qty * item.qty,
-              unit_price: b.unit_price,
-              subtotal: b.unit_price * b.qty * item.qty,
-            }))
-          : [{
-              product_id: item.id,
-              product: item.name,
-              qty: item.qty,
-              unit_price: item.sale_price ?? item.price,
-              subtotal: (item.sale_price ?? item.price) * item.qty,
-            }]
-      );
       const bundles = items
         .filter((item) => item.bundle)
         .map((item) => ({ id: item.bundle!.id, qty: item.qty }));
       const estimatedTotal = total;
-
-      const deliveryAddress = form.ship_to_different
-        ? formatAddress(form.shipping)
-        : formatAddress(form.billing);
 
       const res = await fetch("/api/pre-order", {
         method: "POST",
@@ -376,8 +384,12 @@ export default function CheckoutPage() {
           payment_proof_url: proof.url,
           order_type: "checkout",
           customer_id: userId,
-          billing: form.billing,
-          shipping: form.ship_to_different ? form.shipping : form.billing,
+          billing: { ...form.billing, region: REGION },
+          shipping: { ...(isJnt ? deliveryAddress : form.billing), region: REGION },
+          delivery_method: form.delivery,
+          shipping_name: isJnt ? (form.receiver_name.trim() || form.name.trim()) : form.name.trim(),
+          // Only for the summary/email — the server re-quotes J&T itself.
+          shipping_fee: shippingFee,
           items: orderItems,
           bundles,
           estimatedTotal,
@@ -485,7 +497,7 @@ export default function CheckoutPage() {
 
   const proofUpload = (
     <PaymentProofUpload
-      expectedAmount={total}
+      expectedAmount={grandTotal}
       value={proof}
       onChange={(p) => { setProof(p); if (p) setProofError(""); }}
       error={proofError}
@@ -658,39 +670,96 @@ export default function CheckoutPage() {
 
                 {/* Shipping address */}
                 <div className="border border-line/25 p-6">
-                  <div className="flex items-center justify-between mb-5">
-                    <h2 className="font-inter font-bold text-[14px] uppercase text-fg flex items-center gap-2">
-                      <span className="font-mono text-primary text-[10px]">03 /</span>
-                      Shipping Address
-                    </h2>
-                    {/* Toggle: ship to different address */}
-                    <button
-                      type="button"
-                      onClick={() => setField("ship_to_different", !form.ship_to_different)}
-                      className="flex items-center gap-2 font-mono text-[11px] tracking-wide text-accent/60 hover:text-primary transition-colors"
-                    >
-                      <div className={`w-8 h-4 rounded-full border transition-colors relative ${form.ship_to_different ? "bg-primary/20 border-primary" : "bg-panel border-line"}`}>
-                        <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${form.ship_to_different ? "left-4 bg-primary" : "left-0.5 bg-line"}`} />
-                      </div>
-                      Different address
-                    </button>
+                  <h2 className="font-inter font-bold text-[14px] uppercase text-fg mb-5 flex items-center gap-2">
+                    <span className="font-mono text-primary text-[10px]">03 /</span>
+                    Shipping Address
+                  </h2>
+
+                  {/* Delivery method */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                    {([
+                      { key: "jnt", icon: "local_shipping", hint: "Delivered to your address" },
+                      { key: "pickup", icon: "storefront", hint: "No shipping fee" },
+                    ] as const).map((m) => (
+                      <button
+                        key={m.key}
+                        type="button"
+                        onClick={() => setField("delivery", m.key)}
+                        className={`flex items-center gap-3 py-3 px-4 border text-left transition-all ${
+                          form.delivery === m.key
+                            ? "border-primary bg-primary/5"
+                            : "border-line/40 hover:border-line"
+                        }`}
+                      >
+                        <span className={`material-symbols-outlined text-[20px] ${form.delivery === m.key ? "text-primary" : "text-accent/40"}`}>
+                          {m.icon}
+                        </span>
+                        <span>
+                          <span className={`block font-mono text-[12px] tracking-wide ${form.delivery === m.key ? "text-primary" : "text-fg/70"}`}>
+                            {DELIVERY_METHODS[m.key]}
+                          </span>
+                          <span className="block font-mono text-[10px] text-accent/40 mt-0.5">{m.hint}</span>
+                        </span>
+                      </button>
+                    ))}
                   </div>
 
-                  {form.ship_to_different ? (
-                    <AddressFields
-                      prefix="shipping"
-                      value={form.shipping}
-                      errors={errors.shipping}
-                      onChange={(updated) => {
-                        setField("shipping", updated);
-                        setErrors((e) => ({ ...e, shipping: undefined }));
-                      }}
-                    />
+                  {isJnt ? (
+                    <div className="space-y-5">
+                      <div>
+                        <label className={labelClass} htmlFor="receiver_name">
+                          Receiver Name <span className="text-primary">*</span>
+                        </label>
+                        <input
+                          id="receiver_name"
+                          value={form.receiver_name}
+                          onChange={(e) => setField("receiver_name", e.target.value)}
+                          placeholder={form.name || "Juan Dela Cruz"}
+                          className={inputClass(!!errors.receiver_name)}
+                        />
+                        {errors.receiver_name ? (
+                          <p className="font-mono text-[10px] text-primary mt-1">{errors.receiver_name}</p>
+                        ) : (
+                          <p className="font-mono text-[10px] text-accent/40 mt-1">Leave blank to use your full name.</p>
+                        )}
+                      </div>
+
+                      {/* Toggle: ship to different address */}
+                      <button
+                        type="button"
+                        onClick={() => setField("ship_to_different", !form.ship_to_different)}
+                        className="flex items-center gap-2 font-mono text-[11px] tracking-wide text-accent/60 hover:text-primary transition-colors"
+                      >
+                        <div className={`w-8 h-4 rounded-full border transition-colors relative ${form.ship_to_different ? "bg-primary/20 border-primary" : "bg-panel border-line"}`}>
+                          <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${form.ship_to_different ? "left-4 bg-primary" : "left-0.5 bg-line"}`} />
+                        </div>
+                        Ship to a different address
+                      </button>
+
+                      {form.ship_to_different ? (
+                        <AddressFields
+                          prefix="shipping"
+                          value={form.shipping}
+                          errors={errors.shipping}
+                          onChange={(updated) => {
+                            setField("shipping", updated);
+                            setErrors((e) => ({ ...e, shipping: undefined }));
+                          }}
+                        />
+                      ) : (
+                        <div className="flex items-center gap-3 py-3 px-4 bg-panel border border-line/20">
+                          <span className="material-symbols-outlined text-[16px] text-primary/60">check_circle</span>
+                          <p className="font-mono text-[11px] text-accent/50">
+                            Same as billing address
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   ) : (
-                    <div className="flex items-center gap-3 py-3 px-4 bg-panel border border-line/20">
-                      <span className="material-symbols-outlined text-[16px] text-primary/60">check_circle</span>
-                      <p className="font-mono text-[11px] text-accent/50">
-                        Same as billing address
+                    <div className="flex items-start gap-3 py-3 px-4 bg-panel border border-line/20">
+                      <span className="material-symbols-outlined text-[16px] text-primary/60 mt-0.5">storefront</span>
+                      <p className="font-mono text-[11px] text-accent/60 leading-relaxed whitespace-pre-line">
+                        {shippingContent.pickupNote || "We'll message you with the pickup details."}
                       </p>
                     </div>
                   )}
@@ -796,14 +865,20 @@ export default function CheckoutPage() {
                   <div className="h-px bg-line/30" />
 
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[12px] text-accent/50">Shipping</span>
-                    <span className="font-mono text-[11px] text-accent/40 italic">TBA</span>
+                    <span className="font-mono text-[12px] text-accent/50">Subtotal</span>
+                    <span className="font-mono text-[12px] text-fg">₱{total.toLocaleString()}</span>
                   </div>
 
+                  <ShippingSummaryRow
+                    delivery={form.delivery}
+                    quote={shippingQuote}
+                    hasCity={!!deliveryAddress.city_id}
+                  />
+
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[12px] uppercase text-fg">Est. Total</span>
+                    <span className="font-mono text-[12px] uppercase text-fg">{shippingFee == null ? "Est. Total" : "Total"}</span>
                     <span className="font-inter font-black text-[20px] text-primary">
-                      ₱{total.toLocaleString()}
+                      ₱{grandTotal.toLocaleString()}
                     </span>
                   </div>
 

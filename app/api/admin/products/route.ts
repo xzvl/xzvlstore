@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { revalidateStorefront } from "@/lib/revalidate";
+import { normalizeShippingFields } from "@/lib/shipping";
 
 export async function GET() {
   const { data, error } = await supabase
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
     gallery_images,
     social_image,
   } = body;
+  const shippingFields = normalizeShippingFields(body);
 
   if (!name) {
     return NextResponse.json({ error: "Name is required." }, { status: 400 });
@@ -102,6 +104,7 @@ export async function POST(req: NextRequest) {
       max_purchase_limit: max_purchase_limit ? Number(max_purchase_limit) : null,
       new_arrival: Boolean(new_arrival),
       new_arrival_until: newArrivalUntil,
+      ...shippingFields,
       status,
       sort_order,
     })

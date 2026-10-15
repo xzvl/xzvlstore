@@ -499,6 +499,51 @@ export function activePaymentMethods(payment: PaymentContent): PaymentMethod[] {
   return [...enabled.filter((m) => m.isDefault), ...enabled.filter((m) => !m.isDefault)];
 }
 
+// ─── Shipping ───────────────────────────────────────────────────────────────
+// J&T Express settings used by /checkout and /pre-order: the province/city
+// pickers read {jntApiEndpoint}/website/base/info/area and the shipping fee is
+// quoted from {jntApiEndpoint}/website/fee/findRates (see lib/jnt.ts).
+
+export type ShippingContent = {
+  /** Base URL of the J&T Express website API, e.g. https://ylofficialjw.jtexpress.ph */
+  jntApiEndpoint: string;
+  /** J&T area name the parcels ship from, e.g. "PAMPANGA-SAN-FERNANDO-CITY". */
+  senderAddr: string;
+  /** J&T service type sent as productType ("EZ" = standard). */
+  productType: string;
+  /** Shown to customers who choose pickup (where/when to pick up). */
+  pickupNote: string;
+};
+
+export const DEFAULT_SHIPPING: ShippingContent = {
+  jntApiEndpoint: "https://ylofficialjw.jtexpress.ph",
+  senderAddr: "PAMPANGA-SAN-FERNANDO-CITY",
+  productType: "EZ",
+  pickupNote: "We'll message you with the pickup location and schedule once your order is ready.",
+};
+
+const isHttpUrl = (v: string) => /^https?:\/\/[^\s]+$/i.test(v);
+
+function normalizeShipping(raw: unknown): ShippingContent {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const endpoint = str(o.jntApiEndpoint, "").trim().replace(/\/+$/, "");
+  return {
+    jntApiEndpoint: isHttpUrl(endpoint) ? endpoint : DEFAULT_SHIPPING.jntApiEndpoint,
+    senderAddr: str(o.senderAddr, "").trim().toUpperCase() || DEFAULT_SHIPPING.senderAddr,
+    productType: str(o.productType, "").trim() || DEFAULT_SHIPPING.productType,
+    pickupNote: str(o.pickupNote, DEFAULT_SHIPPING.pickupNote),
+  };
+}
+
+function validateShipping(raw: unknown): Validation<ShippingContent> {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  if (!isHttpUrl(str(o.jntApiEndpoint, "").trim())) {
+    return { ok: false, error: 'J&T Express API endpoint must start with "https://" (or "http://").' };
+  }
+  if (!str(o.senderAddr, "").trim()) return { ok: false, error: "Sender address is required." };
+  return { ok: true, value: normalizeShipping(raw) };
+}
+
 // ─── Colors ─────────────────────────────────────────────────────────────────
 // One palette per mode. The root layout turns these into CSS variables
 // (lib/theme.ts), which the Tailwind theme tokens (primary, fg, canvas…) read,
@@ -590,6 +635,7 @@ export type SiteContent = {
   pos: PosContent;
   maintenance: MaintenanceContent;
   payment: PaymentContent;
+  shipping: ShippingContent;
   colors: ColorsContent;
 };
 
@@ -601,6 +647,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   pos: DEFAULT_POS,
   maintenance: DEFAULT_MAINTENANCE,
   payment: DEFAULT_PAYMENT,
+  shipping: DEFAULT_SHIPPING,
   colors: DEFAULT_COLORS,
 };
 
@@ -616,6 +663,7 @@ export const NORMALIZERS: { [K in keyof SiteContent]: (raw: unknown) => SiteCont
   pos: normalizePos,
   maintenance: normalizeMaintenance,
   payment: normalizePayment,
+  shipping: normalizeShipping,
   colors: normalizeColors,
 };
 
@@ -627,6 +675,7 @@ const VALIDATORS: { [K in keyof SiteContent]: (raw: unknown) => Validation<SiteC
   pos: validatePos,
   maintenance: validateMaintenance,
   payment: validatePayment,
+  shipping: validateShipping,
   colors: validateColors,
 };
 

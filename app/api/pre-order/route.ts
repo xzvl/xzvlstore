@@ -7,6 +7,8 @@ import { downPaymentPerUnit } from "@/lib/store-types";
 import { getBundlesByIds } from "@/lib/bundles";
 import { verifyPayment, verificationNote, type PaymentVerification } from "@/lib/payment-proof";
 import { loadPaymentProof, isDuplicateReference } from "@/lib/payment-proof-ocr";
+import { quoteShipping } from "@/lib/jnt";
+import { DELIVERY_METHODS, POUCH_LABEL, type DeliveryMethod } from "@/lib/shipping";
 
 // Re-reading a payment screenshot (if its saved OCR result is missing) can take a while.
 export const maxDuration = 60;
@@ -14,6 +16,18 @@ export const maxDuration = 60;
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
 type OrderItem = { product_id?: string; product: string; qty: number; unit_price?: number; subtotal: number };
+
+type Address = {
+  address_1: string; address_2: string; city: string; state: string; postcode: string; region: string;
+  /** J&T Express area ids picked in the province/city dropdowns. */
+  province_id?: string; city_id?: string;
+};
+
+/** Shipping as shown in the emails: the fee, "Pickup", or "TBA" while unknown. */
+type ShippingSummary = { label: string; fee: number | null };
+
+const shippingFeeText = (sh: ShippingSummary) =>
+  sh.label === DELIVERY_METHODS.pickup ? "Pickup" : sh.fee != null ? `&#8369;${sh.fee.toLocaleString()}` : "TBA";
 
 // ─── Google Sheets via Apps Script ───────────────────────────────────────────
 
@@ -60,7 +74,8 @@ function buildPreOrderEmailHtml(
   items: OrderItem[],
   estimatedTotal: number,
   date: string,
-  payment: string
+  payment: string,
+  shipping: ShippingSummary
 ) {
   const rows = orderItemsRows(items);
 
@@ -106,12 +121,12 @@ function buildPreOrderEmailHtml(
         <tr>
           <td>
             <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">Estimated Total</p>
-            <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${estimatedTotal.toLocaleString()}</p>
-            <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">Shipping fee not yet included</p>
+            <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${(estimatedTotal + (shipping.fee ?? 0)).toLocaleString()}</p>
+            <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">${shipping.fee == null && shipping.label !== DELIVERY_METHODS.pickup ? "Shipping fee not yet included" : "Shipping included"}</p>
           </td>
           <td style="text-align:right;vertical-align:top;">
-            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">Shipping Fee</p>
-            <p style="font-size:14px;font-style:italic;color:#ebbbb4;margin:0;">TBA</p>
+            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">${shipping.label}</p>
+            <p style="font-size:14px;color:#ebbbb4;margin:0;">${shippingFeeText(shipping)}</p>
           </td>
         </tr>
       </table>
@@ -127,7 +142,8 @@ function buildCustomerEmailHtml(
   name: string,
   items: OrderItem[],
   estimatedTotal: number,
-  date: string
+  date: string,
+  shipping: ShippingSummary
 ) {
   const rows = orderItemsRows(items);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://xzvl.store";
@@ -172,8 +188,14 @@ function buildCustomerEmailHtml(
       <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">
         ${isCheckout ? "Order Total" : "Estimated Total"}
       </p>
-      <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${estimatedTotal.toLocaleString()}</p>
-      <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">Shipping fee not yet included</p>
+      <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${(estimatedTotal + (shipping.fee ?? 0)).toLocaleString()}</p>
+      <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">${
+        shipping.label === DELIVERY_METHODS.pickup
+          ? "For pickup — no shipping fee"
+          : shipping.fee != null
+            ? `Includes &#8369;${shipping.fee.toLocaleString()} ${shipping.label} shipping`
+            : "Shipping fee not yet included"
+      }</p>
     </div>
 
     <div style="text-align:center;margin-bottom:8px;">
@@ -200,7 +222,8 @@ function buildCheckoutEmailHtml(
   items: OrderItem[],
   estimatedTotal: number,
   date: string,
-  payment: string
+  payment: string,
+  shipping: ShippingSummary
 ) {
   const rows = orderItemsRows(items);
 
@@ -247,12 +270,12 @@ function buildCheckoutEmailHtml(
         <tr>
           <td>
             <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">Order Total</p>
-            <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${estimatedTotal.toLocaleString()}</p>
-            <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">Shipping fee not yet included</p>
+            <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${(estimatedTotal + (shipping.fee ?? 0)).toLocaleString()}</p>
+            <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">${shipping.fee == null && shipping.label !== DELIVERY_METHODS.pickup ? "Shipping fee not yet included" : "Shipping included"}</p>
           </td>
           <td style="text-align:right;vertical-align:top;">
-            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">Shipping Fee</p>
-            <p style="font-size:14px;font-style:italic;color:#ebbbb4;margin:0;">TBA</p>
+            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">${shipping.label}</p>
+            <p style="font-size:14px;color:#ebbbb4;margin:0;">${shippingFeeText(shipping)}</p>
           </td>
         </tr>
       </table>
@@ -270,13 +293,21 @@ function buildCheckoutEmailHtml(
  * the database yet, saves the order without them (the proof summary is still
  * in the notes) rather than losing it.
  */
+const isMissingColumn = (code?: string) => code === "42703" || code === "PGRST204";
+
 async function insertOrder(
   row: Record<string, unknown> & { notes: string[] },
-  proofFields: Record<string, unknown> & { proof_images: { url: string; type: string; uploaded_at: string }[] }
+  proofFields: Record<string, unknown> & { proof_images: { url: string; type: string; uploaded_at: string }[] },
+  /** J&T area ids + receiver name — dropped if those columns aren't migrated yet. */
+  shippingFields: Record<string, unknown>
 ) {
+  const full = await supabase.from("orders").insert({ ...row, ...proofFields, ...shippingFields });
+  if (!full.error) return full;
+  if (!isMissingColumn(full.error.code)) throw full.error;
+  console.error("[pre-order] Shipping area columns missing — run the migration in supabase/schema.sql:", full.error.message);
   const first = await supabase.from("orders").insert({ ...row, ...proofFields });
   if (!first.error) return first;
-  if (first.error.code !== "42703" && first.error.code !== "PGRST204") throw first.error;
+  if (!isMissingColumn(first.error.code)) throw first.error;
   console.error("[pre-order] Payment proof columns missing — run the migration in supabase/schema.sql:", first.error.message);
   const retry = await supabase.from("orders").insert({
     ...row,
@@ -291,7 +322,7 @@ async function insertOrder(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, location, phone, email, facebook, items, estimatedTotal, payment_method, customer_id, billing, shipping, order_type, bundles, payment_proof_url } = body as {
+    const { name, location, phone, email, facebook, items, estimatedTotal, payment_method, customer_id, billing, shipping, order_type, bundles, payment_proof_url, delivery_method, shipping_name } = body as {
       name: string;
       location: string;
       phone: string;
@@ -301,8 +332,12 @@ export async function POST(req: NextRequest) {
       estimatedTotal: number;
       payment_method?: string;
       customer_id?: string;
-      billing?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
-      shipping?: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string };
+      billing?: Address;
+      shipping?: Address;
+      /** Defaults to J&T Express. */
+      delivery_method?: DeliveryMethod;
+      /** Receiver name for the J&T parcel. */
+      shipping_name?: string;
       order_type?: "checkout" | "pre-order";
       /** Bundles in the cart. Their products are already expanded into `items`. */
       bundles?: { id: string; qty: number }[];
@@ -492,7 +527,33 @@ export async function POST(req: NextRequest) {
         : Number(it.subtotal) || 0),
       0
     );
-    const expectedPayment = requiredDp > 0 ? requiredDp : Math.max(0, itemsTotal - bundleDiscount);
+    const goodsValue = Math.max(0, itemsTotal - bundleDiscount);
+
+    // Shipping fee: re-quoted from J&T here (pouch size and weight from the
+    // product rows), never taken from the client. Pickup has none.
+    const delivery: DeliveryMethod = delivery_method === "pickup" ? "pickup" : "jnt";
+    let shippingFee: number | null = null;
+    if (delivery === "jnt") {
+      const provinceId = String(shipping?.province_id ?? "").trim();
+      const cityId = String(shipping?.city_id ?? "").trim();
+      try {
+        if (!provinceId || !cityId) throw new Error("no province/city id");
+        const quote = await quoteShipping({ items, provinceId, cityId, goodsValue });
+        shippingFee = quote.fee;
+        orderNotes.push(
+          `Shipping: J&T Express ₱${quote.fee.toLocaleString()} (${quote.pouch ? `${POUCH_LABEL[quote.pouch]} pouch` : `${quote.weight || 1} kg`}${
+            quote.valuationFee > 0 ? `, incl. ₱${quote.valuationFee.toLocaleString()} valuation fee` : ""
+          }).`
+        );
+      } catch (err) {
+        console.error("[pre-order] J&T quote failed:", err);
+        orderNotes.push("Shipping: J&T Express — rate unavailable at checkout, shipping fee TBA.");
+      }
+    }
+    const shippingSummary: ShippingSummary = { label: DELIVERY_METHODS[delivery], fee: shippingFee };
+
+    // A down payment covers only itself — shipping is paid with the balance.
+    const expectedPayment = requiredDp > 0 ? requiredDp : goodsValue + (shippingFee ?? 0);
 
     const proof = await loadPaymentProof(payment_proof_url);
     if (!proof.found) {
@@ -526,14 +587,14 @@ export async function POST(req: NextRequest) {
         to: "xzviel@gmail.com",
         subject: isCheckout ? `New Order from ${name}` : `New Pre-Order from ${name}`,
         html: isCheckout
-          ? buildCheckoutEmailHtml(name, location, phone, email, facebook?.trim() || "", payment_method || null, items, orderTotal, date, paymentNote)
-          : buildPreOrderEmailHtml(name, location, phone, email, facebook?.trim() || "", items, orderTotal, date, paymentNote),
+          ? buildCheckoutEmailHtml(name, location, phone, email, facebook?.trim() || "", payment_method || null, items, orderTotal, date, paymentNote, shippingSummary)
+          : buildPreOrderEmailHtml(name, location, phone, email, facebook?.trim() || "", items, orderTotal, date, paymentNote, shippingSummary),
       }),
       getResend().emails.send({
         from: process.env.RESEND_FROM ?? "xzvl.store <onboarding@resend.dev>",
         to: email,
         subject: isCheckout ? "Thanks for your order! - xzvl.store" : "Thanks for your pre-order! - xzvl.store",
-        html: buildCustomerEmailHtml(isCheckout, name, items, orderTotal, date),
+        html: buildCustomerEmailHtml(isCheckout, name, items, orderTotal, date, shippingSummary),
       }),
       insertOrder({
         name, email, phone, location,
@@ -544,6 +605,8 @@ export async function POST(req: NextRequest) {
         discount: bundleDiscount,
         items,
         payment_method: payment_method || null,
+        delivery_method: DELIVERY_METHODS[delivery],
+        shipping_fee: shippingFee,
         customer_id: customer_id || null,
         billing_address_1: billing?.address_1 || "",
         billing_address_2: billing?.address_2 || "",
@@ -565,6 +628,12 @@ export async function POST(req: NextRequest) {
         proof_images: [{ url: payment_proof_url, type: "payment", uploaded_at: new Date().toISOString() }],
         ...(verification.verified && !isCheckout && requiredDp > 0 ? { down_payment: requiredDp } : {}),
         ...(verification.verified && verification.date ? { payment_date: `${verification.date}T00:00:00+08:00` } : {}),
+      }, {
+        shipping_name: shipping_name?.trim() || name,
+        billing_province_id: billing?.province_id || null,
+        billing_city_id: billing?.city_id || null,
+        shipping_province_id: shipping?.province_id || null,
+        shipping_city_id: shipping?.city_id || null,
       }),
     ]);
 

@@ -303,3 +303,18 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_reference text;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_verification jsonb;
 -- CREATE INDEX IF NOT EXISTS orders_payment_reference_idx ON orders (payment_reference);
+
+-- ─── J&T Express shipping (run this against the live DB) ──────────────────────
+-- Products: the J&T pouch each ships in (null = priced by weight), the per-order
+-- quantity that bumps it to a medium / large pouch, and weight in kg per unit.
+-- Orders: the J&T province/city ids picked at checkout and the receiver name.
+-- delivery_method ("J&T Express" / "Pickup") and shipping_fee already exist.
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS pouch_size text CHECK (pouch_size IN ('small', 'medium', 'large'));
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS pouch_upgrade_medium_qty integer;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS pouch_upgrade_large_qty integer;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS weight numeric;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_name text;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS billing_province_id text;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS billing_city_id text;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_province_id text;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city_id text;

@@ -8,6 +8,7 @@ import Image from "next/image";
 import type { DbProduct, Taxonomy } from "@/lib/supabase";
 import { sizedImageUrl } from "@/lib/image-sizes";
 import MediaLibraryModal from "@/components/admin/MediaLibraryModal";
+import { POUCH_LABEL, POUCH_SIZES, type PouchSize } from "@/lib/shipping";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
@@ -261,6 +262,10 @@ type FormState = {
   main_image: string;
   gallery_images: string[];
   social_image: string;
+  pouch_size: PouchSize | "";
+  pouch_upgrade_medium_qty: string;
+  pouch_upgrade_large_qty: string;
+  weight: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -291,6 +296,10 @@ const EMPTY_FORM: FormState = {
   main_image: "",
   gallery_images: [],
   social_image: "",
+  pouch_size: "",
+  pouch_upgrade_medium_qty: "",
+  pouch_upgrade_large_qty: "",
+  weight: "",
 };
 
 function productToForm(p: DbProduct): FormState {
@@ -322,6 +331,10 @@ function productToForm(p: DbProduct): FormState {
     main_image: p.main_image ?? p.image ?? "",
     gallery_images: p.gallery_images ?? [],
     social_image: p.social_image ?? "",
+    pouch_size: p.pouch_size ?? "",
+    pouch_upgrade_medium_qty: p.pouch_upgrade_medium_qty != null ? String(p.pouch_upgrade_medium_qty) : "",
+    pouch_upgrade_large_qty: p.pouch_upgrade_large_qty != null ? String(p.pouch_upgrade_large_qty) : "",
+    weight: p.weight != null ? String(p.weight) : "",
   };
 }
 
@@ -372,6 +385,12 @@ export default function ProductForm({ productId }: { productId?: string }) {
 
   const save = async () => {
     if (!form.name.trim()) { setError("Product name is required."); return; }
+    const mediumAt = Number(form.pouch_upgrade_medium_qty) || 0;
+    const largeAt = Number(form.pouch_upgrade_large_qty) || 0;
+    if (form.pouch_size === "small" && mediumAt && largeAt && largeAt <= mediumAt) {
+      setError("The quantity for a large pouch must be more than the quantity for a medium pouch.");
+      return;
+    }
     if (form.pre_order && form.down_payment_required && !(Number(form.down_payment_price) > 0)) {
       setError("Enter a down payment price greater than 0, or turn off Required Down Payment.");
       return;
@@ -638,6 +657,74 @@ export default function ProductForm({ productId }: { productId?: string }) {
               title="Taxable"
               subtitle="Apply tax to this product's price"
               activeClass="border-primary/50 bg-primary/10"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Shipping ── */}
+      <div className="bg-panel border border-line/30 p-5 rounded-lg">
+        <p className="tabular-nums mb-1 text-[13px] font-semibold text-fg">Shipping</p>
+        <p className="tabular-nums text-[11px] text-accent/60 mb-3">
+          Used for the J&amp;T Express rate at checkout. An order ships in the largest pouch any of its products needs.
+          Without a pouch size the rate is by weight.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className={LABEL}>Pouch Size</label>
+            <div className="flex flex-wrap gap-2">
+              {(["", ...POUCH_SIZES] as const).map((size) => (
+                <button
+                  key={size || "none"}
+                  type="button"
+                  onClick={() => set$("pouch_size", size)}
+                  className={`px-4 py-2 tabular-nums text-[11px] border transition-colors ${
+                    form.pouch_size === size
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-line/50 text-accent/70 hover:border-accent/40 hover:text-fg"
+                  }`}
+                >
+                  {size ? POUCH_LABEL[size] : "None"}
+                </button>
+              ))}
+            </div>
+          </div>
+          {form.pouch_size === "small" && (
+            <div>
+              <label className={LABEL}>Quantity to upgrade to medium pouch</label>
+              <input
+                type="number"
+                min="2"
+                value={form.pouch_upgrade_medium_qty}
+                onChange={(e) => set$("pouch_upgrade_medium_qty", e.target.value)}
+                placeholder="e.g. 3 — leave blank to never upgrade"
+                className={INPUT}
+              />
+            </div>
+          )}
+          {(form.pouch_size === "small" || form.pouch_size === "medium") && (
+            <div>
+              <label className={LABEL}>Quantity to upgrade to large pouch</label>
+              <input
+                type="number"
+                min="2"
+                value={form.pouch_upgrade_large_qty}
+                onChange={(e) => set$("pouch_upgrade_large_qty", e.target.value)}
+                placeholder="e.g. 6 — leave blank to never upgrade"
+                className={INPUT}
+              />
+            </div>
+          )}
+          <div>
+            <label className={LABEL}>Weight (kg per unit)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.weight}
+              onChange={(e) => set$("weight", e.target.value)}
+              placeholder="e.g. 0.25"
+              className={INPUT}
             />
           </div>
         </div>

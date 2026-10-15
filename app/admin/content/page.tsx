@@ -12,11 +12,13 @@ import PosTab from "./_PosTab";
 import MaintenanceTab from "./_MaintenanceTab";
 import ColorsTab from "./_ColorsTab";
 import PaymentTab from "./_PaymentTab";
+import ShippingTab from "./_ShippingTab";
 
 const TABS = [
   { key: "branding", label: "Branding", icon: "image" },
   { key: "pos", label: "Point of Sale", icon: "point_of_sale" },
   { key: "payment", label: "Payment", icon: "payments" },
+  { key: "shipping", label: "Shipping", icon: "local_shipping" },
   { key: "header", label: "Header", icon: "web_asset" },
   { key: "hero", label: "Hero", icon: "slideshow" },
   { key: "footer", label: "Footer", icon: "vertical_align_bottom" },
@@ -157,6 +159,9 @@ export default function AdminContentPage() {
           )}
           {active === "payment" && (
             <PaymentTab initial={content.payment} onSaved={(payment) => setContent((c) => c && { ...c, payment })} />
+          )}
+          {active === "shipping" && (
+            <ShippingTab initial={content.shipping} onSaved={(shipping) => setContent((c) => c && { ...c, shipping })} />
           )}
           {active === "images" && <ImageOptimizationTab />}
           {active === "colors" && (
