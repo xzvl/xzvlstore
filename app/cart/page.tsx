@@ -7,6 +7,8 @@ import { useCart, type CartItem as CartLine } from "@/lib/cart-context";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlockedBanner from "@/components/BlockedBanner";
+import { matchArea, useAreas, useShippingQuote } from "@/components/AreaFields";
+import { supabaseClient } from "@/lib/supabase-client";
 
 export default function CartPage() {
   const { items, removeItem, updateQty, total, count, revalidateCart } = useCart();
@@ -217,8 +219,53 @@ function CartItem({
   );
 }
 
+/**
+ * J&T estimate to a logged-in customer's saved billing address, the address
+ * checkout starts with. Guests (or no saved city) get no quote.
+ */
+function useCartShipping(total: number) {
+  const { items } = useCart();
+  const [address, setAddress] = useState<{ state: string; city: string } | null>(null);
+
+  useEffect(() => {
+    supabaseClient.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      const res = await fetch("/api/account/profile", {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      if (!res.ok) return;
+      const profile = await res.json();
+      if (profile.billing_state && profile.billing_city) {
+        setAddress({ state: profile.billing_state, city: profile.billing_city });
+      }
+    });
+  }, []);
+
+  const provinces = useAreas(address ? undefined : null);
+  const province = address ? matchArea(provinces.areas, address.state) : undefined;
+  const cities = useAreas(province?.id ?? null);
+  const city = address ? matchArea(cities.areas, address.city) : undefined;
+
+  // Bundles ship as their individual products, same as checkout.
+  const quoteItems = items.flatMap((item) =>
+    item.bundle
+      ? item.bundle.items.map((b) => ({ product_id: b.product_id, qty: b.qty * item.qty }))
+      : [{ product_id: item.id, qty: item.qty }]
+  );
+  const quote = useShippingQuote({
+    enabled: !!(province && city),
+    provinceId: province?.id ?? "",
+    cityId: city?.id ?? "",
+    items: quoteItems,
+    goodsValue: total,
+  });
+  return { quote, place: province && city ? `${city.name}, ${province.name}` : null };
+}
+
 function OrderSummary({ total, count }: { total: number; count: number }) {
   const { isBlocked } = useCart();
+  const shipping = useCartShipping(total);
+  const fee = shipping.quote.quote?.fee ?? null;
   return (
     <div className="sticky top-20 bg-panel border border-line/25 p-6 space-y-5">
       <h2 className="font-inter font-bold text-[16px] uppercase text-fg">
@@ -230,9 +277,22 @@ function OrderSummary({ total, count }: { total: number; count: number }) {
           <span className="font-mono text-[12px] text-accent/50">Subtotal ({count} items)</span>
           <span className="font-mono text-[13px] text-fg">₱{total.toLocaleString()}</span>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-[12px] text-accent/50">Shipping</span>
-          <span className="font-mono text-[12px] text-accent/50 italic">TBA</span>
+        <div>
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[12px] text-accent/50">
+              Shipping{shipping.place && <span className="text-accent/30"> · J&amp;T</span>}
+            </span>
+            {shipping.quote.loading ? (
+              <span className="material-symbols-outlined animate-spin text-[14px] text-accent/40">progress_activity</span>
+            ) : fee != null ? (
+              <span className="font-mono text-[12px] text-fg">₱{fee.toLocaleString()}</span>
+            ) : (
+              <span className="font-mono text-[12px] text-accent/50 italic">TBA</span>
+            )}
+          </div>
+          {shipping.place && fee != null && (
+            <p className="font-mono text-[10px] text-accent/40 mt-1">To {shipping.place}</p>
+          )}
         </div>
       </div>
 
@@ -241,7 +301,7 @@ function OrderSummary({ total, count }: { total: number; count: number }) {
       <div className="flex items-center justify-between">
         <span className="font-mono text-[12px] uppercase text-fg">Estimated Total</span>
         <span className="font-inter font-black text-[22px] text-primary">
-          ₱{total.toLocaleString()}
+          ₱{(total + (fee ?? 0)).toLocaleString()}
         </span>
       </div>
 
@@ -271,7 +331,9 @@ function OrderSummary({ total, count }: { total: number; count: number }) {
       </Link>
 
       <p className="font-mono text-[10px] text-accent/25 text-center leading-relaxed">
-        Shipping fee will be confirmed upon order processing.
+        {fee != null
+          ? "J&T estimate to your saved address — you can change it at checkout."
+          : "Shipping fee will be confirmed upon order processing."}
       </p>
     </div>
   );

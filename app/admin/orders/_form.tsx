@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { DbProduct, OrderProofImage, OrderStatus } from "@/lib/supabase";
 import OrderProofs from "./_proofs";
-import { ProvinceCityNameFields } from "@/components/AreaFields";
+import { ProvinceCityNameFields, matchArea, useAreas, useShippingQuote } from "@/components/AreaFields";
+import { POUCH_LABEL } from "@/lib/shipping";
 
 export const DELIVERY_METHODS = ["J&T Express", "LBC", "Shopee Express", "Grab Express", "Lalamove", "Pickup", "Other"];
-export const PAYMENT_METHODS = ["GCash", "Maya", "Bank Transfer", "Cash on Delivery", "Cash", "PayPal", "Other"];
+const JNT = "J&T Express";
+const REGION = "Philippines";
+export const PAYMENT_METHODS =["GCash", "Maya", "Bank Transfer", "Cash on Delivery", "Cash", "PayPal", "Other"];
 export const ALL_STATUSES: OrderStatus[] = ["pending", "pre-order", "hold pre-order", "processing", "confirmed", "shipped", "completed", "cancelled", "refunded"];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -99,7 +102,7 @@ const INITIAL_DATE = nowPH();
 const EMPTY_FORM: FormState = {
   customer_id: "", name: "", email: "", phone: "", location: "", facebook: "",
   status: "pending", order_date: INITIAL_DATE, payment_date: INITIAL_DATE,
-  delivery_method: "", payment_method: "", shipping_fee: "", tracking_number: "",
+  delivery_method: JNT, payment_method: "", shipping_fee: "", tracking_number: "",
   official_receipt: "", discount: "", down_payment: "",
   billing_address_1: "", billing_address_2: "", billing_city: "", billing_state: "",
   billing_postcode: "", billing_region: "Philippines", billing_phone: "",
@@ -289,12 +292,7 @@ function AddressSection({
         </div>
         <div>
           <label className={LABEL}>Region</label>
-          <input
-            value={String(form[f("region")])}
-            onChange={(e) => set$(f("region"), e.target.value)}
-            placeholder="Philippines"
-            className={INPUT}
-          />
+          <input value={REGION} readOnly disabled className={`${INPUT} opacity-60 cursor-not-allowed`} />
         </div>
       </div>
       <div>
@@ -397,6 +395,9 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
   // ("not set"), which BIR/analytics resolve to the order date. Editing the
   // payment date unlinks it and saves the chosen value.
   const [paymentLinked, setPaymentLinked] = useState(true);
+  // Whether a new J&T quote may overwrite the shipping fee. Off while an
+  // existing order's saved fee is untouched; any edit turns it on.
+  const [feeAuto, setFeeAuto] = useState(!orderId);
 
   useEffect(() => {
     fetch("/api/admin/products").then((r) => r.json()).then(setProducts);
@@ -407,6 +408,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         .then((r) => r.json())
         .then((order) => {
           setPaymentLinked(!order.payment_date);
+          setFeeAuto(order.shipping_fee == null);
           setForm({
             customer_id: order.customer_id ?? "",
             name: order.name ?? "",
@@ -431,14 +433,14 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
             billing_city: order.billing_city ?? "",
             billing_state: order.billing_state ?? "",
             billing_postcode: order.billing_postcode ?? "",
-            billing_region: order.billing_region || "Philippines",
+            billing_region: REGION,
             billing_phone: order.billing_phone ?? "",
             shipping_address_1: order.shipping_address_1 ?? "",
             shipping_address_2: order.shipping_address_2 ?? "",
             shipping_city: order.shipping_city ?? "",
             shipping_state: order.shipping_state ?? "",
             shipping_postcode: order.shipping_postcode ?? "",
-            shipping_region: order.shipping_region || "Philippines",
+            shipping_region: REGION,
             shipping_phone: order.shipping_phone ?? "",
             items: (order.items ?? []).map((it: Record<string, unknown>) => ({
               product_id: String(it.product_id ?? ""),
@@ -456,8 +458,10 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
     }
   }, [orderId]);
 
-  const set$ = (key: keyof FormState, value: string) =>
+  const set$ = (key: keyof FormState, value: string) => {
+    setFeeAuto(true);
     setForm((f) => ({ ...f, [key]: value }));
+  };
 
   const setOrderDate = (value: string) =>
     setForm((f) => ({ ...f, order_date: value, ...(paymentLinked ? { payment_date: value } : {}) }));
@@ -468,6 +472,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
   };
 
   const handleCustomerSelect = (c: Customer | null) => {
+    setFeeAuto(true);
     if (!c) {
       setForm((f) => ({ ...f, customer_id: "" }));
       return;
@@ -485,25 +490,29 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       billing_city: c.billing_city,
       billing_state: c.billing_state,
       billing_postcode: c.billing_postcode,
-      billing_region: c.billing_region || "Philippines",
+      billing_region: REGION,
       billing_phone: c.billing_phone,
       shipping_address_1: c.shipping_address_1,
       shipping_address_2: c.shipping_address_2,
       shipping_city: c.shipping_city,
       shipping_state: c.shipping_state,
       shipping_postcode: c.shipping_postcode,
-      shipping_region: c.shipping_region || "Philippines",
+      shipping_region: REGION,
       shipping_phone: c.shipping_phone,
     }));
   };
 
   const copyBillingToShipping = () => {
+    setFeeAuto(true);
     setForm((f) => ({
       ...f,
       shipping_address_1: f.billing_address_1,
       shipping_address_2: f.billing_address_2,
       shipping_city: f.billing_city,
       shipping_state: f.billing_state,
+      shipping_postcode: f.billing_postcode,
+      shipping_region: REGION,
+      shipping_phone: f.billing_phone,
     }));
   };
 
@@ -516,7 +525,8 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
     setTimeout(() => setShippingCopied(false), 1500);
   };
 
-  const setItem = (i: number, key: keyof ItemRow, value: string) =>
+  const setItem = (i: number, key: keyof ItemRow, value: string) => {
+    setFeeAuto(true);
     setForm((f) => {
       const items = [...f.items];
       const updated = { ...items[i], [key]: value };
@@ -528,9 +538,11 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       items[i] = updated;
       return { ...f, items };
     });
+  };
 
   const selectProduct = (i: number, productId: string) => {
     const p = products.find((x) => x.id === productId);
+    setFeeAuto(true);
     setForm((f) => {
       const items = [...f.items];
       const qty = parseFloat(items[i].qty) || 1;
@@ -547,11 +559,36 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
   };
 
   const addItem = () => setForm((f) => ({ ...f, items: [...f.items, { ...EMPTY_ITEM }] }));
-  const removeItem = (i: number) => setForm((f) => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
+  const removeItem = (i: number) => {
+    setFeeAuto(true);
+    setForm((f) => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
+  };
 
   const itemsSubtotal = form.items.reduce((s, it) => s + (parseFloat(it.subtotal) || 0), 0);
   const discountAmt = parseFloat(form.discount) || 0;
   const total = Math.max(0, itemsSubtotal - discountAmt);
+
+  // J&T quote for the shipping address, same endpoint as checkout. The ids are
+  // worked out from the province/city names the order stores.
+  const shipProvinces = useAreas(undefined);
+  const shipProvinceId = matchArea(shipProvinces.areas, form.shipping_state)?.id ?? "";
+  const shipCities = useAreas(shipProvinceId || null);
+  const shipCityId = matchArea(shipCities.areas, form.shipping_city)?.id ?? "";
+  const shippingQuote = useShippingQuote({
+    enabled: form.delivery_method === JNT,
+    provinceId: shipProvinceId,
+    cityId: shipCityId,
+    items: form.items
+      .filter((it) => it.product_id && (parseFloat(it.qty) || 0) > 0)
+      .map((it) => ({ product_id: it.product_id, qty: parseFloat(it.qty) || 0 })),
+    goodsValue: total,
+  });
+  useEffect(() => {
+    const q = shippingQuote.quote;
+    if (feeAuto && q) setForm((f) => ({ ...f, shipping_fee: String(q.fee) }));
+    // Only a new quote fills the fee; flipping feeAuto alone doesn't.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shippingQuote.quote]);
 
   const save = async () => {
     if (!form.name.trim()) { setError("Name is required."); return; }
@@ -578,14 +615,14 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         billing_city: form.billing_city,
         billing_state: form.billing_state,
         billing_postcode: form.billing_postcode,
-        billing_region: form.billing_region,
+        billing_region: REGION,
         billing_phone: form.billing_phone,
         shipping_address_1: form.shipping_address_1,
         shipping_address_2: form.shipping_address_2,
         shipping_city: form.shipping_city,
         shipping_state: form.shipping_state,
         shipping_postcode: form.shipping_postcode,
-        shipping_region: form.shipping_region,
+        shipping_region: REGION,
         shipping_phone: form.shipping_phone,
         items: form.items.map((it) => ({
           product_id: it.product_id || null,
@@ -779,6 +816,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
               value={form.delivery_method}
               onChange={(e) => {
                 const value = e.target.value;
+                setFeeAuto(true);
                 setForm((f) => ({ ...f, delivery_method: value, ...(value === "Pickup" ? { shipping_fee: "" } : {}) }));
               }}
               className={SELECT}
@@ -798,6 +836,19 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
                 min="0"
                 className={INPUT}
               />
+              {form.delivery_method === JNT && (
+                <p className={`tabular-nums text-[10px] mt-1 ${shippingQuote.error ? "text-orange-400" : "text-accent/50"}`}>
+                  {shippingQuote.loading ? "Getting J&T rate…"
+                    : shippingQuote.error ? `${shippingQuote.error} Enter the fee manually.`
+                    : shippingQuote.quote ? [
+                        `J&T rate ₱${shippingQuote.quote.fee.toLocaleString()}`,
+                        shippingQuote.quote.pouch ? `${POUCH_LABEL[shippingQuote.quote.pouch]} pouch` : `${shippingQuote.quote.weight || 1} kg`,
+                        shippingQuote.quote.valuationFee > 0 ? `incl. ₱${shippingQuote.quote.valuationFee.toLocaleString()} valuation fee` : "",
+                      ].filter(Boolean).join(" · ")
+                    : !shipCityId ? "Pick the shipping province and city to get the J&T rate."
+                    : "Add products to get the J&T rate."}
+                </p>
+              )}
             </div>
           )}
           <div>

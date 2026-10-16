@@ -137,13 +137,14 @@ export function AreaCombobox({
   const ref = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
-  // A saved/auto-filled name gets its id as soon as the list arrives.
+  // A saved/auto-filled name gets its id once both it and the list are here,
+  // whichever arrives last (the account prefill often lands after the list).
   useEffect(() => {
     if (selectedId && areas.some((a) => a.id === selectedId)) return;
     const m = matchArea(areas, value);
     if (m) onChange(m.name, m);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areas]);
+  }, [areas, value]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
