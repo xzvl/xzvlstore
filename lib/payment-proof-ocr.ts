@@ -10,6 +10,8 @@ import { parsePaymentText, type PaymentExtraction } from "@/lib/payment-proof";
 
 const BUCKET = "product-images";
 const FOLDER = "payment-proofs";
+// Well under the routes' 60s maxDuration, leaving room to store the image.
+const OCR_TIMEOUT_MS = 30_000;
 
 /** Runs OCR on an image and parses the payment details. null if OCR failed. */
 export async function readPaymentProof(image: Buffer): Promise<PaymentExtraction | null> {
@@ -31,14 +33,25 @@ export async function readPaymentProof(image: Buffer): Promise<PaymentExtraction
     }
 
     const { createWorker } = await import("tesseract.js");
-    // The English language data is downloaded once and cached in the temp dir
-    // (the deploy filesystem is read-only).
-    const worker = await createWorker("eng", undefined, { cachePath: os.tmpdir() });
-    try {
+    let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
+    const run = async () => {
+      // The English language data is downloaded once and cached in the temp
+      // dir (the deploy filesystem is read-only).
+      worker = await createWorker("eng", undefined, { cachePath: os.tmpdir() });
       const { data } = await worker.recognize(input);
       return parsePaymentText(data.text ?? "");
+    };
+    // If the worker stalls, give up so the upload still goes through and the
+    // payment is checked manually instead of the request timing out.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`OCR timed out after ${OCR_TIMEOUT_MS / 1000}s`)), OCR_TIMEOUT_MS);
+    });
+    try {
+      return await Promise.race([run(), timeout]);
     } finally {
-      await worker.terminate();
+      clearTimeout(timer);
+      await (worker as Awaited<ReturnType<typeof createWorker>> | null)?.terminate().catch(() => {});
     }
   } catch (err) {
     console.error("[payment-proof] OCR error:", err);

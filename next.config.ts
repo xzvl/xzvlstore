@@ -1,12 +1,28 @@
 import type { NextConfig } from "next";
 
+const TESSERACT_FILES = [
+  "tesseract.js",
+  "tesseract.js-core",
+  "regenerator-runtime",
+  "is-url",
+  "wasm-feature-detect",
+  "bmp-js",
+  "zlibjs",
+  "node-fetch",
+  "whatwg-url",
+  "tr46",
+  "webidl-conversions",
+].map((pkg) => `./node_modules/${pkg}/**/*`);
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp", "tesseract.js"],
   // Tesseract.js starts its OCR worker from a file path, which file tracing
-  // can't see — ship the package with the routes that read payment proofs.
+  // can't see — ship the package and the worker's own (hoisted) dependencies
+  // with the routes that read payment proofs. A missing one makes the worker
+  // crash on startup and OCR hang until the function times out.
   outputFileTracingIncludes: {
-    "/api/payment-proof": ["./node_modules/tesseract.js/**/*", "./node_modules/tesseract.js-core/**/*"],
-    "/api/pre-order": ["./node_modules/tesseract.js/**/*", "./node_modules/tesseract.js-core/**/*"],
+    "/api/payment-proof": TESSERACT_FILES,
+    "/api/pre-order": TESSERACT_FILES,
   },
   images: {
     // Fully disable Next.js Image Optimization, site-wide. `next/image`
