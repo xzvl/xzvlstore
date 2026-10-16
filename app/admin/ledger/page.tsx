@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
-import type { Order } from "@/lib/supabase";
+import type { Order, OrderStatus } from "@/lib/supabase";
 
 type LedgerEntry = {
   id: string;
@@ -11,13 +11,16 @@ type LedgerEntry = {
   type: "incoming" | "outgoing";
   amount: number;
   entry_date: string;
+  /** False = left out of the totals. Missing (column not added yet) = on. */
+  computed?: boolean;
 };
 
 type EntryKind = "custom" | "order" | "dp";
 
 // A ledger row: either a custom entry from the ledger table, or a read-only
-// entry derived from an order (completed sale, or a pre-order's down payment).
-type Row = LedgerEntry & { kind: EntryKind; order?: Order };
+// entry derived from an order (paid sale, or a pre-order's down payment).
+// `computed` is resolved for every row: the entry's own flag, or the order's.
+type Row = LedgerEntry & { kind: EntryKind; order?: Order; computed: boolean };
 
 type FormState = {
   title: string;
@@ -36,7 +39,26 @@ const now = new Date();
 
 const ORDER_SOURCE = "Facebook / Website";
 
-const KIND_FILTERS: { value: "all" | "orders" | "custom"; label: string }[] = [
+// Paid orders that count in full, each tagged with its status in the title.
+// `row` / `card` highlight the desktop row and mobile card; completed orders
+// aren't highlighted, since they're the settled, normal case.
+type Badge = { label: string; className: string; row?: string; card?: string };
+
+const SALE_BADGES: Partial<Record<OrderStatus, Badge>> = {
+  confirmed: { label: "HK", className: "bg-sky-400/15 text-sky-400 border-sky-400/40", row: "bg-sky-400/[0.05]", card: "border-sky-400/40" },
+  processing: { label: "PR", className: "bg-violet-400/15 text-violet-400 border-violet-400/40", row: "bg-violet-400/[0.05]", card: "border-violet-400/40" },
+  shipped: { label: "SH", className: "bg-blue-400/15 text-blue-400 border-blue-400/40", row: "bg-blue-400/[0.05]", card: "border-blue-400/40" },
+  completed: { label: "CO", className: "bg-green-400/15 text-green-400 border-green-400/40" },
+};
+
+const DP_BADGE: Badge = { label: "DP", className: "bg-amber-400/15 text-amber-400 border-amber-400/40", row: "bg-amber-400/[0.05]", card: "border-amber-400/40" };
+
+function rowBadge(row: Row): Badge | undefined {
+  if (row.kind === "dp") return DP_BADGE;
+  return row.order ? SALE_BADGES[row.order.status] : undefined;
+}
+
+const KIND_FILTERS:{ value: "all" | "orders" | "custom"; label: string }[] = [
   { value: "all", label: "All Entries" },
   { value: "orders", label: "Orders Only" },
   { value: "custom", label: "Custom Entry" },
@@ -46,7 +68,7 @@ function orderShippingFee(o: Order): number {
   return o.delivery_method && o.delivery_method !== "Pickup" ? (o.shipping_fee ?? 0) : 0;
 }
 
-// "#123 Juan (SKU-1, SKU-2)" — the DP prefix is rendered separately so it can be highlighted.
+// "#123 Juan (SKU-1, SKU-2)" — the status/DP prefix is rendered separately so it can be highlighted.
 function orderLabel(o: Order, skuById: Map<string, string>): string {
   const num = o.order_number != null ? `#${o.order_number}` : `#${o.id.slice(0, 8)}`;
   const firstName = o.name.trim().split(/\s+/)[0] ?? "";
@@ -56,21 +78,23 @@ function orderLabel(o: Order, skuById: Map<string, string>): string {
   return `${num} ${firstName}${skus.length ? ` (${skus.join(", ")})` : ""}`;
 }
 
-// Completed orders count in full (total + shipping); pre-orders count only
-// their down payment, dated by payment date (falls back to the order date).
+// Confirmed/processing/shipped/completed orders count in full (total + shipping);
+// pre-orders count only their down payment, dated by payment date (falls back
+// to the order date).
 function ordersToRows(orders: Order[], skuById: Map<string, string>): Row[] {
   return orders.flatMap((o): Row[] => {
     const date = o.payment_date ?? o.created_at;
-    if (o.status === "completed") {
+    const computed = o.ledger_computed !== false;
+    if (SALE_BADGES[o.status]) {
       return [{
-        id: `order-${o.id}`, kind: "order", order: o,
+        id: `order-${o.id}`, kind: "order", order: o, computed,
         title: orderLabel(o, skuById), source: ORDER_SOURCE, type: "incoming",
         amount: o.estimated_total + orderShippingFee(o), entry_date: date,
       }];
     }
     if (o.status === "pre-order" && (o.down_payment ?? 0) > 0) {
       return [{
-        id: `dp-${o.id}`, kind: "dp", order: o,
+        id: `dp-${o.id}`, kind: "dp", order: o, computed,
         title: orderLabel(o, skuById), source: ORDER_SOURCE, type: "incoming",
         amount: o.down_payment, entry_date: date,
       }];
@@ -80,15 +104,52 @@ function ordersToRows(orders: Order[], skuById: Map<string, string>): Row[] {
 }
 
 function RowTitle({ row }: { row: Row }) {
+  const badge = rowBadge(row);
   return (
     <>
-      {row.kind === "dp" && (
-        <span className="inline-flex items-center tabular-nums text-[9px] font-bold uppercase tracking-wider px-1.5 py-px rounded bg-amber-400/15 text-amber-400 border border-amber-400/40 mr-1.5 align-middle">
-          DP
+      {badge && (
+        <span
+          title={row.kind === "dp" ? "Down payment" : row.order?.status}
+          className={`inline-flex items-center tabular-nums text-[9px] font-bold uppercase tracking-wider px-1.5 py-px rounded border mr-1.5 align-middle ${badge.className}`}
+        >
+          {badge.label}
         </span>
       )}
       {row.title}
     </>
+  );
+}
+
+// On = the row counts toward the totals. Stops the click so it doesn't open the order.
+function ComputeToggle({ row, busy, onToggle }: { row: Row; busy: boolean; onToggle: (row: Row) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={row.computed}
+      disabled={busy}
+      onClick={e => { e.stopPropagation(); onToggle(row); }}
+      title={row.computed ? "Computed in totals — click to exclude" : "Excluded from totals — click to include"}
+      className={`relative inline-flex h-4 w-7 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
+        row.computed ? "bg-primary" : "bg-line"
+      }`}
+    >
+      <span className={`inline-block h-3 w-3 rounded-full bg-white shadow transition-transform ${
+        row.computed ? "translate-x-3.5" : "translate-x-0.5"
+      }`} />
+    </button>
+  );
+}
+
+// Order rows come from /admin/orders, so they can't be deleted here. The wrapper
+// stops the click so it doesn't open the order popup either.
+function OrderDeleteDisabled({ className = "" }: { className?: string }) {
+  return (
+    <span onClick={e => e.stopPropagation()} title="Order entries can't be deleted from the ledger" className="inline-flex cursor-not-allowed">
+      <button type="button" disabled className={`text-accent/20 ${className}`}>
+        <span className="material-symbols-outlined text-[16px]">delete</span>
+      </button>
+    </span>
   );
 }
 
@@ -145,17 +206,16 @@ export default function LedgerPage() {
     const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? v : []);
     Promise.all([
       json("/api/admin/ledger"),
-      json("/api/admin/orders?status=completed"),
-      json("/api/admin/orders?status=pre-order"),
+      json("/api/admin/orders"),
       json("/api/admin/products"),
-    ]).then(([ledger, completed, preOrders, products]) => {
+    ]).then(([ledger, orders, products]) => {
       const skuById = new Map<string, string>(
         arr<{ id: string; sku: string | null }>(products)
           .filter(p => p.sku?.trim())
           .map(p => [p.id, p.sku!.trim()])
       );
-      const custom: Row[] = arr<LedgerEntry>(ledger).map(e => ({ ...e, kind: "custom" }));
-      const orderRows = ordersToRows([...arr<Order>(completed), ...arr<Order>(preOrders)], skuById);
+      const custom: Row[] = arr<LedgerEntry>(ledger).map(e => ({ ...e, kind: "custom", computed: e.computed !== false }));
+      const orderRows = ordersToRows(arr<Order>(orders), skuById);
       setEntries(
         [...custom, ...orderRows].sort(
           (a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
@@ -182,9 +242,34 @@ export default function LedgerPage() {
 
   const sources = Array.from(new Set(entries.map(e => e.source).filter(Boolean))).sort();
 
-  const totalIncoming = filtered.filter(e => e.type === "incoming").reduce((s, e) => s + e.amount, 0);
-  const totalOutgoing = filtered.filter(e => e.type === "outgoing").reduce((s, e) => s + e.amount, 0);
+  const computedRows = filtered.filter(e => e.computed);
+  const excludedCount = filtered.length - computedRows.length;
+  const totalIncoming = computedRows.filter(e => e.type === "incoming").reduce((s, e) => s + e.amount, 0);
+  const totalOutgoing = computedRows.filter(e => e.type === "outgoing").reduce((s, e) => s + e.amount, 0);
   const balance = totalIncoming - totalOutgoing;
+
+  // Optimistic flip; reverts if the save fails (e.g. the DB column isn't added yet).
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const toggleComputed = async (row: Row) => {
+    const computed = !row.computed;
+    const setRow = (value: boolean) =>
+      setEntries(es => es.map(e => (e.id === row.id ? { ...e, computed: value } : e)));
+    setRow(computed);
+    setTogglingId(row.id);
+    const res = await fetch("/api/admin/ledger/compute", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        row.order ? { kind: "order", id: row.order.id, computed } : { kind: "custom", id: row.id, computed }
+      ),
+    }).catch(() => null);
+    setTogglingId(null);
+    if (!res?.ok) {
+      setRow(!computed);
+      const json = await res?.json().catch(() => null);
+      alert(`Couldn't save: ${json?.error ?? "network error"}`);
+    }
+  };
 
   const openNew = () => {
     setEditing(null);
@@ -262,7 +347,7 @@ export default function LedgerPage() {
         </div>
         <button
           onClick={openNew}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors font-medium shadow-sm"
+          className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
           <span className="material-symbols-outlined text-[14px]">add</span>
           Add Entry
@@ -350,7 +435,10 @@ export default function LedgerPage() {
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
-        <span className="tabular-nums text-[11px] text-accent/50">{filtered.length} {filtered.length === 1 ? "entry" : "entries"}</span>
+        <span className="tabular-nums text-[11px] text-accent/50">
+          {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
+          {excludedCount > 0 && ` · ${excludedCount} not computed`}
+        </span>
       </div>
 
       {/* Table */}
@@ -373,10 +461,10 @@ export default function LedgerPage() {
                 key={entry.id}
                 onClick={entry.order ? () => setViewOrder(entry) : undefined}
                 className={`bg-panel border rounded-lg ${entry.order ? "cursor-pointer" : ""} ${
-                  entry.kind === "dp" ? "border-amber-400/40" : "border-line/20"
+                  rowBadge(entry)?.card ?? "border-line/20"
                 }`}
               >
-                <div className="px-4 py-3 space-y-1">
+                <div className={`px-4 py-3 space-y-1 ${entry.computed ? "" : "opacity-50"}`}>
                   {/* Row 1: title */}
                   <p className="font-semibold text-[13px] text-fg truncate"><RowTitle row={entry} /></p>
 
@@ -400,12 +488,16 @@ export default function LedgerPage() {
                       {entry.type}
                     </span>
                     <span className="text-line/60 tabular-nums text-[11px]">|</span>
-                    <span className={`tabular-nums font-bold text-[13px] ${entry.type === "incoming" ? "text-green-400" : "text-red-400"}`}>
+                    <span className={`tabular-nums font-bold text-[13px] ${entry.type === "incoming" ? "text-green-400" : "text-red-400"} ${entry.computed ? "" : "line-through"}`}>
                       {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString("en-US")}
                     </span>
                     <span className="flex-1" />
+                    <ComputeToggle row={entry} busy={togglingId === entry.id} onToggle={toggleComputed} />
                     {entry.order ? (
-                      <span className="material-symbols-outlined text-[16px] text-accent/40" title="View order">receipt_long</span>
+                      <>
+                        <span className="material-symbols-outlined text-[16px] text-accent/40" title="View order">receipt_long</span>
+                        <OrderDeleteDisabled />
+                      </>
                     ) : (
                       <>
                         <button onClick={() => openEdit(entry)} className="text-accent/50 hover:text-primary transition-colors" title="Edit">
@@ -456,10 +548,10 @@ export default function LedgerPage() {
                   <tr
                     onClick={entry.order ? () => setViewOrder(entry) : undefined}
                     className={`border-b border-line/15 hover:bg-panel transition-colors ${entry.order ? "cursor-pointer" : ""} ${
-                      entry.kind === "dp" ? "bg-amber-400/[0.05]" : ""
-                    }`}
+                      rowBadge(entry)?.row ?? ""
+                    } ${entry.computed ? "" : "[&>td:not(:last-child)]:opacity-50"}`}
                   >
-                    <td className="px-3 py-3 font-semibold text-[13px] text-fg max-w-[240px] truncate" title={entry.kind === "dp" ? `DP ${entry.title}` : entry.title}>
+                    <td className="px-3 py-3 font-semibold text-[13px] text-fg max-w-[240px] truncate" title={[rowBadge(entry)?.label, entry.title].filter(Boolean).join(" ")}>
                       <RowTitle row={entry} />
                     </td>
                     <td className="px-3 py-3 tabular-nums text-[12px] text-accent/60 whitespace-nowrap">
@@ -479,19 +571,24 @@ export default function LedgerPage() {
                     </td>
                     <td className={`px-3 py-3 tabular-nums font-bold text-[13px] text-right whitespace-nowrap ${
                       entry.type === "incoming" ? "text-green-400" : "text-red-400"
-                    }`}>
+                    } ${entry.computed ? "" : "line-through"}`}>
                       {entry.type === "outgoing" ? "−" : "+"}₱{entry.amount.toLocaleString("en-US")}
                     </td>
                     <td className="px-3 py-3 tabular-nums text-[11px] text-accent/60 text-right whitespace-nowrap">
                       {formatDate(entry.entry_date)}
                     </td>
                     <td className="px-3 py-3">
+                      <div className="flex items-center gap-1 justify-end">
+                      <ComputeToggle row={entry} busy={togglingId === entry.id} onToggle={toggleComputed} />
                       {entry.order ? (
-                        <div className="flex items-center justify-end p-1.5 text-accent/40" title="View order">
-                          <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-                        </div>
+                        <>
+                          <div className="flex items-center justify-end p-1.5 text-accent/40" title="View order">
+                            <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                          </div>
+                          <OrderDeleteDisabled className="p-1.5" />
+                        </>
                       ) : (
-                        <div className="flex items-center gap-1 justify-end">
+                        <>
                           <button
                             onClick={() => openEdit(entry)}
                             className="p-1.5 text-accent/50 hover:text-primary transition-colors"
@@ -506,8 +603,9 @@ export default function LedgerPage() {
                           >
                             <span className="material-symbols-outlined text-[16px]">delete</span>
                           </button>
-                        </div>
+                        </>
                       )}
+                      </div>
                     </td>
                   </tr>
 
@@ -641,7 +739,7 @@ export default function LedgerPage() {
               <button
                 onClick={save}
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors disabled:opacity-50 font-medium shadow-sm"
+                className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
               >
                 {saving
                   ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
@@ -694,7 +792,7 @@ function OrderModal({
         <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-line/30">
           <div className="min-w-0">
             <p className="tabular-nums text-[13px] font-semibold text-fg">
-              {row.kind === "dp" ? "Pre-order Down Payment" : "Completed Order"}
+              {row.kind === "dp" ? "Pre-order Down Payment" : `${order.status[0].toUpperCase()}${order.status.slice(1)} Order`}
             </p>
             <h2 className="font-semibold text-[18px] text-fg truncate"><RowTitle row={row} /></h2>
           </div>
@@ -749,7 +847,7 @@ function OrderModal({
           </button>
           <Link
             href={`/admin/orders/${order.id}`}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors font-medium shadow-sm"
+            className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
           >
             <span className="material-symbols-outlined text-[14px]">open_in_new</span>
             Open Order

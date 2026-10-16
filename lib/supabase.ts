@@ -63,6 +63,8 @@ export type Order = {
   payment_reference?: string | null;
   /** What OCR read from the proof of payment and whether it matched. */
   payment_verification?: PaymentVerification | null;
+  /** False = this order's /admin/ledger row is left out of the totals. Missing = on. */
+  ledger_computed?: boolean;
 };
 
 export type OrderProofType = "payment" | "purchase";

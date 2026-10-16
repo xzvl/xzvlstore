@@ -673,7 +673,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors disabled:opacity-50 flex-shrink-0 mt-8 font-medium shadow-sm"
+          className="flex items-center gap-2 px-5 py-1.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors disabled:opacity-50 flex-shrink-0 mt-8 font-medium shadow-sm"
         >
           {saving
             ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
@@ -991,7 +991,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors disabled:opacity-50 font-medium shadow-sm"
+          className="flex items-center gap-2 px-5 py-1.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors disabled:opacity-50 font-medium shadow-sm"
         >
           {saving
             ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>

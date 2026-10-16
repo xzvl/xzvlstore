@@ -318,3 +318,8 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS billing_city_id text;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_province_id text;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city_id text;
+
+-- ─── Ledger compute switch (run this against the live DB) ─────────────────────
+-- Off = the row stays listed on /admin/ledger but is left out of the totals.
+-- ALTER TABLE ledger ADD COLUMN IF NOT EXISTS computed boolean NOT NULL DEFAULT true;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS ledger_computed boolean NOT NULL DEFAULT true;

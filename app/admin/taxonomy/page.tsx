@@ -118,7 +118,7 @@ export default function AdminTaxonomyPage() {
         </div>
         <button
           onClick={openNew}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-all font-medium shadow-sm"
+          className="sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           Add {activeTab.label.replace(/s$/, "")}

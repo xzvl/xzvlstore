@@ -87,7 +87,7 @@ function monthOptions(): { value: string; label: string }[] {
 
 function defaultDateRange(): { from: Date; to: Date } {
   const now = new Date();
-  return { from: sod(new Date(now.getFullYear(), now.getMonth() - 3, 1)), to: eod(now) };
+  return { from: sod(new Date(now.getFullYear(), now.getMonth() - 6, 1)), to: eod(now) };
 }
 
 function resolveDateRange(dateFilter: string, dateFrom: string, dateTo: string): { from: Date; to: Date } | null {
@@ -637,14 +637,14 @@ function AdminOrdersPageInner() {
           <button
             type="button"
             onClick={() => setExportOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-panel border border-line text-fg tabular-nums text-[11px] hover:border-primary hover:text-primary transition-colors font-medium rounded-lg"
+            className="flex items-center gap-1.5 px-4 py-1 bg-panel border border-line text-fg tabular-nums text-[11px] hover:border-primary hover:text-primary transition-colors font-medium rounded-lg"
           >
             <span className="material-symbols-outlined text-[14px]">download</span>
             Export
           </button>
           <Link
             href="/admin/orders/new"
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary border border-primary text-white tabular-nums text-[11px] hover:bg-primary/90 transition-colors font-medium shadow-sm"
+            className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
           >
             <span className="material-symbols-outlined text-[14px]">add</span>
             New Order

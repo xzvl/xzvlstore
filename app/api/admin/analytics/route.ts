@@ -20,6 +20,9 @@ function computePerformance(orders: RawOrder[]) {
   return { totalSales, netSales, orders: orders.length, productsSold };
 }
 
+// Paid orders count as sales from confirmation onward, not just once completed.
+const SALE_STATUSES = ["confirmed", "processing", "shipped", "completed"];
+
 // An order counts on its payment date; if none is set, on its order date.
 async function fetchOrders(from: string, to: string) {
   return supabase
@@ -29,7 +32,7 @@ async function fetchOrders(from: string, to: string) {
       `and(payment_date.gte.${from},payment_date.lte.${to}),` +
       `and(payment_date.is.null,created_at.gte.${from},created_at.lte.${to})`
     )
-    .eq("status", "completed");
+    .in("status", SALE_STATUSES);
 }
 
 export async function GET(req: NextRequest) {

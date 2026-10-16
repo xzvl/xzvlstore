@@ -6,8 +6,8 @@ import type { OrderProofImage, OrderProofType } from "@/lib/supabase";
 import { sizedImageUrl } from "@/lib/image-sizes";
 
 const TYPES: { value: OrderProofType; label: string; active: string }[] = [
-  { value: "payment", label: "Proof of Payment", active: "border-green-400/60 bg-green-400/10 text-green-400" },
-  { value: "purchase", label: "Proof of Purchase", active: "border-sky-400/60 bg-sky-400/10 text-sky-400" },
+  { value: "payment", label: "Payment", active: "border-green-400/60 bg-green-400/10 text-green-400" },
+  { value: "purchase", label: "Purchase", active: "border-sky-400/60 bg-sky-400/10 text-sky-400" },
 ];
 
 const typeLabel = (t: OrderProofType) => TYPES.find((x) => x.value === t)?.label ?? t;

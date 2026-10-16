@@ -89,47 +89,34 @@ type JournalRow = {
   credit: string;
 };
 
-// ─── Date filter helpers (mirrors /admin/orders) ──────────────────────────────
+// ─── Date filter helpers ───────────────────────────────────────────────────────
 
-const sod = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const eod = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 
-function monthOptions(): { value: string; label: string }[] {
-  const now = new Date();
-  return Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    return { value, label };
-  });
+// The books start on the BIR registration date; every later year is covered in full.
+const BIR_REGISTERED = new Date(2026, 6, 20);
+
+function birYears(): number[] {
+  const years: number[] = [];
+  for (let y = new Date().getFullYear(); y >= BIR_REGISTERED.getFullYear(); y--) years.push(y);
+  return years;
 }
 
-function defaultDateRange(): { from: Date; to: Date } {
-  const year = new Date().getFullYear();
-  if (year === 2026) {
-    return { from: new Date(2026, 6, 20), to: eod(new Date(2026, 11, 31)) };
-  }
-  return { from: new Date(year, 0, 1), to: eod(new Date(year, 11, 31)) };
+function yearCoverage(year: number): { from: Date; to: Date } {
+  const from = year === BIR_REGISTERED.getFullYear() ? BIR_REGISTERED : new Date(year, 0, 1);
+  return { from, to: eod(new Date(year, 11, 31)) };
 }
 
-function resolveDateRange(dateFilter: string, dateFrom: string, dateTo: string): { from: Date; to: Date } | null {
-  if (dateFilter === "all") return null;
-  if (dateFilter === "default") return defaultDateRange();
-  if (dateFilter === "custom") {
-    if (!dateFrom && !dateTo) return null;
-    return {
-      from: dateFrom ? sod(new Date(dateFrom)) : new Date(0),
-      to: dateTo ? eod(new Date(dateTo)) : eod(new Date()),
-    };
-  }
-  const m = /^(\d{4})-(\d{2})$/.exec(dateFilter);
-  if (m) {
-    const year = Number(m[1]);
-    const month = Number(m[2]) - 1;
-    return { from: new Date(year, month, 1), to: new Date(year, month + 1, 0, 23, 59, 59, 999) };
-  }
-  return null;
+// "YYYY-MM-DD" <-> local Date (new Date("YYYY-MM-DD") would parse as UTC).
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+function parseYmd(s: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
 }
+
+const DATE_INPUT = "bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20";
 
 // ─── Journal helpers ───────────────────────────────────────────────────────────
 
@@ -376,18 +363,25 @@ function AdminBirPageInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const years = birYears();
+  const currentYear = years[0];
   const tab = searchParams.get("tab") ?? "gj";
-  const dateFilter = searchParams.get("dateFilter") ?? "default";
+  const yearParam = Number(searchParams.get("year"));
+  const year = years.includes(yearParam) ? yearParam : currentYear;
   const dateFrom = searchParams.get("dateFrom") ?? "";
   const dateTo = searchParams.get("dateTo") ?? "";
 
-  const setParam = (key: string, value: string, def: string) => {
+  // null (or the default value) removes the param from the URL.
+  const setParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value === def) params.delete(key);
-    else params.set(key, value);
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
+  const setParam = (key: string, value: string, def: string) => setParams({ [key]: value === def ? null : value });
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<DbProduct[]>([]);
@@ -410,11 +404,21 @@ function AdminBirPageInner() {
   }, []);
 
   const taxableIds = useMemo(() => new Set(products.filter((p) => p.taxable).map((p) => p.id)), [products]);
-  const dateRange = useMemo(() => resolveDateRange(dateFilter, dateFrom, dateTo), [dateFilter, dateFrom, dateTo]);
+  const coverage = useMemo(() => yearCoverage(year), [year]);
 
-  // Unfiltered by the page's date controls below — the quarterly BIR summary
-  // boxes always reflect the real calendar quarters, regardless of what the
-  // user has the journal/ledger tabs currently filtered to.
+  // The start/end date inputs narrow the selected year; they can't reach outside it.
+  const dateRange = useMemo(() => {
+    const from = parseYmd(dateFrom);
+    const to = parseYmd(dateTo);
+    return {
+      from: from && from > coverage.from ? from : coverage.from,
+      to: to && eod(to) < coverage.to ? eod(to) : coverage.to,
+    };
+  }, [coverage, dateFrom, dateTo]);
+
+  // Unfiltered by the start/end date inputs — the quarterly BIR summary boxes
+  // always reflect the selected year's real calendar quarters, regardless of
+  // what the journal/ledger tabs are narrowed to.
   const allTxnsRaw = useMemo<Txn[]>(() => {
     // Each order books on its payment date; if none is set, the order date.
     const birOrders = orders.filter((o) => !!o.official_receipt?.trim());
@@ -509,7 +513,7 @@ function AdminBirPageInner() {
   }, [orders, ledgerEntries, taxableIds]);
 
   const allTxns = useMemo(
-    () => allTxnsRaw.filter((t) => !dateRange || (t.date >= dateRange.from && t.date <= dateRange.to)),
+    () => allTxnsRaw.filter((t) => t.date >= dateRange.from && t.date <= dateRange.to),
     [allTxnsRaw, dateRange]
   );
 
@@ -520,7 +524,6 @@ function AdminBirPageInner() {
         .filter((t) => t.cashFlow === "in" && t.date >= from && t.date <= to)
         .reduce((sum, t) => sum + (t.otherLines.find((l) => l.account === "Sales Revenue")?.amount ?? 0), 0);
 
-    const year = new Date().getFullYear();
     const periods = [
       { title: "BIR Form 1701Q Q1", cover: "January 1 to March 31", deadline: "Deadline May 15", from: new Date(year, 0, 1), to: eod(new Date(year, 2, 31)) },
       { title: "BIR Form 1701Q Q2", cover: "April 1 to June 30", deadline: "Deadline August 15", from: new Date(year, 3, 1), to: eod(new Date(year, 5, 30)) },
@@ -529,7 +532,7 @@ function AdminBirPageInner() {
     ];
 
     return periods.map((p) => ({ ...p, creditSales: creditSales(p.from, p.to) }));
-  }, [allTxnsRaw]);
+  }, [allTxnsRaw, year]);
 
   const annualCreditSales = useMemo(
     () => birReturns.find((r) => r.title === "BIR Form 1701 MS")?.creditSales ?? 0,
@@ -576,8 +579,17 @@ function AdminBirPageInner() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div>
+      <div className="flex items-center justify-between gap-4">
         <h1 className="font-semibold text-fg text-[22px] tracking-tight">BIR - Books of Account</h1>
+        <select
+          value={year}
+          onChange={(e) => setParams({ year: e.target.value === String(currentYear) ? null : e.target.value, dateFrom: null, dateTo: null })}
+          className={DATE_INPUT}
+        >
+          {years.map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
       </div>
 
       {/* Quarterly BIR income-tax return summary */}
@@ -602,54 +614,44 @@ function AdminBirPageInner() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-line/30 pb-0 overflow-x-auto overflow-y-hidden scrollbar-x-5">
-        {BIR_TABS.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => setParam("tab", t.value, "gj")}
-            className={`px-4 py-2 tabular-nums text-[11px] transition-colors border-b-2 -mb-px whitespace-nowrap font-medium rounded-none ${
-              tab === t.value
-                ? "text-primary border-primary"
-                : "text-accent/60 border-transparent hover:text-fg"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Date filter */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <select
-          value={dateFilter}
-          onChange={(e) => setParam("dateFilter", e.target.value, "default")}
-          className="bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20"
-        >
-          <option value="all">All Dates</option>
-          <option value="default">Default</option>
-          <option value="custom">Custom</option>
-          {monthOptions().map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
+      {/* Tabs + start/end date */}
+      <div className="flex flex-col md:flex-row md:items-end gap-3 md:gap-4">
+        <div className="flex-1 min-w-0 flex items-center gap-1 border-b border-line/30 pb-0 overflow-x-auto overflow-y-hidden scrollbar-x-5">
+          {BIR_TABS.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setParam("tab", t.value, "gj")}
+              className={`px-4 py-2 tabular-nums text-[11px] transition-colors border-b-2 -mb-px whitespace-nowrap font-medium rounded-none ${
+                tab === t.value
+                  ? "text-primary border-primary"
+                  : "text-accent/60 border-transparent hover:text-fg"
+              }`}
+            >
+              {t.label}
+            </button>
           ))}
-        </select>
-        {dateFilter === "custom" && (
-          <>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setParam("dateFrom", e.target.value, "")}
-              className="bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20"
-            />
-            <span className="tabular-nums text-[10px] text-accent/50">to</span>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setParam("dateTo", e.target.value, "")}
-              className="bg-deep border border-line text-fg tabular-nums text-[12px] px-3 py-1.5 focus:outline-none focus:border-primary transition-colors rounded-md focus:ring-2 focus:ring-primary/20"
-            />
-          </>
-        )}
+        </div>
+        <div className="flex items-center gap-2 md:pb-1">
+          <input
+            type="date"
+            aria-label="Start date"
+            value={ymd(dateRange.from)}
+            min={ymd(coverage.from)}
+            max={ymd(dateRange.to)}
+            onChange={(e) => setParam("dateFrom", e.target.value, ymd(coverage.from))}
+            className={`${DATE_INPUT} min-w-0 flex-1 md:flex-none`}
+          />
+          <span className="tabular-nums text-[10px] text-accent/50">to</span>
+          <input
+            type="date"
+            aria-label="End date"
+            value={ymd(dateRange.to)}
+            min={ymd(dateRange.from)}
+            max={ymd(coverage.to)}
+            onChange={(e) => setParam("dateTo", e.target.value, ymd(coverage.to))}
+            className={`${DATE_INPUT} min-w-0 flex-1 md:flex-none`}
+          />
+        </div>
       </div>
 
       {/* Content */}
