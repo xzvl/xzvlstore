@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { ProvinceCityNameFields } from "@/components/AreaFields";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
@@ -76,14 +77,14 @@ function AddressBlock({
         <input value={String(form[f("address_2")])} onChange={e => set$(f("address_2"), e.target.value)} placeholder="Apt, unit, floor (optional)" className={INPUT} />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={LABEL}>City</label>
-          <input value={String(form[f("city")])} onChange={e => set$(f("city"), e.target.value)} placeholder="City" className={INPUT} />
-        </div>
-        <div>
-          <label className={LABEL}>State / Province</label>
-          <input value={String(form[f("state")])} onChange={e => set$(f("state"), e.target.value)} placeholder="Province" className={INPUT} />
-        </div>
+        <ProvinceCityNameFields
+          prefix={prefix}
+          state={String(form[f("state")])}
+          city={String(form[f("city")])}
+          onChange={({ state, city }) => { set$(f("state"), state); set$(f("city"), city); }}
+          inputClass={() => INPUT}
+          labelClass={LABEL}
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

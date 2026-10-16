@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { DbProduct, OrderProofImage, OrderStatus } from "@/lib/supabase";
 import OrderProofs from "./_proofs";
+import { ProvinceCityNameFields } from "@/components/AreaFields";
 
 export const DELIVERY_METHODS = ["J&T Express", "LBC", "Shopee Express", "Grab Express", "Lalamove", "Pickup", "Other"];
 export const PAYMENT_METHODS = ["GCash", "Maya", "Bank Transfer", "Cash on Delivery", "Cash", "PayPal", "Other"];
@@ -267,24 +268,14 @@ function AddressSection({
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={LABEL}>City</label>
-          <input
-            value={String(form[f("city")])}
-            onChange={(e) => set$(f("city"), e.target.value)}
-            placeholder="City"
-            className={INPUT}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>State / Province</label>
-          <input
-            value={String(form[f("state")])}
-            onChange={(e) => set$(f("state"), e.target.value)}
-            placeholder="Province"
-            className={INPUT}
-          />
-        </div>
+        <ProvinceCityNameFields
+          prefix={prefix}
+          state={String(form[f("state")])}
+          city={String(form[f("city")])}
+          onChange={({ state, city }) => { set$(f("state"), state); set$(f("city"), city); }}
+          inputClass={() => INPUT}
+          labelClass={LABEL}
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

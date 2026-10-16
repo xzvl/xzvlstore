@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase-client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { ProvinceCityNameFields } from "@/components/AreaFields";
 import type { Order } from "@/lib/supabase";
 import { sizedImageUrl } from "@/lib/image-sizes";
 
@@ -711,14 +712,14 @@ function AddressFields({
         <label className={LABEL}>Address line 2</label>
         <input value={profile[f("address_2")]} onChange={e => set$(f("address_2"), e.target.value)} placeholder="Barangay, Subdivision" className={INPUT} />
       </div>
-      <div>
-        <label className={LABEL}>City</label>
-        <input value={profile[f("city")]} onChange={e => set$(f("city"), e.target.value)} placeholder="City" className={INPUT} />
-      </div>
-      <div>
-        <label className={LABEL}>State / Province</label>
-        <input value={profile[f("state")]} onChange={e => set$(f("state"), e.target.value)} placeholder="Province" className={INPUT} />
-      </div>
+      <ProvinceCityNameFields
+        prefix={prefix}
+        state={profile[f("state")]}
+        city={profile[f("city")]}
+        onChange={({ state, city }) => { set$(f("state"), state); set$(f("city"), city); }}
+        inputClass={() => INPUT}
+        labelClass={LABEL}
+      />
       <div>
         <label className={LABEL}>Postcode / ZIP</label>
         <input value={profile[f("postcode")]} onChange={e => set$(f("postcode"), e.target.value)} placeholder="1234" className={INPUT} />

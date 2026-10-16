@@ -231,32 +231,79 @@ export function AreaCombobox({
 
 export type ProvinceCityValue = { state: string; province_id: string; city: string; city_id: string };
 
+type ProvinceCityProps = {
+  prefix: string;
+  errors?: { state?: string; city?: string };
+  inputClass: (err?: boolean) => string;
+  labelClass: string;
+  /** Show the required asterisk on both labels. */
+  required?: boolean;
+};
+
+/** Province + city pickers that track the J&T ids (checkout, pre-order). */
 export function ProvinceCityFields({
+  value,
+  onChange,
+  ...rest
+}: ProvinceCityProps & { value: ProvinceCityValue; onChange: (v: ProvinceCityValue) => void }) {
+  const provinces = useAreas(undefined);
+  const cities = useAreas(value.province_id || null);
+  return <ProvinceCityInputs {...rest} value={value} onChange={onChange} provinces={provinces} cities={cities} />;
+}
+
+/**
+ * Province + city pickers for forms that only store the names (account,
+ * admin customers/orders). The J&T ids are worked out from the names.
+ */
+export function ProvinceCityNameFields({
+  state,
+  city,
+  onChange,
+  required = false,
+  ...rest
+}: ProvinceCityProps & { state: string; city: string; onChange: (v: { state: string; city: string }) => void }) {
+  const provinces = useAreas(undefined);
+  const province_id = matchArea(provinces.areas, state)?.id ?? "";
+  const cities = useAreas(province_id || null);
+  const city_id = matchArea(cities.areas, city)?.id ?? "";
+  return (
+    <ProvinceCityInputs
+      {...rest}
+      required={required}
+      value={{ state, province_id, city, city_id }}
+      onChange={(v) => onChange({ state: v.state, city: v.city })}
+      provinces={provinces}
+      cities={cities}
+    />
+  );
+}
+
+function ProvinceCityInputs({
   prefix,
   value,
   errors = {},
   onChange,
   inputClass,
   labelClass,
-}: {
-  prefix: string;
+  required = true,
+  provinces,
+  cities,
+}: ProvinceCityProps & {
   value: ProvinceCityValue;
-  errors?: { state?: string; city?: string };
   onChange: (v: ProvinceCityValue) => void;
-  inputClass: (err?: boolean) => string;
-  labelClass: string;
+  provinces: ReturnType<typeof useAreas>;
+  cities: ReturnType<typeof useAreas>;
 }) {
-  const provinces = useAreas(undefined);
-  const cities = useAreas(value.province_id || null);
   // Latest value for the async auto-match callbacks.
   const latest = useRef(value);
   latest.current = value;
+  const star = required && <span className="text-primary"> *</span>;
 
   return (
     <>
       <div>
         <label className={labelClass} htmlFor={`${prefix}-state`}>
-          State / Province <span className="text-primary">*</span>
+          State / Province{star}
         </label>
         <AreaCombobox
           id={`${prefix}-state`}
@@ -285,7 +332,7 @@ export function ProvinceCityFields({
       </div>
       <div>
         <label className={labelClass} htmlFor={`${prefix}-city`}>
-          City / Municipality <span className="text-primary">*</span>
+          City / Municipality{star}
         </label>
         <AreaCombobox
           id={`${prefix}-city`}

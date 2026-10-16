@@ -14,6 +14,13 @@ const TESSERACT_FILES = [
   "webidl-conversions",
 ].map((pkg) => `./node_modules/${pkg}/**/*`);
 
+// sharp's Linux binary loads libvips (libvips-cpp.so) from a sibling package
+// at runtime, which file tracing can't see. Without it sharp fails with
+// ERR_DLOPEN_FAILED on Vercel. (Nothing matches on a Windows/macOS build.)
+const SHARP_FILES = ["@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64"].map(
+  (pkg) => `./node_modules/${pkg}/**/*`
+);
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp", "tesseract.js"],
   // Tesseract.js starts its OCR worker from a file path, which file tracing
@@ -21,8 +28,10 @@ const nextConfig: NextConfig = {
   // with the routes that read payment proofs. A missing one makes the worker
   // crash on startup and OCR hang until the function times out.
   outputFileTracingIncludes: {
-    "/api/payment-proof": TESSERACT_FILES,
-    "/api/pre-order": TESSERACT_FILES,
+    "/api/payment-proof": [...TESSERACT_FILES, ...SHARP_FILES],
+    "/api/pre-order": [...TESSERACT_FILES, ...SHARP_FILES],
+    "/api/admin/upload": SHARP_FILES,
+    "/api/admin/image-optimizer": SHARP_FILES,
   },
   images: {
     // Fully disable Next.js Image Optimization, site-wide. `next/image`
