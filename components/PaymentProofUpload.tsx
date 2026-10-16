@@ -135,8 +135,6 @@ export default function PaymentProofUpload({
             ok={!check.flags.includes("amount_mismatch") && !check.flags.includes("amount_not_found")} />
           <ProofRow label="Ref No." value={check.reference}
             ok={!check.flags.includes("reference_not_found") && !check.flags.includes("duplicate_reference")} />
-          <ProofRow label="Date" value={check.date}
-            ok={!check.flags.includes("date_not_found") && !check.flags.includes("date_out_of_range")} />
           {!check.verified && (
             <ul className="pt-1 space-y-0.5">
               {check.flags.map((f) => (

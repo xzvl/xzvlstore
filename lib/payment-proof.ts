@@ -31,9 +31,6 @@ export type PaymentVerification = PaymentExtraction & {
   checked_at: string;
 };
 
-/** A payment screenshot older than this many days isn't auto-verified. */
-export const MAX_PAYMENT_AGE_DAYS = 3;
-
 export const FLAG_LABELS: Record<PaymentFlag, string> = {
   ocr_failed: "Couldn't read the screenshot",
   amount_not_found: "No amount found",
@@ -41,7 +38,8 @@ export const FLAG_LABELS: Record<PaymentFlag, string> = {
   reference_not_found: "No reference number found",
   duplicate_reference: "Reference number already used on another order",
   date_not_found: "No date found",
-  date_out_of_range: `Payment date isn't within the last ${MAX_PAYMENT_AGE_DAYS} days`,
+  // Date flags are no longer raised; kept so older orders' stored flags still have labels.
+  date_out_of_range: "Payment date isn't recent",
 };
 
 // ─── Parsing ──────────────────────────────────────────────────────────────────
@@ -129,15 +127,10 @@ export function parsePaymentText(text: string): PaymentExtraction {
 
 // ─── Verification ─────────────────────────────────────────────────────────────
 
-/** Today in PH time as YYYY-MM-DD. */
-export const manilaToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
-
-const dayDiff = (a: string, b: string) => Math.round((Date.parse(a) - Date.parse(b)) / 86_400_000);
-
 /**
  * Checks an extraction against the amount the order expects. Verified only
- * when the amount matches, a reference number was found and isn't on another
- * order, and the payment date is recent.
+ * when the amount matches and a reference number was found and isn't on
+ * another order. The date is read when present but doesn't affect the result.
  */
 export function verifyPayment(
   extraction: PaymentExtraction | null,
@@ -158,12 +151,6 @@ export function verifyPayment(
   }
   if (!ex.reference) flags.push("reference_not_found");
   else if (duplicateReference) flags.push("duplicate_reference");
-  if (!ex.date) {
-    flags.push("date_not_found");
-  } else {
-    const age = dayDiff(manilaToday(), ex.date);
-    if (age < -1 || age > MAX_PAYMENT_AGE_DAYS) flags.push("date_out_of_range");
-  }
 
   return {
     ...ex,
