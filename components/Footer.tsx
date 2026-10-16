@@ -47,9 +47,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {/* Brand */}
           <div>
-            <p className="font-inter font-black text-[24px] uppercase tracking-tight mb-3">
+            <p className="font-inter font-black text-[24px] uppercase tracking-tight mb-4">
               {branding.logoImageUrl ? (
-                <span className="relative block h-10 w-44">
+                <span className="relative block h-14 w-44">
                   <Image src={branding.logoImageUrl} alt="xzvl.store" fill sizes="176px" className="object-contain object-left" />
                 </span>
               ) : (

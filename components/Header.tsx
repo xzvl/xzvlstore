@@ -24,7 +24,7 @@ export default function Header() {
           className="font-inter font-black text-[20px] uppercase shrink-0 tracking-tight"
         >
           {branding.logoImageUrl ? (
-            <span className="relative block h-8 w-36">
+            <span className="relative block h-10 w-36">
               <Image src={branding.logoImageUrl} alt="xzvl.store" fill sizes="144px" className="object-contain object-left" priority />
             </span>
           ) : (
