@@ -261,3 +261,47 @@ export function buildCheckoutEmailHtml(
 </body>
 </html>`;
 }
+
+/** Sent to each waitlisted customer when a product becomes available — see lib/waitlist-notify.ts. */
+export function buildWaitlistEmailHtml(
+  name: string,
+  productName: string,
+  productUrl: string,
+  image: string | null,
+  preOrder: boolean,
+  colors: EmailColors,
+  text: EmailTextContent
+) {
+  const firstName = name.split(" ")[0] || name;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:${colors.background};">
+  <div style="background:${colors.panel};color:${colors.text};font-family:'Courier New',monospace;padding:40px 32px;max-width:600px;margin:0 auto;border:1px solid ${colors.border};">
+
+    <p style="color:${colors.primary};font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;">${text.tag}</p>
+    <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:${colors.text};letter-spacing:-0.02em;">${preOrder ? "Now Open for Pre-Order" : "Now Available"}</h1>
+    <p style="font-size:13px;color:${colors.muted};opacity:0.7;margin:0 0 28px 0;line-height:1.6;">
+      ${firstName ? `Hi ${firstName}! ` : ""}A product on your waitlist is ${preOrder ? "now open for pre-order" : "back in stock"}. Grab it before it's gone.
+    </p>
+
+    <div style="background:${colors.panelAccent};border:1px solid ${colors.border};padding:18px;margin-bottom:28px;text-align:center;">
+      ${image ? `<img src="${image}" alt="" width="240" style="display:block;max-width:240px;width:100%;height:auto;margin:0 auto 14px auto;border:1px solid ${colors.border};"/>` : ""}
+      <p style="font-size:15px;font-weight:900;text-transform:uppercase;color:${colors.text};margin:0;">${productName}</p>
+    </div>
+
+    <div style="text-align:center;margin-bottom:8px;">
+      <a href="${productUrl}" style="display:inline-block;background:${colors.primary};color:#ffffff;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;padding:14px 28px;">
+        ${preOrder ? "Pre-Order Now" : "Shop Now"}
+      </a>
+    </div>
+    <p style="text-align:center;font-size:10px;color:${colors.muted};opacity:0.4;margin:0;">
+      You're receiving this because you joined the waitlist for this product.
+    </p>
+
+  </div>
+</body>
+</html>`;
+}

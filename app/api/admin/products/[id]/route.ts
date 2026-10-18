@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { isAvailable, notifyWaitlist } from "@/lib/waitlist-notify";
 import { revalidateStorefront } from "@/lib/revalidate";
 import { disableBundlesWithProduct } from "@/lib/bundles";
 import { normalizeShippingFields } from "@/lib/shipping";
@@ -89,6 +90,14 @@ export async function PATCH(
     }
   }
 
+  // Snapshot availability first, so the waitlist is only emailed on the
+  // unavailable → available transition.
+  const { data: before } = await supabase
+    .from("products")
+    .select("status, sneak_peek, pre_order, stock")
+    .eq("id", id)
+    .single();
+
   const { data, error } = await supabase
     .from("products")
     .update(updates)
@@ -99,6 +108,10 @@ export async function PATCH(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   // A product that becomes a pre-order or sneak peek disables the bundles it's in.
   if (data.pre_order || data.sneak_peek) await disableBundlesWithProduct(id);
+  if (before && !isAvailable(before) && isAvailable(data)) {
+    // After the response, so the admin isn't kept waiting on Resend.
+    after(() => notifyWaitlist(data).catch((err) => console.error("[waitlist] notify failed:", err)));
+  }
   revalidateStorefront();
   return NextResponse.json(data);
 }

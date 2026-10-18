@@ -61,7 +61,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2.5 min-w-0">
       {favicon ? (
-        <span className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 shadow-sm shadow-primary/30">
+        <span className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
           <Image src={favicon} alt="xzvl.store" fill sizes="32px" className="object-cover" />
         </span>
       ) : (

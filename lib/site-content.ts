@@ -633,7 +633,12 @@ export type EmailTextContent = {
   buttonLabel: string;
 };
 
-export type EmailContent = { colors: EmailColors; text: EmailTextContent };
+export type EmailContent = {
+  colors: EmailColors;
+  text: EmailTextContent;
+  /** Email waitlisted customers when a product becomes available (lib/waitlist-notify.ts). */
+  waitlistEnabled: boolean;
+};
 
 export const DEFAULT_EMAIL: EmailContent = {
   colors: {
@@ -651,6 +656,7 @@ export const DEFAULT_EMAIL: EmailContent = {
     greetingPreOrder: "We've received your pre-order request. We'll reach out once your item is confirmed and ready.",
     buttonLabel: "View My Orders",
   },
+  waitlistEnabled: false,
 };
 
 const EMAIL_COLOR_KEYS = ["background", "panel", "panelAccent", "border", "primary", "text", "muted"] as const;
@@ -669,6 +675,7 @@ function normalizeEmail(raw: unknown): EmailContent {
       greetingPreOrder: str(t.greetingPreOrder, DEFAULT_EMAIL.text.greetingPreOrder).trim() || DEFAULT_EMAIL.text.greetingPreOrder,
       buttonLabel: str(t.buttonLabel, DEFAULT_EMAIL.text.buttonLabel).trim() || DEFAULT_EMAIL.text.buttonLabel,
     },
+    waitlistEnabled: o.waitlistEnabled === true,
   };
 }
 

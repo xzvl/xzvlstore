@@ -8,8 +8,9 @@ import type { DbProduct, Taxonomy } from "@/lib/supabase";
 import { reorderVisible } from "@/lib/reorder";
 import { TogglePill } from "./_form";
 import { sizedImageUrl } from "@/lib/image-sizes";
+import type { ListCounts } from "@/app/api/admin/products/list-counts/route";
 
-type SortKey = "name" | "sku" | "stock" | "brand";
+type SortKey = "name" | "sku" | "stock" | "brand" | "favorites" | "waitlist";
 
 const toSlug = (s: string) =>
   s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -321,11 +322,18 @@ function AdminProductsPageInner() {
   const [reorderError, setReorderError] = useState<string | null>(null);
   const [quickEdit, setQuickEdit] = useState<DbProduct | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
+  const [listCounts, setListCounts] = useState<ListCounts>({});
+  const favCount = (p: DbProduct) => listCounts[p.id]?.favorites ?? 0;
+  const waitCount = (p: DbProduct) => listCounts[p.id]?.waitlist ?? 0;
 
   const fetch$ = async () => {
     setLoading(true);
-    const res = await fetch("/api/admin/products");
+    const [res, countsRes] = await Promise.all([
+      fetch("/api/admin/products"),
+      fetch("/api/admin/products/list-counts").catch(() => null),
+    ]);
     if (res.ok) setProducts(await res.json());
+    if (countsRes?.ok) setListCounts(await countsRes.json());
     setLoading(false);
   };
 
@@ -366,6 +374,8 @@ function AdminProductsPageInner() {
           case "name": va = a.name.toLowerCase(); vb = b.name.toLowerCase(); break;
           case "sku": va = (a.sku ?? "").toLowerCase(); vb = (b.sku ?? "").toLowerCase(); break;
           case "stock": va = a.stock; vb = b.stock; break;
+          case "favorites": va = favCount(a); vb = favCount(b); break;
+          case "waitlist": va = waitCount(a); vb = waitCount(b); break;
           case "brand":
             va = (brandMap[a.brand_id ?? ""] ?? "").toLowerCase();
             vb = (brandMap[b.brand_id ?? ""] ?? "").toLowerCase();
@@ -839,6 +849,16 @@ function AdminProductsPageInner() {
                           {p.stock}
                         </span>
                       </span>
+                      <span className="mx-1.5 text-line/60">|</span>
+                      <span title="Favorites">
+                        <span className="material-symbols-outlined text-[12px] align-[-2px] mr-0.5">favorite</span>
+                        <span className={favCount(p) ? "text-fg font-bold" : ""}>{favCount(p)}</span>
+                      </span>
+                      <span className="mx-1.5 text-line/60">|</span>
+                      <span title="Waitlist">
+                        <span className="material-symbols-outlined text-[12px] align-[-2px] mr-0.5">notifications</span>
+                        <span className={waitCount(p) ? "text-fg font-bold" : ""}>{waitCount(p)}</span>
+                      </span>
                     </p>
 
                     {/* Row 3: Price | Cost | Profit */}
@@ -903,7 +923,7 @@ function AdminProductsPageInner() {
 
           {/* ── Desktop table (hidden below md) ── */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full border-collapse min-w-[900px]">
+            <table className="w-full border-collapse min-w-[1040px]">
               <thead>
                 <tr className="border-b border-line/40 group">
                   <th className={`${thBase} w-8 px-1`}></th>
@@ -915,6 +935,8 @@ function AdminProductsPageInner() {
                   <th className={thBase}>Cost</th>
                   <th className={thBase}>Profit</th>
                   <SortTh label="Brand" sortKey="brand" />
+                  <SortTh label="Favorites" sortKey="favorites" />
+                  <SortTh label="Waitlist" sortKey="waitlist" />
                   <th className={thBase}></th>
                 </tr>
               </thead>
@@ -992,6 +1014,8 @@ function AdminProductsPageInner() {
                         )}
                       </td>
                       <td className="px-3 py-3 tabular-nums text-[12px] text-accent/60 max-w-[120px] truncate">{p.brand_id && brandMap[p.brand_id] ? brandMap[p.brand_id] : <span className="text-accent/40">—</span>}</td>
+                      <td className={`px-3 py-3 tabular-nums text-[12px] ${favCount(p) ? "text-fg font-bold" : "text-accent/40"}`}>{favCount(p)}</td>
+                      <td className={`px-3 py-3 tabular-nums text-[12px] ${waitCount(p) ? "text-fg font-bold" : "text-accent/40"}`}>{waitCount(p)}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1.5">
                           <button onClick={() => setQuickEdit(p)} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/70 hover:border-primary hover:text-primary transition-colors" title="Quick edit">

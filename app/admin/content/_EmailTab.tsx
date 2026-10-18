@@ -203,6 +203,39 @@ export default function EmailTab({
       </div>
 
       <div className={CARD}>
+        <p className={CARD_TITLE}>Waitlist Emails</p>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <p className="tabular-nums text-[11px] text-accent/60 max-w-xl">
+            When on, customers on a product&apos;s waitlist get an email (using the colors and tag above) when that
+            product becomes available — back in stock, or a sneak peek released or opened for pre-order. Saving a
+            product that was already available doesn&apos;t re-send.
+          </p>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={value.waitlistEnabled}
+            onClick={() => set("waitlistEnabled", !value.waitlistEnabled)}
+            className="flex items-center gap-3 tabular-nums text-[11px] font-medium"
+          >
+            <span
+              className={`relative w-12 h-6 border transition-colors ${
+                value.waitlistEnabled ? "bg-primary/20 border-primary" : "bg-fg/[0.05] border-line"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 w-[18px] h-[18px] transition-all ${
+                  value.waitlistEnabled ? "left-[26px] bg-primary" : "left-0.5 bg-accent/40"
+                }`}
+              />
+            </span>
+            <span className={value.waitlistEnabled ? "text-primary" : "text-accent/70"}>
+              {value.waitlistEnabled ? "On" : "Off"}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div className={CARD}>
         <p className={CARD_TITLE}>Test</p>
         <p className="tabular-nums text-[11px] text-accent/60">
           Sends a sample &quot;Thank You&quot; email using the colors and text above — including any unsaved edits —
@@ -210,12 +243,14 @@ export default function EmailTab({
         </p>
         <p className="flex items-start gap-1.5 tabular-nums text-[11px] text-accent/50">
           <span className="material-symbols-outlined text-[14px] flex-shrink-0 mt-px">info</span>
+          <span className="tabular-nums text-[11px] text-accent/60">
           Until a domain is verified at{" "}
           <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
             resend.com/domains
           </a>{" "}
           and set as the System Email in Branding, Resend only delivers test emails to the address your Resend
           account was signed up with — any other address will fail.
+          </span>
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <input
