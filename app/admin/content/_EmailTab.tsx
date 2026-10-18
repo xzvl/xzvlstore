@@ -208,6 +208,15 @@ export default function EmailTab({
           Sends a sample &quot;Thank You&quot; email using the colors and text above — including any unsaved edits —
           so you can check it before saving. Defaults to the Website Email set in Branding.
         </p>
+        <p className="flex items-start gap-1.5 tabular-nums text-[11px] text-accent/50">
+          <span className="material-symbols-outlined text-[14px] flex-shrink-0 mt-px">info</span>
+          Until a domain is verified at{" "}
+          <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            resend.com/domains
+          </a>{" "}
+          and set as the System Email in Branding, Resend only delivers test emails to the address your Resend
+          account was signed up with — any other address will fail.
+        </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="email"

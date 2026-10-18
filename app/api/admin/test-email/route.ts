@@ -51,7 +51,15 @@ export async function POST(req: NextRequest) {
       subject: "[Test] Thanks for your order! - xzvl.store",
       html,
     });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      // Resend's sandbox restriction (no verified domain yet): it only delivers
+      // to the email the Resend account itself was signed up with. Point at the
+      // field that fixes it rather than leaving the raw message as the only clue.
+      const message = /only send testing emails/i.test(error.message)
+        ? `${error.message} Set it in /admin/content → Branding → System Email once you've verified a domain.`
+        : error.message;
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
     return NextResponse.json({ success: true });
   } catch (err) {
     return NextResponse.json(

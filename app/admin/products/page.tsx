@@ -452,6 +452,19 @@ function AdminProductsPageInner() {
     }
   };
 
+  const toggleIncludeInTotals = async (p: DbProduct) => {
+    const next = p.include_in_totals === false;
+    const res = await fetch(`/api/admin/products/${p.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ include_in_totals: next }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? updated : x)));
+    }
+  };
+
   // ── Reorder (drag & drop) ────────────────────────────────────────────────────
   // Works under any filter or search: the visible products are re-arranged
   // among the positions they already occupy in the full list, so products the
@@ -867,6 +880,17 @@ function AdminProductsPageInner() {
                       <button onClick={() => toggleStatus(p)} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/70 hover:border-blue-400 hover:text-blue-400 transition-colors" title={p.status === "active" ? "Disable" : "Enable"}>
                         <span className="material-symbols-outlined text-[13px]">{p.status === "active" ? "visibility_off" : "visibility"}</span>
                       </button>
+                      <button
+                        onClick={() => toggleIncludeInTotals(p)}
+                        className={`w-7 h-7 flex items-center justify-center border transition-colors ${
+                          p.include_in_totals === false
+                            ? "border-line/40 text-accent/40 hover:border-green-400 hover:text-green-400"
+                            : "border-green-400/40 text-green-400 hover:border-green-400 hover:text-green-400"
+                        }`}
+                        title={p.include_in_totals === false ? "Excluded from Est. Total / Total Profit — tap to include" : "Included in Est. Total / Total Profit — tap to exclude"}
+                      >
+                        <span className="material-symbols-outlined text-[13px]">calculate</span>
+                      </button>
                       <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/70 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
                         <span className="material-symbols-outlined text-[13px]">delete</span>
                       </button>
@@ -981,6 +1005,17 @@ function AdminProductsPageInner() {
                           </button>
                           <button onClick={() => toggleStatus(p)} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/70 hover:border-blue-400 hover:text-blue-400 transition-colors" title={p.status === "active" ? "Disable" : "Enable"}>
                             <span className="material-symbols-outlined text-[13px]">{p.status === "active" ? "visibility_off" : "visibility"}</span>
+                          </button>
+                          <button
+                            onClick={() => toggleIncludeInTotals(p)}
+                            className={`w-7 h-7 flex items-center justify-center border transition-colors ${
+                              p.include_in_totals === false
+                                ? "border-line/40 text-accent/40 hover:border-green-400 hover:text-green-400"
+                                : "border-green-400/40 text-green-400 hover:border-green-400 hover:text-green-400"
+                            }`}
+                            title={p.include_in_totals === false ? "Excluded from Est. Total / Total Profit — click to include" : "Included in Est. Total / Total Profit — click to exclude"}
+                          >
+                            <span className="material-symbols-outlined text-[13px]">calculate</span>
                           </button>
                           <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} className="w-7 h-7 flex items-center justify-center border border-line/40 text-accent/70 hover:border-red-500 hover:text-red-500 transition-colors disabled:opacity-40" title="Delete">
                             <span className="material-symbols-outlined text-[13px]">delete</span>
