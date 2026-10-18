@@ -167,7 +167,11 @@ export default function AdminContentPage() {
           )}
           {active === "images" && <ImageOptimizationTab />}
           {active === "email" && (
-            <EmailTab initial={content.email} onSaved={(email) => setContent((c) => c && { ...c, email })} />
+            <EmailTab
+              initial={content.email}
+              websiteEmail={content.branding.websiteEmail}
+              onSaved={(email) => setContent((c) => c && { ...c, email })}
+            />
           )}
           {active === "colors" && (
             <ColorsTab initial={content.colors} onSaved={(colors) => setContent((c) => c && { ...c, colors })} />

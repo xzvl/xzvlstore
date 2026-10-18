@@ -66,6 +66,15 @@ export default function Footer() {
             <p className="font-mono text-[11px] text-accent/50 leading-relaxed max-w-xs whitespace-pre-line">
               {footer.description}
             </p>
+            {branding.websiteEmail && (
+              <a
+                href={`mailto:${branding.websiteEmail}`}
+                className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent/50 hover:text-primary transition-colors mt-3"
+              >
+                <span className="material-symbols-outlined text-[14px]">mail</span>
+                {branding.websiteEmail}
+              </a>
+            )}
           </div>
 
           {/* Links */}

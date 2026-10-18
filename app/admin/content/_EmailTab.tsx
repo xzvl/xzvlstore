@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   DEFAULT_EMAIL,
   isHexColor,
@@ -59,15 +60,41 @@ function Preview({ colors, greeting, buttonLabel }: { colors: EmailColors; greet
 
 export default function EmailTab({
   initial,
+  websiteEmail,
   onSaved,
 }: {
   initial: EmailContent;
+  /** Branding → Website Email, used to prefill the test address below. */
+  websiteEmail: string;
   onSaved: (v: EmailContent) => void;
 }) {
   const { value, set, saving, message, error, save } = useSectionEditor("email", initial, onSaved);
 
   const setColor = (key: keyof EmailColors, v: string) => set("colors", { ...value.colors, [key]: v });
   const setText = (key: keyof EmailContent["text"], v: string) => set("text", { ...value.text, [key]: v });
+
+  const [testEmail, setTestEmail] = useState(websiteEmail);
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function sendTestEmail() {
+    setTestSending(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/admin/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: testEmail, content: value }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Failed to send test email.");
+      setTestResult({ ok: true, text: `Sent to ${testEmail}.` });
+    } catch (err) {
+      setTestResult({ ok: false, text: err instanceof Error ? err.message : "Failed to send test email." });
+    } finally {
+      setTestSending(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -173,6 +200,40 @@ export default function EmailTab({
           />
           <p className="tabular-nums text-[10px] text-accent/50 mt-1">Links to /account/orders</p>
         </div>
+      </div>
+
+      <div className={CARD}>
+        <p className={CARD_TITLE}>Test</p>
+        <p className="tabular-nums text-[11px] text-accent/60">
+          Sends a sample &quot;Thank You&quot; email using the colors and text above — including any unsaved edits —
+          so you can check it before saving. Defaults to the Website Email set in Branding.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="email"
+            value={testEmail}
+            onChange={(e) => setTestEmail(e.target.value)}
+            placeholder="you@example.com"
+            className={`${INPUT} sm:max-w-xs`}
+          />
+          <button
+            type="button"
+            onClick={sendTestEmail}
+            disabled={testSending || !testEmail.trim()}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-line/60 text-accent/80 tabular-nums text-[11px] uppercase hover:border-primary hover:text-primary transition-colors disabled:opacity-50 tracking-wider font-medium flex-shrink-0"
+          >
+            <span className={`material-symbols-outlined text-[14px] ${testSending ? "animate-spin" : ""}`}>
+              {testSending ? "progress_activity" : "send"}
+            </span>
+            {testSending ? "Sending…" : "Send Test Email"}
+          </button>
+        </div>
+        {testResult && (
+          <p className={`flex items-center gap-1.5 tabular-nums text-[11px] ${testResult.ok ? "text-green-400" : "text-red-400"}`}>
+            <span className="material-symbols-outlined text-[14px]">{testResult.ok ? "check_circle" : "error"}</span>
+            {testResult.text}
+          </p>
+        )}
       </div>
 
       <SaveBar saving={saving} message={message} error={error} onSave={save} label="Save Email" />

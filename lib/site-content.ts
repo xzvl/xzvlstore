@@ -204,13 +204,21 @@ export type BrandingContent = {
   faviconUrl: string;
   /** Shown instead of the one above when /admin is in dark mode (set in Colors → Default mode). Empty = always use faviconUrl. */
   faviconUrlDark: string;
+  /** "From" address for every email this store sends. Empty = the RESEND_FROM env var, then a built-in default. */
+  systemEmail: string;
+  /** Receives the "New Order"/"New Pre-Order" admin notifications. Empty = xzviel@gmail.com. */
+  orderEmail: string;
+  /** Shown as a contact email in the storefront footer. Empty = hidden. */
+  websiteEmail: string;
 };
 
 export const DEFAULT_BRANDING: BrandingContent = {
   logoImageUrl: "", logoImageUrlDark: "", faviconUrl: "", faviconUrlDark: "",
+  systemEmail: "", orderEmail: "", websiteEmail: "",
 };
 
 const isImageUrl = (v: string) => v === "" || /^(\/|https?:\/\/)/i.test(v);
+export const isEmailOrEmpty = (v: string) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
 
 function normalizeBranding(raw: unknown): BrandingContent {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
@@ -218,11 +226,17 @@ function normalizeBranding(raw: unknown): BrandingContent {
   const logoDark = str(o.logoImageUrlDark, "").trim();
   const fav = str(o.faviconUrl, "").trim();
   const favDark = str(o.faviconUrlDark, "").trim();
+  const systemEmail = str(o.systemEmail, "").trim();
+  const orderEmail = str(o.orderEmail, "").trim();
+  const websiteEmail = str(o.websiteEmail, "").trim();
   return {
     logoImageUrl: isImageUrl(logo) ? logo : "",
     logoImageUrlDark: isImageUrl(logoDark) ? logoDark : "",
     faviconUrl: isImageUrl(fav) ? fav : "",
     faviconUrlDark: isImageUrl(favDark) ? favDark : "",
+    systemEmail: isEmailOrEmpty(systemEmail) ? systemEmail : "",
+    orderEmail: isEmailOrEmpty(orderEmail) ? orderEmail : "",
+    websiteEmail: isEmailOrEmpty(websiteEmail) ? websiteEmail : "",
   };
 }
 
@@ -232,6 +246,9 @@ function validateBranding(raw: unknown): Validation<BrandingContent> {
   if (!isImageUrl(str(o.logoImageUrlDark, "").trim())) return { ok: false, error: "Alternative logo must be an uploaded image." };
   if (!isImageUrl(str(o.faviconUrl, "").trim())) return { ok: false, error: "Favicon must be an uploaded image." };
   if (!isImageUrl(str(o.faviconUrlDark, "").trim())) return { ok: false, error: "Alternative favicon must be an uploaded image." };
+  if (!isEmailOrEmpty(str(o.systemEmail, "").trim())) return { ok: false, error: "System email must be a valid email address." };
+  if (!isEmailOrEmpty(str(o.orderEmail, "").trim())) return { ok: false, error: "Order email must be a valid email address." };
+  if (!isEmailOrEmpty(str(o.websiteEmail, "").trim())) return { ok: false, error: "Website email must be a valid email address." };
   return { ok: true, value: normalizeBranding(raw) };
 }
 
