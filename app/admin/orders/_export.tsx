@@ -290,7 +290,7 @@ export function ExportOrdersModal({
           <button
             onClick={handleExport}
             disabled={selected.length === 0 || orders.length === 0}
-            className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
           >
             <span className="material-symbols-outlined text-[14px]">download</span>
             Export

@@ -21,7 +21,23 @@ const SHARP_FILES = ["@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64"].map
   (pkg) => `./node_modules/${pkg}/**/*`
 );
 
+// Old /account?tab=<name> links → /account/<page>.
+const ACCOUNT_TAB_PAGES: Record<string, string> = {
+  orders: "orders",
+  info: "profile",
+  billing: "billing",
+  shipping: "shipping",
+};
+
 const nextConfig: NextConfig = {
+  async redirects() {
+    return Object.entries(ACCOUNT_TAB_PAGES).map(([tab, page]) => ({
+      source: "/account",
+      has: [{ type: "query" as const, key: "tab", value: tab }],
+      destination: `/account/${page}`,
+      permanent: true,
+    }));
+  },
   serverExternalPackages: ["sharp", "tesseract.js"],
   // Tesseract.js starts its OCR worker from a file path, which file tracing
   // can't see — ship the package and the worker's own (hoisted) dependencies

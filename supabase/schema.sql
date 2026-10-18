@@ -323,3 +323,27 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- Off = the row stays listed on /admin/ledger but is left out of the totals.
 -- ALTER TABLE ledger ADD COLUMN IF NOT EXISTS computed boolean NOT NULL DEFAULT true;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS ledger_computed boolean NOT NULL DEFAULT true;
+
+-- ─── Favorites (heart) + waitlist (run this against the live DB) ──────────────
+-- favorites: a customer "hearts" a product (/product/[slug]); shown in /account/favorites.
+-- waitlist: a customer asks to be notified when an out-of-stock / sneak-peek product
+-- is available; shown in /account/waitlist.
+-- CREATE TABLE IF NOT EXISTS favorites (
+--   customer_id uuid REFERENCES customers(id) ON DELETE CASCADE,
+--   product_id text REFERENCES products(id) ON DELETE CASCADE,
+--   created_at timestamptz DEFAULT now() NOT NULL,
+--   PRIMARY KEY (customer_id, product_id)
+-- );
+-- CREATE TABLE IF NOT EXISTS waitlist (
+--   customer_id uuid REFERENCES customers(id) ON DELETE CASCADE,
+--   product_id text REFERENCES products(id) ON DELETE CASCADE,
+--   created_at timestamptz DEFAULT now() NOT NULL,
+--   PRIMARY KEY (customer_id, product_id)
+-- );
+-- ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+
+-- ─── Exclude a product from the Est. Total / Total Profit totals (run against the live DB) ──
+-- Default on (included). Turn off in /admin/products for products that shouldn't count toward
+-- the inventory value / profit totals shown at the top of the page (samples, giveaways, etc).
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS include_in_totals boolean NOT NULL DEFAULT true;

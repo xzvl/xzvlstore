@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSiteContent } from "@/components/SiteContentProvider";
+import { useThemeMode } from "@/lib/use-theme-mode";
 import type { SocialPlatform } from "@/lib/site-content";
 
 export const SOCIAL_ICONS: Record<SocialPlatform, ReactNode> = {
@@ -40,6 +41,8 @@ export const SOCIAL_LABELS: Record<SocialPlatform, string> = {
 
 export default function Footer() {
   const { branding, footer } = useSiteContent();
+  const mode = useThemeMode();
+  const logo = (mode === "dark" && branding.logoImageUrlDark) || branding.logoImageUrl;
 
   return (
     <footer className="bg-deep border-t border-line/30 mt-16">
@@ -48,9 +51,9 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <p className="font-inter font-black text-[24px] uppercase tracking-tight mb-4">
-              {branding.logoImageUrl ? (
+              {logo ? (
                 <span className="relative block h-14 w-44">
-                  <Image src={branding.logoImageUrl} alt="xzvl.store" fill sizes="176px" className="object-contain object-left" />
+                  <Image src={logo} alt="xzvl.store" fill sizes="176px" className="object-contain object-left" />
                 </span>
               ) : (
                 <>

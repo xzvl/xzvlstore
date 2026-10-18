@@ -14,6 +14,7 @@ import PaymentProofUpload, { type UploadedPaymentProof } from "@/components/Paym
 import { useSiteContent } from "@/components/SiteContentProvider";
 import { activePaymentMethods } from "@/lib/site-content";
 import { downPaymentPerUnit } from "@/lib/store-types";
+import { stripHtml } from "@/lib/strip-html";
 import { DELIVERY_METHODS, type DeliveryMethod } from "@/lib/shipping";
 import { ProvinceCityFields, ShippingSummaryRow, useShippingQuote } from "@/components/AreaFields";
 
@@ -486,6 +487,7 @@ export default function PreOrderPage() {
   const [submittedProducts, setSubmittedProducts] = useState<Product[]>([]);
   const [submittedDownPayment, setSubmittedDownPayment] = useState(0);
   const [submittedVerified, setSubmittedVerified] = useState(false);
+  const [submittedUnpaid, setSubmittedUnpaid] = useState(false);
   const [error, setError] = useState("");
   const [proof, setProof] = useState<UploadedPaymentProof | null>(null);
   const [proofError, setProofError] = useState("");
@@ -602,9 +604,9 @@ export default function PreOrderPage() {
     goodsValue: orderTotal,
   });
   const shippingFee = isJnt ? shippingQuote.quote?.fee ?? null : 0;
-  // The proof of payment must show the down payment if one is required
-  // (shipping is paid with the balance), otherwise the full total + shipping.
-  const amountDue = downPaymentDue > 0 ? downPaymentDue : orderTotal + (shippingFee ?? 0);
+  // The Payment section (and the proof it asks for) only shows when a product
+  // requires a down payment, so this only ever needs to equal that down payment.
+  const amountDue = downPaymentDue;
 
   const setContact$ = (field: keyof ContactForm, value: string) =>
     setContact((prev) => ({ ...prev, [field]: value }));
@@ -640,12 +642,6 @@ export default function PreOrderPage() {
 
     const filledRows = rows.filter((r) => r.productId);
     if (filledRows.length === 0) { setError("Please select at least one product."); return; }
-    if (!proof) {
-      setProofError("Please upload a screenshot of your payment.");
-      setError("Proof of payment is required.");
-      return;
-    }
-
     setError("");
     setSubmitting(true);
     try {
@@ -677,7 +673,7 @@ export default function PreOrderPage() {
           shipping_name: contact.name.trim(),
           shipping_fee: shippingFee,
           payment_method: selectedPaymentMethod?.company,
-          payment_proof_url: proof.url,
+          payment_proof_url: proof?.url,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -685,6 +681,7 @@ export default function PreOrderPage() {
       setSubmittedProducts(filledRows.map((r) => preOrderProducts.find((p) => p.id === r.productId)!));
       setSubmittedDownPayment(downPaymentDue);
       setSubmittedVerified(!!data.verified);
+      setSubmittedUnpaid(!proof);
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -711,14 +708,39 @@ export default function PreOrderPage() {
               </p>
             </div>
 
-            {submittedVerified ? (
+            {submittedDownPayment === 0 ? (
+              <div className="w-full border border-purple-400/40 bg-purple-400/5 px-4 py-4 text-left space-y-2">
+                <p className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase text-purple-400">
+                  <span className="material-symbols-outlined text-[16px]">event_available</span>
+                  Reservation Confirmed
+                </p>
+                <p className="font-mono text-[12px] text-accent/70 leading-relaxed">
+                  No payment is needed right now — we&apos;ll reach out when it&apos;s time to pay.
+                </p>
+              </div>
+            ) : submittedVerified ? (
               <div className="w-full border border-green-400/40 bg-green-400/5 px-4 py-4 text-left space-y-2">
                 <p className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase text-green-400">
                   <span className="material-symbols-outlined text-[16px]">verified</span>
                   Payment Verified
                 </p>
                 <p className="font-mono text-[12px] text-accent/70 leading-relaxed">
-                  Your {submittedDownPayment > 0 ? "down payment" : "payment"} was verified and your pre-order is confirmed.
+                  Your down payment was verified and your pre-order is confirmed.
+                </p>
+              </div>
+            ) : submittedUnpaid ? (
+              <div className="w-full border border-orange-400/40 bg-orange-400/5 px-4 py-4 text-left space-y-2">
+                <p className="flex items-center gap-2 font-mono text-[10px] tracking-widest uppercase text-orange-400">
+                  <span className="material-symbols-outlined text-[16px]">pending</span>
+                  On Hold — Awaiting Payment
+                </p>
+                <p className="font-mono text-[12px] text-accent/70 leading-relaxed">
+                  Your pre-order is placed but on hold until we receive your payment. Send your proof of payment to our
+                  Facebook page{" "}
+                  <a href="https://www.facebook.com/xzviel" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    facebook.com/xzviel
+                  </a>{" "}
+                  to confirm it.
                 </p>
               </div>
             ) : (
@@ -986,15 +1008,16 @@ export default function PreOrderPage() {
             </section>
           )}
 
-          {/* ── Payment ── */}
-          {rows.some((r) => r.productId) && (
+          {/* ── Payment: only when a product requires a down payment — otherwise
+                 there's nothing to pay upfront, so the section doesn't show at all. ── */}
+          {rows.some((r) => r.productId) && downPaymentDue > 0 && (
             <section className="animate-fade-up relative" style={{ animationDelay: "320ms" }}>
-              {sectionTitle("SECTION_04", downPaymentDue > 0 ? "Down Payment" : "Payment")}
+              {sectionTitle("SECTION_04", "Down Payment")}
               <p className="font-mono text-[12px] text-accent/60 leading-relaxed mb-4">
-                {downPaymentDue > 0 ? "This pre-order requires a down payment of " : "Pay the total of "}
+                This pre-order requires a down payment of{" "}
                 <span className="text-orange-400 font-bold">₱{amountDue.toLocaleString()}</span>, then upload a screenshot
                 of your payment. Verified payments are confirmed right away; anything we can&apos;t verify is put on hold
-                until we check it.
+                until we check it. <span className="text-fg/70">Payment is optional — you can pre-order now and pay later; your pre-order stays on hold until we receive it.</span>
               </p>
               {selectedPaymentMethod ? (
                 <PaymentMethodPicker
@@ -1034,16 +1057,19 @@ export default function PreOrderPage() {
             </p>
           )}
 
-          {/* Cancellation policy notice */}
-          <div className="border border-line/40 bg-panel px-4 py-4 flex gap-3">
-            <span className="material-symbols-outlined text-[18px] text-primary/70 flex-shrink-0 mt-0.5">info</span>
-            <div className="space-y-1">
-              <p className="font-mono text-[11px] tracking-widest uppercase text-accent/60">Pre-Order Policy</p>
-              <p className="font-mono text-[12px] text-accent/50 leading-relaxed">
-                Pre-orders <span className="text-fg/80">cannot be cancelled</span> once placed. Your reservation will only be voided if the total number of pre-orders does not meet the required allocation.
-              </p>
+          {/* Pre-order policy notice (editable in /admin/content → Payment) */}
+          {stripHtml(siteContent.payment.preOrder.policy) && (
+            <div className="border border-line/40 bg-panel px-4 py-4 flex gap-3">
+              <span className="material-symbols-outlined text-[18px] text-primary/70 flex-shrink-0 mt-0.5">info</span>
+              <div className="space-y-1">
+                <p className="font-mono text-[11px] tracking-widest uppercase text-accent/60">{siteContent.payment.preOrder.policyTitle}</p>
+                <div
+                  className="font-mono text-[12px] text-accent/50 leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-fg/80 [&_p]:mb-1"
+                  dangerouslySetInnerHTML={{ __html: siteContent.payment.preOrder.policy }}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Confirmation screenshot notice */}
           <div className="border border-orange-400/30 bg-orange-400/5 px-4 py-4 flex gap-3">
@@ -1074,7 +1100,7 @@ export default function PreOrderPage() {
               {submitting ? "Submitting…" : "Submit Pre-Order"}
             </button>
             <p className="mt-3 font-mono text-[11px] text-accent/40">
-              A proof of payment is required. If it can&apos;t be verified automatically, your pre-order is placed on hold until we check it.
+              A proof of payment is optional. Without one, or if it can&apos;t be verified automatically, your pre-order is placed on hold until we check it.
             </p>
           </div>
         </form>

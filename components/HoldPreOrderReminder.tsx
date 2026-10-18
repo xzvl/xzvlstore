@@ -161,7 +161,7 @@ export default function HoldPreOrderReminder() {
             Message Us on Facebook
           </a>
           <Link
-            href="/account?tab=orders"
+            href="/account/orders"
             onClick={() => setOpen(false)}
             className="flex-1 flex items-center justify-center px-5 py-3 border border-line text-accent/60 font-mono text-[11px] tracking-widest uppercase hover:border-primary hover:text-primary transition-all"
           >

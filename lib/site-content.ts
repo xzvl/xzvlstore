@@ -198,28 +198,40 @@ function validateNavLinks(raw: unknown, where: string): string | null {
 export type BrandingContent = {
   /** Empty = the built-in "xzvl.store" text logo. */
   logoImageUrl: string;
+  /** Shown instead of the one above when the storefront is in dark mode. Empty = always use logoImageUrl. */
+  logoImageUrlDark: string;
   /** Empty = the default /assets/favicon.webp. */
   faviconUrl: string;
+  /** Shown instead of the one above when /admin is in dark mode (set in Colors → Default mode). Empty = always use faviconUrl. */
+  faviconUrlDark: string;
 };
 
-export const DEFAULT_BRANDING: BrandingContent = { logoImageUrl: "", faviconUrl: "" };
+export const DEFAULT_BRANDING: BrandingContent = {
+  logoImageUrl: "", logoImageUrlDark: "", faviconUrl: "", faviconUrlDark: "",
+};
 
 const isImageUrl = (v: string) => v === "" || /^(\/|https?:\/\/)/i.test(v);
 
 function normalizeBranding(raw: unknown): BrandingContent {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const logo = str(o.logoImageUrl, "").trim();
+  const logoDark = str(o.logoImageUrlDark, "").trim();
   const fav = str(o.faviconUrl, "").trim();
+  const favDark = str(o.faviconUrlDark, "").trim();
   return {
     logoImageUrl: isImageUrl(logo) ? logo : "",
+    logoImageUrlDark: isImageUrl(logoDark) ? logoDark : "",
     faviconUrl: isImageUrl(fav) ? fav : "",
+    faviconUrlDark: isImageUrl(favDark) ? favDark : "",
   };
 }
 
 function validateBranding(raw: unknown): Validation<BrandingContent> {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   if (!isImageUrl(str(o.logoImageUrl, "").trim())) return { ok: false, error: "Logo must be an uploaded image." };
+  if (!isImageUrl(str(o.logoImageUrlDark, "").trim())) return { ok: false, error: "Alternative logo must be an uploaded image." };
   if (!isImageUrl(str(o.faviconUrl, "").trim())) return { ok: false, error: "Favicon must be an uploaded image." };
+  if (!isImageUrl(str(o.faviconUrlDark, "").trim())) return { ok: false, error: "Alternative favicon must be an uploaded image." };
   return { ok: true, value: normalizeBranding(raw) };
 }
 
@@ -449,13 +461,35 @@ export type PaymentMethod = {
   qrCode: string;
 };
 
-export type PaymentContent = { methods: PaymentMethod[] };
+/** Copy shown on the /pre-order form, editable in /admin/content → Payment. */
+export type PreOrderContent = {
+  /** Heading of the policy box. */
+  policyTitle: string;
+  /** Rich-text (HTML) body of the policy box. */
+  policy: string;
+};
 
-export const DEFAULT_PAYMENT: PaymentContent = { methods: [] };
+export type PaymentContent = { methods: PaymentMethod[]; preOrder: PreOrderContent };
+
+export const DEFAULT_PRE_ORDER: PreOrderContent = {
+  policyTitle: "Pre-Order Policy",
+  policy:
+    "<p>Pre-orders <strong>cannot be cancelled</strong> once placed. Your reservation will only be voided if the total number of pre-orders does not meet the required allocation.</p>",
+};
+
+export const DEFAULT_PAYMENT: PaymentContent = { methods: [], preOrder: DEFAULT_PRE_ORDER };
 
 const MAX_PAYMENT_METHODS = 20;
 
 export const newPaymentMethodId = () => `pm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+
+function normalizePreOrder(raw: unknown): PreOrderContent {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  return {
+    policyTitle: str(o.policyTitle, DEFAULT_PRE_ORDER.policyTitle).trim() || DEFAULT_PRE_ORDER.policyTitle,
+    policy: typeof o.policy === "string" ? o.policy : DEFAULT_PRE_ORDER.policy,
+  };
+}
 
 function normalizePayment(raw: unknown): PaymentContent {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
@@ -478,7 +512,10 @@ function normalizePayment(raw: unknown): PaymentContent {
     : [];
   // At most one default — keep the first one flagged.
   const firstDefault = methods.findIndex((m) => m.isDefault);
-  return { methods: methods.map((m, i) => ({ ...m, isDefault: i === firstDefault })) };
+  return {
+    methods: methods.map((m, i) => ({ ...m, isDefault: i === firstDefault })),
+    preOrder: normalizePreOrder(o.preOrder),
+  };
 }
 
 function validatePayment(raw: unknown): Validation<PaymentContent> {
@@ -542,6 +579,94 @@ function validateShipping(raw: unknown): Validation<ShippingContent> {
   }
   if (!str(o.senderAddr, "").trim()) return { ok: false, error: "Sender address is required." };
   return { ok: true, value: normalizeShipping(raw) };
+}
+
+// ─── Email ──────────────────────────────────────────────────────────────────
+// Colors + text for the transactional emails sent from app/api/pre-order/route.ts
+// (the admin "New Order"/"New Pre-Order" notifications and the customer "Thank
+// You" email). Email clients strip <style> blocks and CSS variables, so these
+// are plain hex values read server-side and inlined into each email's HTML —
+// unlike the storefront's Colors tab, there's no light/dark mode here.
+
+export type EmailColors = {
+  /** Outer <body> background, just visible as a thin margin around the card. */
+  background: string;
+  /** The email's card background. */
+  panel: string;
+  /** Background of the boxed sections inside the card (Customer Info, Order Items). */
+  panelAccent: string;
+  /** Border around the card, its sections, and the line between order items. */
+  border: string;
+  /** Headings, totals, the button background and the "XZVL_STORE" kicker. */
+  primary: string;
+  /** Body text. */
+  text: string;
+  /** Labels and secondary text (e.g. "Name", "Qty"). */
+  muted: string;
+};
+
+export type EmailTextContent = {
+  /** Small kicker line above the heading, e.g. "XZVL_STORE". */
+  tag: string;
+  /** Intro paragraph in the customer email after a checkout order. */
+  greetingCheckout: string;
+  /** Intro paragraph in the customer email after a pre-order. */
+  greetingPreOrder: string;
+  /** Button label in the customer email, linking to /account/orders. */
+  buttonLabel: string;
+};
+
+export type EmailContent = { colors: EmailColors; text: EmailTextContent };
+
+export const DEFAULT_EMAIL: EmailContent = {
+  colors: {
+    background: "#0e0e0e",
+    panel: "#131313",
+    panelAccent: "#1a1a1a",
+    border: "#1f1f1f",
+    primary: "#ed0d11",
+    text: "#e2e2e2",
+    muted: "#ebbbb4",
+  },
+  text: {
+    tag: "XZVL_STORE",
+    greetingCheckout: "We've received your order and we're getting it ready. We'll notify you once it ships.",
+    greetingPreOrder: "We've received your pre-order request. We'll reach out once your item is confirmed and ready.",
+    buttonLabel: "View My Orders",
+  },
+};
+
+const EMAIL_COLOR_KEYS = ["background", "panel", "panelAccent", "border", "primary", "text", "muted"] as const;
+
+function normalizeEmail(raw: unknown): EmailContent {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const c = (o.colors && typeof o.colors === "object" ? o.colors : {}) as Record<string, unknown>;
+  const t = (o.text && typeof o.text === "object" ? o.text : {}) as Record<string, unknown>;
+  return {
+    colors: Object.fromEntries(
+      EMAIL_COLOR_KEYS.map((k) => [k, isHexColor(c[k]) ? c[k] : DEFAULT_EMAIL.colors[k]])
+    ) as EmailColors,
+    text: {
+      tag: str(t.tag, DEFAULT_EMAIL.text.tag).trim() || DEFAULT_EMAIL.text.tag,
+      greetingCheckout: str(t.greetingCheckout, DEFAULT_EMAIL.text.greetingCheckout).trim() || DEFAULT_EMAIL.text.greetingCheckout,
+      greetingPreOrder: str(t.greetingPreOrder, DEFAULT_EMAIL.text.greetingPreOrder).trim() || DEFAULT_EMAIL.text.greetingPreOrder,
+      buttonLabel: str(t.buttonLabel, DEFAULT_EMAIL.text.buttonLabel).trim() || DEFAULT_EMAIL.text.buttonLabel,
+    },
+  };
+}
+
+function validateEmail(raw: unknown): Validation<EmailContent> {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const c = (o.colors && typeof o.colors === "object" ? o.colors : {}) as Record<string, unknown>;
+  const t = (o.text && typeof o.text === "object" ? o.text : {}) as Record<string, unknown>;
+  for (const k of EMAIL_COLOR_KEYS) {
+    if (!isHexColor(c[k])) return { ok: false, error: `Email colors: ${k} must be a hex value like #131313.` };
+  }
+  if (!str(t.tag, "").trim()) return { ok: false, error: "Email tag is required." };
+  if (!str(t.greetingCheckout, "").trim()) return { ok: false, error: "The checkout greeting is required." };
+  if (!str(t.greetingPreOrder, "").trim()) return { ok: false, error: "The pre-order greeting is required." };
+  if (!str(t.buttonLabel, "").trim()) return { ok: false, error: "The button label is required." };
+  return { ok: true, value: normalizeEmail(raw) };
 }
 
 // ─── Colors ─────────────────────────────────────────────────────────────────
@@ -636,6 +761,7 @@ export type SiteContent = {
   maintenance: MaintenanceContent;
   payment: PaymentContent;
   shipping: ShippingContent;
+  email: EmailContent;
   colors: ColorsContent;
 };
 
@@ -648,6 +774,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   maintenance: DEFAULT_MAINTENANCE,
   payment: DEFAULT_PAYMENT,
   shipping: DEFAULT_SHIPPING,
+  email: DEFAULT_EMAIL,
   colors: DEFAULT_COLORS,
 };
 
@@ -664,6 +791,7 @@ export const NORMALIZERS: { [K in keyof SiteContent]: (raw: unknown) => SiteCont
   maintenance: normalizeMaintenance,
   payment: normalizePayment,
   shipping: normalizeShipping,
+  email: normalizeEmail,
   colors: normalizeColors,
 };
 
@@ -676,6 +804,7 @@ const VALIDATORS: { [K in keyof SiteContent]: (raw: unknown) => Validation<SiteC
   maintenance: validateMaintenance,
   payment: validatePayment,
   shipping: validateShipping,
+  email: validateEmail,
   colors: validateColors,
 };
 

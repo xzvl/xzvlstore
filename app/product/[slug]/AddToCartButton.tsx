@@ -194,6 +194,11 @@ export default function AddToCartButton({ product }: { product: StoreProduct }) 
               <span className="material-symbols-outlined text-[18px]">add</span>
             </button>
           </div>
+          {rawLimit != null && (
+            <span className="ml-4 font-mono text-[10px] tracking-wide text-accent/50">
+              Limit {rawLimit} per customer
+            </span>
+          )}
         </div>
       )}
 

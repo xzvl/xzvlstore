@@ -810,6 +810,28 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
+                {/* Confirmation screenshot notice */}
+                <div className="border border-orange-400/30 bg-orange-400/5 px-4 py-4 flex gap-3">
+                  <span className="material-symbols-outlined text-[18px] text-orange-400/70 flex-shrink-0 mt-0.5">photo_camera</span>
+                  <div className="space-y-1">
+                    <p className="font-mono text-[11px] tracking-widest uppercase text-orange-400/70">Important</p>
+                    <p className="font-mono text-[12px] text-accent/50 leading-relaxed">
+                      After submitting, please take a{" "}
+                      <span className="text-fg/80">screenshot of the confirmation/thank you message</span>{" "}
+                      and send it to our official Facebook page{" "}
+                      <a
+                        href="https://www.facebook.com/xzviel"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        facebook.com/xzviel
+                      </a>{" "}
+                      to confirm your order.
+                    </p>
+                  </div>
+                </div>
+
                 {submitError && (
                   <p className="font-mono text-[12px] text-primary border border-primary/30 p-3 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[14px]">error</span>

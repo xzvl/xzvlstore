@@ -24,6 +24,11 @@ export default function BrandingTab({
           image for best results. Leave empty to keep the default &quot;xzvl.store&quot; text logo.
         </p>
         <ImageUploader label="Logo image" value={value.logoImageUrl} onChange={(url) => set("logoImageUrl", url)} />
+        <p className="tabular-nums text-[11px] text-accent/60">
+          Alternative logo, shown instead of the one above when a visitor has the storefront in dark mode. Leave empty
+          to always use the logo above.
+        </p>
+        <ImageUploader label="Alternative logo (dark mode)" value={value.logoImageUrlDark} onChange={(url) => set("logoImageUrlDark", url)} />
       </div>
 
       <div className={CARD}>
@@ -33,6 +38,11 @@ export default function BrandingTab({
           favicons aggressively, so a change can take a while to appear. Leave empty for the default.
         </p>
         <ImageUploader label="Favicon" value={value.faviconUrl} onChange={(url) => set("faviconUrl", url)} />
+        <p className="tabular-nums text-[11px] text-accent/60">
+          Alternative favicon, used for the brand mark in /admin and the login page instead of the one above when
+          Colors → Default mode is dark. Leave empty to always use the favicon above.
+        </p>
+        <ImageUploader label="Alternative favicon (dark mode)" value={value.faviconUrlDark} onChange={(url) => set("faviconUrlDark", url)} />
       </div>
 
       <SaveBar saving={saving} message={message} error={error} onSave={save} label="Save Branding" />

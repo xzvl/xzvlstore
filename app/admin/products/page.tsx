@@ -49,6 +49,7 @@ function QuickEditModal({
   const [salePrice, setSalePrice] = useState(product.sale_price != null ? String(product.sale_price) : "");
   const [cost, setCost] = useState(String(product.cost));
   const [taxable, setTaxable] = useState(product.taxable);
+  const [includeInTotals, setIncludeInTotals] = useState(product.include_in_totals ?? true);
   const [preOrder, setPreOrder] = useState(product.pre_order);
   const [sneakPeek, setSneakPeek] = useState(product.sneak_peek);
   const [bundleOnly, setBundleOnly] = useState(product.bundle_only ?? false);
@@ -88,6 +89,7 @@ function QuickEditModal({
         sale_price: salePrice.trim() === "" ? null : num(salePrice),
         cost: num(cost),
         taxable,
+        include_in_totals: includeInTotals,
         pre_order: preOrder,
         sneak_peek: sneakPeek,
         bundle_only: bundleOnly,
@@ -248,6 +250,14 @@ function QuickEditModal({
               subtitle="Apply tax to this product's price"
               activeClass="border-primary/50 bg-primary/10"
             />
+            <TogglePill
+              active={includeInTotals}
+              onClick={() => setIncludeInTotals((v) => !v)}
+              title="Include in Totals"
+              subtitle="Count this product in the Est. Total / Total Profit above"
+              activeClass="border-green-400/50 bg-green-400/10"
+              switchClass="bg-green-400"
+            />
           </div>
 
           {error && <p className="tabular-nums text-[11px] text-red-500">{error}</p>}
@@ -372,8 +382,10 @@ function AdminProductsPageInner() {
 
   // Inventory value / profit for the products currently listed (respects filters & search).
   // Profit only counts products that have a cost recorded — the table shows "—" for the rest.
+  // A product with "Include in Totals" off is left out of both sums entirely.
   const totals = displayed.reduce(
     (acc, p) => {
+      if (p.include_in_totals === false) { acc.excluded += 1; return acc; }
       const unit = p.sale_price ?? p.price;
       const qty = Math.max(0, p.stock);
       acc.value += unit * qty;
@@ -381,7 +393,7 @@ function AdminProductsPageInner() {
       else acc.noCost += 1;
       return acc;
     },
-    { value: 0, profit: 0, noCost: 0 }
+    { value: 0, profit: 0, noCost: 0, excluded: 0 }
   );
 
   const handleDelete = async (id: string) => {
@@ -417,6 +429,7 @@ function AdminProductsPageInner() {
         sneak_peek_note: p.sneak_peek_note,
         bundle_only: p.bundle_only,
         taxable: p.taxable,
+        include_in_totals: p.include_in_totals,
         main_image: p.main_image,
         gallery_images: p.gallery_images,
         social_image: p.social_image,
@@ -567,7 +580,7 @@ function AdminProductsPageInner() {
         </div>
         <Link
           href="/admin/products/new"
-          className="sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           Add Product
@@ -595,7 +608,9 @@ function AdminProductsPageInner() {
         <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
           <div
             className="flex items-center gap-2.5 bg-panel border border-line/40 px-4 py-2 rounded-lg"
-            title={`Retail value of stock on hand across the ${displayed.length} listed product${displayed.length === 1 ? "" : "s"}`}
+            title={`Retail value of stock on hand across the ${displayed.length} listed product${displayed.length === 1 ? "" : "s"}${
+              totals.excluded > 0 ? ` (${totals.excluded} excluded via "Include in Totals")` : ""
+            }`}
           >
             <span className="material-symbols-outlined text-accent/50 text-[18px]">inventory_2</span>
             <div className="leading-tight">
@@ -607,9 +622,12 @@ function AdminProductsPageInner() {
           <div
             className="flex items-center gap-2.5 bg-panel border border-line/40 px-4 py-2 rounded-lg"
             title={
-              totals.noCost > 0
-                ? `${totals.noCost} listed product${totals.noCost === 1 ? " has" : "s have"} no cost recorded and ${totals.noCost === 1 ? "is" : "are"} excluded`
-                : "Profit on stock on hand across the listed products"
+              [
+                totals.noCost > 0
+                  ? `${totals.noCost} listed product${totals.noCost === 1 ? " has" : "s have"} no cost recorded and ${totals.noCost === 1 ? "is" : "are"} excluded`
+                  : "Profit on stock on hand across the listed products",
+                totals.excluded > 0 ? `${totals.excluded} excluded via "Include in Totals"` : "",
+              ].filter(Boolean).join("; ")
             }
           >
             <span className="material-symbols-outlined text-accent/50 text-[18px]">trending_up</span>
@@ -788,6 +806,14 @@ function AdminProductsPageInner() {
                           inactive
                         </span>
                       )}
+                      {p.include_in_totals === false && (
+                        <span
+                          className="tabular-nums text-[9px] uppercase px-1.5 py-px border border-accent/20 bg-accent/5 text-accent/60 flex-shrink-0 tracking-wider font-medium rounded"
+                          title="Excluded from Est. Total / Total Profit"
+                        >
+                          excl. totals
+                        </span>
+                      )}
                     </div>
 
                     {/* Row 2: brand | Stocks */}
@@ -909,6 +935,14 @@ function AdminProductsPageInner() {
                           {p.pre_order && <span className="tabular-nums text-[9px] uppercase px-1.5 py-px border border-orange-400/30 bg-orange-400/10 text-orange-400 tracking-wider font-medium rounded">pre-order</span>}
                           {p.sneak_peek && <span className="tabular-nums text-[9px] uppercase px-1.5 py-px border border-sky-400/30 bg-sky-400/10 text-sky-400 tracking-wider font-medium rounded">sneak peek</span>}
                           {p.status === "inactive" && <span className="tabular-nums text-[9px] uppercase px-1.5 py-px border border-accent/20 bg-accent/5 text-accent/60 tracking-wider font-medium rounded">inactive</span>}
+                          {p.include_in_totals === false && (
+                            <span
+                              className="tabular-nums text-[9px] uppercase px-1.5 py-px border border-accent/20 bg-accent/5 text-accent/60 tracking-wider font-medium rounded"
+                              title="Excluded from Est. Total / Total Profit"
+                            >
+                              excl. totals
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-3 py-3 tabular-nums text-[12px] text-accent/60 whitespace-nowrap">{p.sku ?? <span className="text-accent/40">—</span>}</td>

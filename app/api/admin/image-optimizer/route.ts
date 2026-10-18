@@ -147,7 +147,9 @@ function rewriteReferences(
     }
     if (row.key === "branding") {
       if (row.value.logoImageUrl === oldUrl) { row.value.logoImageUrl = newUrl; changed = true; }
+      if (row.value.logoImageUrlDark === oldUrl) { row.value.logoImageUrlDark = newUrl; changed = true; }
       if (row.value.faviconUrl === oldUrl) { row.value.faviconUrl = newUrl; changed = true; }
+      if (row.value.faviconUrlDark === oldUrl) { row.value.faviconUrlDark = newUrl; changed = true; }
     }
     if (row.key === "maintenance" && row.value.image === oldUrl) {
       row.value.image = newUrl;

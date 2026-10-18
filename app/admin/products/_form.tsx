@@ -255,6 +255,7 @@ type FormState = {
   sneak_peek_note: string;
   bundle_only: boolean;
   taxable: boolean;
+  include_in_totals: boolean;
   max_purchase_enabled: boolean;
   max_purchase_limit: string;
   new_arrival: boolean;
@@ -289,6 +290,7 @@ const EMPTY_FORM: FormState = {
   sneak_peek_note: "",
   bundle_only: false,
   taxable: false,
+  include_in_totals: true,
   max_purchase_enabled: false,
   max_purchase_limit: "",
   new_arrival: false,
@@ -324,6 +326,7 @@ function productToForm(p: DbProduct): FormState {
     sneak_peek_note: p.sneak_peek_note ?? "",
     bundle_only: p.bundle_only ?? false,
     taxable: p.taxable ?? false,
+    include_in_totals: p.include_in_totals ?? true,
     max_purchase_enabled: p.max_purchase_enabled ?? false,
     max_purchase_limit: p.max_purchase_limit ? String(p.max_purchase_limit) : "",
     new_arrival: p.new_arrival ?? false,
@@ -659,6 +662,17 @@ export default function ProductForm({ productId }: { productId?: string }) {
               activeClass="border-primary/50 bg-primary/10"
             />
           </div>
+
+          <div className="md:col-span-2">
+            <TogglePill
+              active={form.include_in_totals}
+              onClick={() => set$("include_in_totals", !form.include_in_totals)}
+              title="Include in Totals"
+              subtitle="Count this product's stock value and profit in the Est. Total / Total Profit above"
+              activeClass="border-green-400/50 bg-green-400/10"
+              switchClass="bg-green-400"
+            />
+          </div>
         </div>
       </div>
 
@@ -856,7 +870,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
         <button
           onClick={save}
           disabled={saving}
-          className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
           {saving
             ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>

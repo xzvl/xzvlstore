@@ -13,6 +13,7 @@ import MaintenanceTab from "./_MaintenanceTab";
 import ColorsTab from "./_ColorsTab";
 import PaymentTab from "./_PaymentTab";
 import ShippingTab from "./_ShippingTab";
+import EmailTab from "./_EmailTab";
 
 const TABS = [
   { key: "branding", label: "Branding", icon: "image" },
@@ -23,6 +24,7 @@ const TABS = [
   { key: "hero", label: "Hero", icon: "slideshow" },
   { key: "footer", label: "Footer", icon: "vertical_align_bottom" },
   { key: "images", label: "Images", icon: "photo_library" },
+  { key: "email", label: "Email", icon: "mail" },
   { key: "colors", label: "Colors", icon: "palette" },
   { key: "maintenance", label: "Maintenance", icon: "construction" },
 ] as const;
@@ -164,6 +166,9 @@ export default function AdminContentPage() {
             <ShippingTab initial={content.shipping} onSaved={(shipping) => setContent((c) => c && { ...c, shipping })} />
           )}
           {active === "images" && <ImageOptimizationTab />}
+          {active === "email" && (
+            <EmailTab initial={content.email} onSaved={(email) => setContent((c) => c && { ...c, email })} />
+          )}
           {active === "colors" && (
             <ColorsTab initial={content.colors} onSaved={(colors) => setContent((c) => c && { ...c, colors })} />
           )}

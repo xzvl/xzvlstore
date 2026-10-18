@@ -109,6 +109,8 @@ export type DbProduct = {
   /** Only sold as part of a bundle — can't be added to the cart on its own. */
   bundle_only: boolean;
   taxable: boolean;
+  /** Counted in /admin/products' Est. Total / Total Profit when true (default). */
+  include_in_totals: boolean;
   max_purchase_enabled: boolean;
   max_purchase_limit: number | null;
   new_arrival: boolean;

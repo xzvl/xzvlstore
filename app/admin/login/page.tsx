@@ -1,8 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useSiteContent } from "@/components/SiteContentProvider";
 
 export default function AdminLoginPage() {
+  const { branding, colors } = useSiteContent();
+  // /admin is pinned to Colors → Default mode, never the visitor's own toggle,
+  // so the favicon variant is picked from that setting (see AdminShell's Brand).
+  const favicon = (colors.defaultMode === "dark" && branding.faviconUrlDark) || branding.faviconUrl;
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,9 +46,15 @@ export default function AdminLoginPage() {
     <main className="min-h-screen bg-deep flex items-center justify-center px-4">
       <div className="w-full max-w-sm bg-panel border border-line/40 rounded-xl p-6 sm:p-8 shadow-2xl shadow-black/40">
         <div className="flex items-center gap-2.5 mb-6">
-          <span className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-[15px] shadow-sm shadow-primary/30">
-            X
-          </span>
+          {favicon ? (
+            <span className="relative w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 shadow-sm shadow-primary/30">
+              <Image src={favicon} alt="xzvl.store" fill sizes="36px" className="object-cover" />
+            </span>
+          ) : (
+            <span className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-[15px] shadow-sm shadow-primary/30">
+              X
+            </span>
+          )}
           <div className="leading-tight">
             <p className="text-[13px] font-semibold text-fg">xzvl.store</p>
             <p className="text-[11px] text-accent/60">Back office</p>

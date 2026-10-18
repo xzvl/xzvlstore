@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useSiteContent } from "@/components/SiteContentProvider";
 
 type NavItem = { href: string; label: string; icon: string };
 
@@ -51,11 +53,22 @@ function isActive(pathname: string, href: string) {
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
+  const { branding, colors } = useSiteContent();
+  // /admin is pinned to Colors → Default mode (ForceThemeMode), never the
+  // visitor's own toggle, so the favicon variant is picked from that setting.
+  const favicon = (colors.defaultMode === "dark" && branding.faviconUrlDark) || branding.faviconUrl;
+
   return (
     <div className="flex items-center gap-2.5 min-w-0">
-      <span className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-[14px] flex-shrink-0 shadow-sm shadow-primary/30">
-        X
-      </span>
+      {favicon ? (
+        <span className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 shadow-sm shadow-primary/30">
+          <Image src={favicon} alt="xzvl.store" fill sizes="32px" className="object-cover" />
+        </span>
+      ) : (
+        <span className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-[14px] flex-shrink-0 shadow-sm shadow-primary/30">
+          X
+        </span>
+      )}
       {!compact && (
         <div className="min-w-0 leading-tight">
           <p className="text-[13px] font-semibold text-fg truncate">xzvl.store</p>
@@ -256,7 +269,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             </span>
             <Link
               href="/admin/orders/new"
-              className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
+              className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
               New order

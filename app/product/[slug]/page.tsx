@@ -10,6 +10,8 @@ import ProductCard from "@/components/ProductCard";
 import BlockedBanner from "@/components/BlockedBanner";
 import AddToCartButton from "./AddToCartButton";
 import ProductImages from "./ProductImages";
+import { HeartButton, WaitlistButton } from "./ProductActions";
+import ShareButtons from "./ShareButtons";
 
 const FIELDS =
   "id, slug, name, price, sale_price, stock, image, main_image, gallery_images, social_image, pre_order, sneak_peek, bundle_only, status, brand_id, brands, category_ids, max_purchase_enabled, max_purchase_limit";
@@ -215,28 +217,33 @@ export default async function ProductPage({
             {/* Right: Info */}
             <div className="flex flex-col gap-6">
               {/* Brand + badges */}
-              <div className="flex items-center gap-3">
-                {product.brand_name && (
-                  <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-accent/50">
-                    {product.brand_name}
-                  </span>
-                )}
-                {product.pre_order && (
-                  <span className="bg-primary px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
-                    Pre-Order
-                  </span>
-                )}
-                {product.sneak_peek && (
-                  <span className="bg-sky-500 px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
-                    Sneak Peek
-                  </span>
-                )}
-                {product.bundle_only && (
-                  <span className="bg-violet-500 px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
-                    Bundle Only
-                  </span>
-                )}
-              </div>
+              {(product.brand_name ||
+                product.pre_order ||
+                product.sneak_peek ||
+                product.bundle_only) && (
+                <div className="flex items-center gap-3">
+                  {product.brand_name && (
+                    <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-accent/50">
+                      {product.brand_name}
+                    </span>
+                  )}
+                  {product.pre_order && (
+                    <span className="bg-primary px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
+                      Pre-Order
+                    </span>
+                  )}
+                  {product.sneak_peek && (
+                    <span className="bg-sky-500 px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
+                      Sneak Peek
+                    </span>
+                  )}
+                  {product.bundle_only && (
+                    <span className="bg-violet-500 px-2 py-0.5 font-mono text-[9px] text-white tracking-widest uppercase">
+                      Bundle Only
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Name */}
               <h1 className="font-inter font-black text-[22px] md:text-[28px] text-fg leading-tight uppercase">
@@ -284,10 +291,21 @@ export default async function ProductPage({
                     ? "In stock"
                     : "Out of stock"}
                 </span>
+                <div className="ml-auto">
+                  <HeartButton productId={product.id} />
+                </div>
               </div>
 
               {/* Add to cart */}
               <AddToCartButton product={product} />
+
+              {/* Waitlist: sneak peeks and sold-out products */}
+              {!product.bundle_only && (product.sneak_peek || (product.status === "active" && !product.pre_order )) && (
+                <WaitlistButton
+                  productId={product.id}
+                  label={product.sneak_peek ? "Notify Me When Available" : "Add to Waitlist"}
+                />
+              )}
 
               {/* Bundle-only notice */}
               {product.bundle_only && !product.sneak_peek && (
@@ -401,6 +419,10 @@ export default async function ProductPage({
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[16px] text-primary">verified</span>
                   <span className="font-mono text-[11px] text-fg/50">100% authentic products</span>
+                </div>
+                <div className="pt-3 border-t border-line/20 flex items-center gap-2">
+                  <span className="font-mono text-[10px] tracking-widest uppercase text-accent/40">Share</span>
+                  <ShareButtons path={`/product/${product.slug}`} title={product.name} />
                 </div>
               </div>
             </div>

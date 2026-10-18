@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useSiteContent } from "@/components/SiteContentProvider";
+import { useThemeMode } from "@/lib/use-theme-mode";
 import SearchBar from "@/components/SearchBar";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -14,6 +15,8 @@ export default function Header() {
   const navLinks = header.navLinks;
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const mode = useThemeMode();
+  const logo = (mode === "dark" && branding.logoImageUrlDark) || branding.logoImageUrl;
 
   return (
     <header className="sticky top-0 z-50 bg-header/95 backdrop-blur-md border-b border-line/40">
@@ -23,9 +26,9 @@ export default function Header() {
           href="/"
           className="font-inter font-black text-[20px] uppercase shrink-0 tracking-tight"
         >
-          {branding.logoImageUrl ? (
-            <span className="relative block h-10 w-36">
-              <Image src={branding.logoImageUrl} alt="xzvl.store" fill sizes="144px" className="object-contain object-left" priority />
+          {logo ? (
+            <span className="relative block h-8 lg:h-10 w-36">
+              <Image src={logo} alt="xzvl.store" fill sizes="144px" className="object-contain object-left" priority />
             </span>
           ) : (
             <>

@@ -19,7 +19,7 @@ export default function SaveBar({
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
+        className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
       >
         {saving
           ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ForceThemeMode from "@/components/admin/ForceThemeMode";
+import AccountProvider from "@/components/account/AccountProvider";
 import { getSiteContent } from "@/lib/get-site-content";
 
 export const metadata: Metadata = { title: "My Account" };
@@ -10,7 +11,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
   return (
     <div className="erp-theme bg-deep text-fg">
       <ForceThemeMode mode={colors.defaultMode} />
-      {children}
+      <AccountProvider>{children}</AccountProvider>
     </div>
   );
 }

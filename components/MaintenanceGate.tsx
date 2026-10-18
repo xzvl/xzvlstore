@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSiteContent } from "@/components/SiteContentProvider";
+import { useThemeMode } from "@/lib/use-theme-mode";
 import { SOCIAL_ICONS, SOCIAL_LABELS } from "@/components/Footer";
 
 // Wraps every page in the root layout. While maintenance mode is on (toggled
@@ -21,6 +22,8 @@ export default function MaintenanceGate({ forced, children }: { forced: boolean;
 
 function MaintenancePage() {
   const { branding, footer, maintenance } = useSiteContent();
+  const mode = useThemeMode();
+  const logo = (mode === "dark" && branding.logoImageUrlDark) || branding.logoImageUrl;
 
   return (
     <main className="relative min-h-screen bg-deep cyber-grid flex flex-col items-center justify-center px-4 py-16 overflow-hidden">
@@ -28,9 +31,9 @@ function MaintenancePage() {
 
       <div className="w-full max-w-xl flex flex-col items-center text-center">
         <p className="font-inter font-black text-[24px] uppercase tracking-tight mb-10">
-          {branding.logoImageUrl ? (
+          {logo ? (
             <span className="relative block h-10 w-44">
-              <Image src={branding.logoImageUrl} alt="xzvl.store" fill sizes="176px" className="object-contain" priority />
+              <Image src={logo} alt="xzvl.store" fill sizes="176px" className="object-contain" priority />
             </span>
           ) : (
             <>

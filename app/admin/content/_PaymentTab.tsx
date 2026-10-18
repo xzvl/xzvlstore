@@ -1,11 +1,14 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { newPaymentMethodId, type PaymentContent, type PaymentMethod } from "@/lib/site-content";
 import { useSectionEditor } from "@/components/admin/useSectionEditor";
 import { CARD, CARD_TITLE, INPUT, LABEL } from "@/components/admin/formKit";
 import ImageUploader from "@/components/admin/ImageUploader";
 import ListEditor from "@/components/admin/ListEditor";
 import SaveBar from "@/components/admin/SaveBar";
+
+const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
 function Switch({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
   return (
@@ -40,6 +43,8 @@ export default function PaymentTab({
   const { value, setValue, saving, message, error, save } = useSectionEditor("payment", initial, onSaved);
 
   const setMethods = (methods: PaymentMethod[]) => setValue((v) => ({ ...v, methods }));
+  const setPreOrder = (patch: Partial<PaymentContent["preOrder"]>) =>
+    setValue((v) => ({ ...v, preOrder: { ...v.preOrder, ...patch } }));
   const makeDefault = (id: string) =>
     setMethods(value.methods.map((m) => ({ ...m, isDefault: m.id === id ? !m.isDefault : false })));
 
@@ -125,6 +130,27 @@ export default function PaymentTab({
             No payment methods yet. Until you add one, checkout shows the built-in list (GCash, Cash, Bank Transfer, Maya).
           </p>
         )}
+      </div>
+
+      <div className={CARD}>
+        <p className={CARD_TITLE}>Pre-Order</p>
+        <p className="tabular-nums text-[11px] text-accent/60">
+          Text shown on the <span className="text-primary">/pre-order</span> form, above the submit button.
+        </p>
+        <div>
+          <label className={LABEL}>Policy Title</label>
+          <input
+            value={value.preOrder.policyTitle}
+            onChange={(e) => setPreOrder({ policyTitle: e.target.value })}
+            placeholder="Pre-Order Policy"
+            className={INPUT}
+          />
+        </div>
+        <div>
+          <label className={LABEL}>Policy</label>
+          <RichTextEditor value={value.preOrder.policy} onChange={(policy) => setPreOrder({ policy })} />
+          <p className="tabular-nums text-[11px] text-accent/50 mt-1.5">Leave empty to hide the policy box.</p>
+        </div>
       </div>
 
       {missingCompany && (

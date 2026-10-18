@@ -332,7 +332,7 @@ export default function AdminBundlesPage() {
         <h1 className="font-semibold text-fg text-[22px] tracking-tight">Bundle Products</h1>
         <Link
           href="/admin/bundle-products/new"
-          className="sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-white text-[12px] font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           Add Bundle

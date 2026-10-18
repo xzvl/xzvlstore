@@ -9,6 +9,8 @@ import { verifyPayment, verificationNote, type PaymentVerification } from "@/lib
 import { loadPaymentProof, isDuplicateReference } from "@/lib/payment-proof-ocr";
 import { quoteShipping } from "@/lib/jnt";
 import { DELIVERY_METHODS, POUCH_LABEL, type DeliveryMethod } from "@/lib/shipping";
+import { getSiteContent } from "@/lib/get-site-content";
+import type { EmailColors, EmailTextContent } from "@/lib/site-content";
 
 // Re-reading a payment screenshot (if its saved OCR result is missing) can take a while.
 export const maxDuration = 60;
@@ -47,22 +49,25 @@ async function appendToSheet(payload: object) {
 }
 
 // ─── Email ────────────────────────────────────────────────────────────────────
+// Colors and the customer-facing greeting/button text come from /admin/content →
+// Email, read once per request (see getSiteContent() below) and threaded through
+// every builder — never hardcoded, so the admin's edits actually take effect.
 
-function orderItemsRows(items: OrderItem[]) {
+function orderItemsRows(items: OrderItem[], colors: EmailColors) {
   return items
     .map(
       (item) => `
       <tr>
-        <td style="padding:10px 14px;border-bottom:1px solid #2a2a2a;font-size:13px;">${item.product}</td>
-        <td style="padding:10px 14px;border-bottom:1px solid #2a2a2a;font-size:13px;text-align:center;">${item.qty}</td>
-        <td style="padding:10px 14px;border-bottom:1px solid #2a2a2a;font-size:13px;text-align:right;">&#8369;${item.subtotal.toLocaleString()}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid ${colors.border};font-size:13px;">${item.product}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid ${colors.border};font-size:13px;text-align:center;">${item.qty}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid ${colors.border};font-size:13px;text-align:right;">&#8369;${item.subtotal.toLocaleString()}</td>
       </tr>`
     )
     .join("");
 }
 
-function paymentRow(payment: string) {
-  return `<tr><td style="padding:5px 0;color:#ebbbb4;vertical-align:top;">Payment</td><td style="padding:5px 0;">${payment}</td></tr>`;
+function paymentRow(payment: string, colors: EmailColors) {
+  return `<tr><td style="padding:5px 0;color:${colors.muted};vertical-align:top;">Payment</td><td style="padding:5px 0;">${payment}</td></tr>`;
 }
 
 function buildPreOrderEmailHtml(
@@ -75,58 +80,59 @@ function buildPreOrderEmailHtml(
   estimatedTotal: number,
   date: string,
   payment: string,
-  shipping: ShippingSummary
+  shipping: ShippingSummary,
+  colors: EmailColors
 ) {
-  const rows = orderItemsRows(items);
+  const rows = orderItemsRows(items, colors);
 
   return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#0e0e0e;">
-  <div style="background:#131313;color:#e2e2e2;font-family:'Courier New',monospace;padding:40px 32px;max-width:600px;margin:0 auto;border:1px solid #1f1f1f;">
+<body style="margin:0;padding:0;background:${colors.background};">
+  <div style="background:${colors.panel};color:${colors.text};font-family:'Courier New',monospace;padding:40px 32px;max-width:600px;margin:0 auto;border:1px solid ${colors.border};">
 
-    <p style="color:#ed0d11;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;">XZVL_STORE // NEW_PRE_ORDER</p>
-    <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:#e2e2e2;letter-spacing:-0.02em;">New Pre-Order</h1>
-    <p style="font-size:12px;color:#ebbbb4;opacity:0.5;margin:0 0 28px 0;">Submitted on ${date}</p>
+    <p style="color:${colors.primary};font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;">XZVL_STORE // NEW_PRE_ORDER</p>
+    <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:${colors.text};letter-spacing:-0.02em;">New Pre-Order</h1>
+    <p style="font-size:12px;color:${colors.muted};opacity:0.5;margin:0 0 28px 0;">Submitted on ${date}</p>
 
-    <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:16px;">
-      <p style="font-size:10px;color:#ed0d11;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Customer Info</p>
+    <div style="background:${colors.panelAccent};border:1px solid ${colors.border};padding:18px;margin-bottom:16px;">
+      <p style="font-size:10px;color:${colors.primary};text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Customer Info</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <tr><td style="padding:5px 0;color:#ebbbb4;width:90px;">Name</td><td style="padding:5px 0;">${name}</td></tr>
-        <tr><td style="padding:5px 0;color:#ebbbb4;">Location</td><td style="padding:5px 0;">${location}</td></tr>
-        <tr><td style="padding:5px 0;color:#ebbbb4;">Phone</td><td style="padding:5px 0;">${phone || "—"}</td></tr>
-        <tr><td style="padding:5px 0;color:#ebbbb4;">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
-        <tr><td style="padding:5px 0;color:#ebbbb4;">Facebook</td><td style="padding:5px 0;">${facebook ? `<a href="${facebook}" style="color:#ed0d11;">${facebook}</a>` : "—"}</td></tr>
-        ${paymentRow(payment)}
+        <tr><td style="padding:5px 0;color:${colors.muted};width:90px;">Name</td><td style="padding:5px 0;">${name}</td></tr>
+        <tr><td style="padding:5px 0;color:${colors.muted};">Location</td><td style="padding:5px 0;">${location}</td></tr>
+        <tr><td style="padding:5px 0;color:${colors.muted};">Phone</td><td style="padding:5px 0;">${phone || "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:${colors.muted};">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:${colors.muted};">Facebook</td><td style="padding:5px 0;">${facebook ? `<a href="${facebook}" style="color:${colors.primary};">${facebook}</a>` : "—"}</td></tr>
+        ${paymentRow(payment, colors)}
       </table>
     </div>
 
-    <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:16px;">
-      <p style="font-size:10px;color:#ed0d11;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Order Items</p>
+    <div style="background:${colors.panelAccent};border:1px solid ${colors.border};padding:18px;margin-bottom:16px;">
+      <p style="font-size:10px;color:${colors.primary};text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Order Items</p>
       <table style="width:100%;border-collapse:collapse;">
         <thead>
-          <tr style="border-bottom:1px solid #603e39;">
-            <th style="padding:8px 14px;text-align:left;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Product</th>
-            <th style="padding:8px 14px;text-align:center;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Qty</th>
-            <th style="padding:8px 14px;text-align:right;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Subtotal</th>
+          <tr style="border-bottom:1px solid ${colors.border};">
+            <th style="padding:8px 14px;text-align:left;color:${colors.muted};font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Product</th>
+            <th style="padding:8px 14px;text-align:center;color:${colors.muted};font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Qty</th>
+            <th style="padding:8px 14px;text-align:right;color:${colors.muted};font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Subtotal</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
 
-    <div style="border:1px solid #603e39;padding:18px;">
+    <div style="border:1px solid ${colors.border};padding:18px;">
       <table style="width:100%;border-collapse:collapse;">
         <tr>
           <td>
-            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">Estimated Total</p>
-            <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${(estimatedTotal + (shipping.fee ?? 0)).toLocaleString()}</p>
-            <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">${shipping.fee == null && shipping.label !== DELIVERY_METHODS.pickup ? "Shipping fee not yet included" : "Shipping included"}</p>
+            <p style="font-size:10px;color:${colors.muted};text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">Estimated Total</p>
+            <p style="font-size:24px;font-weight:900;color:${colors.primary};margin:0;">&#8369;${(estimatedTotal + (shipping.fee ?? 0)).toLocaleString()}</p>
+            <p style="font-size:10px;color:${colors.muted};opacity:0.5;margin:4px 0 0 0;">${shipping.fee == null && shipping.label !== DELIVERY_METHODS.pickup ? "Shipping fee not yet included" : "Shipping included"}</p>
           </td>
           <td style="text-align:right;vertical-align:top;">
-            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">${shipping.label}</p>
-            <p style="font-size:14px;color:#ebbbb4;margin:0;">${shippingFeeText(shipping)}</p>
+            <p style="font-size:10px;color:${colors.muted};text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">${shipping.label}</p>
+            <p style="font-size:14px;color:${colors.muted};margin:0;">${shippingFeeText(shipping)}</p>
           </td>
         </tr>
       </table>
@@ -143,53 +149,51 @@ function buildCustomerEmailHtml(
   items: OrderItem[],
   estimatedTotal: number,
   date: string,
-  shipping: ShippingSummary
+  shipping: ShippingSummary,
+  colors: EmailColors,
+  text: EmailTextContent
 ) {
-  const rows = orderItemsRows(items);
+  const rows = orderItemsRows(items, colors);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://xzvl.store";
-  const ordersUrl = `${siteUrl}/account?tab=orders`;
+  const ordersUrl = `${siteUrl}/account/orders`;
   const firstName = name.split(" ")[0] || name;
 
   return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#0e0e0e;">
-  <div style="background:#131313;color:#e2e2e2;font-family:'Courier New',monospace;padding:40px 32px;max-width:600px;margin:0 auto;border:1px solid #1f1f1f;">
+<body style="margin:0;padding:0;background:${colors.background};">
+  <div style="background:${colors.panel};color:${colors.text};font-family:'Courier New',monospace;padding:40px 32px;max-width:600px;margin:0 auto;border:1px solid ${colors.border};">
 
-    <p style="color:#ed0d11;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;">XZVL_STORE</p>
-    <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:#e2e2e2;letter-spacing:-0.02em;">Thank You, ${firstName}!</h1>
-    <p style="font-size:13px;color:#ebbbb4;opacity:0.7;margin:0 0 28px 0;line-height:1.6;">
-      ${
-        isCheckout
-          ? "We've received your order and we're getting it ready. We'll notify you once it ships."
-          : "We've received your pre-order request. We'll reach out once your item is confirmed and ready."
-      }
+    <p style="color:${colors.primary};font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;">${text.tag}</p>
+    <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:${colors.text};letter-spacing:-0.02em;">Thank You, ${firstName}!</h1>
+    <p style="font-size:13px;color:${colors.muted};opacity:0.7;margin:0 0 28px 0;line-height:1.6;">
+      ${isCheckout ? text.greetingCheckout : text.greetingPreOrder}
     </p>
 
-    <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:16px;">
-      <p style="font-size:10px;color:#ed0d11;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 4px 0;">
+    <div style="background:${colors.panelAccent};border:1px solid ${colors.border};padding:18px;margin-bottom:16px;">
+      <p style="font-size:10px;color:${colors.primary};text-transform:uppercase;letter-spacing:0.15em;margin:0 0 4px 0;">
         ${isCheckout ? "Order" : "Pre-Order"} Summary
       </p>
-      <p style="font-size:11px;color:#ebbbb4;opacity:0.5;margin:0 0 14px 0;">Placed on ${date}</p>
+      <p style="font-size:11px;color:${colors.muted};opacity:0.5;margin:0 0 14px 0;">Placed on ${date}</p>
       <table style="width:100%;border-collapse:collapse;">
         <thead>
-          <tr style="border-bottom:1px solid #603e39;">
-            <th style="padding:8px 14px;text-align:left;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Product</th>
-            <th style="padding:8px 14px;text-align:center;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Qty</th>
-            <th style="padding:8px 14px;text-align:right;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Subtotal</th>
+          <tr style="border-bottom:1px solid ${colors.border};">
+            <th style="padding:8px 14px;text-align:left;color:${colors.muted};font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Product</th>
+            <th style="padding:8px 14px;text-align:center;color:${colors.muted};font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Qty</th>
+            <th style="padding:8px 14px;text-align:right;color:${colors.muted};font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Subtotal</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
 
-    <div style="border:1px solid #603e39;padding:18px;margin-bottom:28px;">
-      <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">
+    <div style="border:1px solid ${colors.border};padding:18px;margin-bottom:28px;">
+      <p style="font-size:10px;color:${colors.muted};text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">
         ${isCheckout ? "Order Total" : "Estimated Total"}
       </p>
-      <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${(estimatedTotal + (shipping.fee ?? 0)).toLocaleString()}</p>
-      <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">${
+      <p style="font-size:24px;font-weight:900;color:${colors.primary};margin:0;">&#8369;${(estimatedTotal + (shipping.fee ?? 0)).toLocaleString()}</p>
+      <p style="font-size:10px;color:${colors.muted};opacity:0.5;margin:4px 0 0 0;">${
         shipping.label === DELIVERY_METHODS.pickup
           ? "For pickup — no shipping fee"
           : shipping.fee != null
@@ -199,11 +203,11 @@ function buildCustomerEmailHtml(
     </div>
 
     <div style="text-align:center;margin-bottom:8px;">
-      <a href="${ordersUrl}" style="display:inline-block;background:#ed0d11;color:#ffffff;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;padding:14px 28px;">
-        View My Orders
+      <a href="${ordersUrl}" style="display:inline-block;background:${colors.primary};color:#ffffff;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;padding:14px 28px;">
+        ${text.buttonLabel}
       </a>
     </div>
-    <p style="text-align:center;font-size:10px;color:#ebbbb4;opacity:0.4;margin:0;">
+    <p style="text-align:center;font-size:10px;color:${colors.muted};opacity:0.4;margin:0;">
       Track this ${isCheckout ? "order" : "pre-order"} anytime from your account page.
     </p>
 
@@ -223,59 +227,60 @@ function buildCheckoutEmailHtml(
   estimatedTotal: number,
   date: string,
   payment: string,
-  shipping: ShippingSummary
+  shipping: ShippingSummary,
+  colors: EmailColors
 ) {
-  const rows = orderItemsRows(items);
+  const rows = orderItemsRows(items, colors);
 
   return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#0e0e0e;">
-  <div style="background:#131313;color:#e2e2e2;font-family:'Courier New',monospace;padding:40px 32px;max-width:600px;margin:0 auto;border:1px solid #1f1f1f;">
+<body style="margin:0;padding:0;background:${colors.background};">
+  <div style="background:${colors.panel};color:${colors.text};font-family:'Courier New',monospace;padding:40px 32px;max-width:600px;margin:0 auto;border:1px solid ${colors.border};">
 
-    <p style="color:#ed0d11;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;">XZVL_STORE // NEW_ORDER</p>
-    <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:#e2e2e2;letter-spacing:-0.02em;">New Order</h1>
-    <p style="font-size:12px;color:#ebbbb4;opacity:0.5;margin:0 0 28px 0;">Placed on ${date}</p>
+    <p style="color:${colors.primary};font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;">XZVL_STORE // NEW_ORDER</p>
+    <h1 style="font-size:26px;font-weight:900;text-transform:uppercase;margin:0 0 6px 0;color:${colors.text};letter-spacing:-0.02em;">New Order</h1>
+    <p style="font-size:12px;color:${colors.muted};opacity:0.5;margin:0 0 28px 0;">Placed on ${date}</p>
 
-    <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:16px;">
-      <p style="font-size:10px;color:#ed0d11;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Customer Info</p>
+    <div style="background:${colors.panelAccent};border:1px solid ${colors.border};padding:18px;margin-bottom:16px;">
+      <p style="font-size:10px;color:${colors.primary};text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Customer Info</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <tr><td style="padding:5px 0;color:#ebbbb4;width:110px;">Name</td><td style="padding:5px 0;">${name}</td></tr>
-        <tr><td style="padding:5px 0;color:#ebbbb4;">Location</td><td style="padding:5px 0;">${location}</td></tr>
-        <tr><td style="padding:5px 0;color:#ebbbb4;">Phone</td><td style="padding:5px 0;">${phone || "—"}</td></tr>
-        <tr><td style="padding:5px 0;color:#ebbbb4;">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
-        <tr><td style="padding:5px 0;color:#ebbbb4;">Facebook</td><td style="padding:5px 0;">${facebook ? `<a href="${facebook}" style="color:#ed0d11;">${facebook}</a>` : "—"}</td></tr>
-        <tr><td style="padding:5px 0;color:#ebbbb4;">Payment Method</td><td style="padding:5px 0;">${paymentMethod || "—"}</td></tr>
-        ${paymentRow(payment)}
+        <tr><td style="padding:5px 0;color:${colors.muted};width:110px;">Name</td><td style="padding:5px 0;">${name}</td></tr>
+        <tr><td style="padding:5px 0;color:${colors.muted};">Location</td><td style="padding:5px 0;">${location}</td></tr>
+        <tr><td style="padding:5px 0;color:${colors.muted};">Phone</td><td style="padding:5px 0;">${phone || "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:${colors.muted};">Email</td><td style="padding:5px 0;">${email || "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:${colors.muted};">Facebook</td><td style="padding:5px 0;">${facebook ? `<a href="${facebook}" style="color:${colors.primary};">${facebook}</a>` : "—"}</td></tr>
+        <tr><td style="padding:5px 0;color:${colors.muted};">Payment Method</td><td style="padding:5px 0;">${paymentMethod || "—"}</td></tr>
+        ${paymentRow(payment, colors)}
       </table>
     </div>
 
-    <div style="background:#1a1a1a;border:1px solid #603e39;padding:18px;margin-bottom:16px;">
-      <p style="font-size:10px;color:#ed0d11;text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Order Items</p>
+    <div style="background:${colors.panelAccent};border:1px solid ${colors.border};padding:18px;margin-bottom:16px;">
+      <p style="font-size:10px;color:${colors.primary};text-transform:uppercase;letter-spacing:0.15em;margin:0 0 14px 0;">Order Items</p>
       <table style="width:100%;border-collapse:collapse;">
         <thead>
-          <tr style="border-bottom:1px solid #603e39;">
-            <th style="padding:8px 14px;text-align:left;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Product</th>
-            <th style="padding:8px 14px;text-align:center;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Qty</th>
-            <th style="padding:8px 14px;text-align:right;color:#ebbbb4;font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Subtotal</th>
+          <tr style="border-bottom:1px solid ${colors.border};">
+            <th style="padding:8px 14px;text-align:left;color:${colors.muted};font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Product</th>
+            <th style="padding:8px 14px;text-align:center;color:${colors.muted};font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Qty</th>
+            <th style="padding:8px 14px;text-align:right;color:${colors.muted};font-size:10px;font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;">Subtotal</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
 
-    <div style="border:1px solid #603e39;padding:18px;">
+    <div style="border:1px solid ${colors.border};padding:18px;">
       <table style="width:100%;border-collapse:collapse;">
         <tr>
           <td>
-            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">Order Total</p>
-            <p style="font-size:24px;font-weight:900;color:#ed0d11;margin:0;">&#8369;${(estimatedTotal + (shipping.fee ?? 0)).toLocaleString()}</p>
-            <p style="font-size:10px;color:#ebbbb4;opacity:0.5;margin:4px 0 0 0;">${shipping.fee == null && shipping.label !== DELIVERY_METHODS.pickup ? "Shipping fee not yet included" : "Shipping included"}</p>
+            <p style="font-size:10px;color:${colors.muted};text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px 0;">Order Total</p>
+            <p style="font-size:24px;font-weight:900;color:${colors.primary};margin:0;">&#8369;${(estimatedTotal + (shipping.fee ?? 0)).toLocaleString()}</p>
+            <p style="font-size:10px;color:${colors.muted};opacity:0.5;margin:4px 0 0 0;">${shipping.fee == null && shipping.label !== DELIVERY_METHODS.pickup ? "Shipping fee not yet included" : "Shipping included"}</p>
           </td>
           <td style="text-align:right;vertical-align:top;">
-            <p style="font-size:10px;color:#ebbbb4;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">${shipping.label}</p>
-            <p style="font-size:14px;color:#ebbbb4;margin:0;">${shippingFeeText(shipping)}</p>
+            <p style="font-size:10px;color:${colors.muted};text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px 0;">${shipping.label}</p>
+            <p style="font-size:14px;color:${colors.muted};margin:0;">${shippingFeeText(shipping)}</p>
           </td>
         </tr>
       </table>
@@ -311,7 +316,9 @@ async function insertOrder(
   console.error("[pre-order] Payment proof columns missing — run the migration in supabase/schema.sql:", first.error.message);
   const retry = await supabase.from("orders").insert({
     ...row,
-    notes: [...row.notes, `Proof of payment image: ${proofFields.proof_images[0].url}`],
+    notes: proofFields.proof_images.length
+      ? [...row.notes, `Proof of payment image: ${proofFields.proof_images[0].url}`]
+      : row.notes,
   });
   if (retry.error) throw retry.error;
   return retry;
@@ -341,7 +348,7 @@ export async function POST(req: NextRequest) {
       order_type?: "checkout" | "pre-order";
       /** Bundles in the cart. Their products are already expanded into `items`. */
       bundles?: { id: string; qty: number }[];
-      /** Public URL returned by /api/payment-proof. Required. */
+      /** Public URL returned by /api/payment-proof. Required for checkout, optional for pre-orders. */
       payment_proof_url?: string;
     };
 
@@ -353,7 +360,9 @@ export async function POST(req: NextRequest) {
     if (!facebook?.trim()) {
       return NextResponse.json({ error: "Facebook link is required." }, { status: 400 });
     }
-    if (!payment_proof_url) {
+    // Checkout needs a proof of payment; a pre-order can be placed without paying
+    // (it's then put on hold until the customer pays).
+    if (isCheckout && !payment_proof_url) {
       return NextResponse.json({ error: "Please upload your proof of payment." }, { status: 400 });
     }
 
@@ -555,23 +564,38 @@ export async function POST(req: NextRequest) {
     // A down payment covers only itself — shipping is paid with the balance.
     const expectedPayment = requiredDp > 0 ? requiredDp : goodsValue + (shippingFee ?? 0);
 
-    const proof = await loadPaymentProof(payment_proof_url);
-    if (!proof.found) {
-      return NextResponse.json({ error: "Your proof of payment couldn't be found. Please upload it again." }, { status: 400 });
+    // A pre-order with no down payment required has nothing to pay upfront at
+    // all — the form doesn't even show a payment section — so it's never held
+    // for payment, whatever (if anything) payment_proof_url turns out to be.
+    const paymentNeeded = isCheckout || requiredDp > 0;
+
+    let verification: PaymentVerification | null = null;
+    let paymentNote: string | null = null;
+    if (payment_proof_url) {
+      const proof = await loadPaymentProof(payment_proof_url);
+      if (!proof.found) {
+        return NextResponse.json({ error: "Your proof of payment couldn't be found. Please upload it again." }, { status: 400 });
+      }
+      verification = verifyPayment(
+        proof.extraction,
+        expectedPayment,
+        await isDuplicateReference(proof.extraction?.reference ?? null)
+      );
+      paymentNote = verificationNote(verification);
+    } else if (paymentNeeded) {
+      paymentNote = `Payment: not paid yet — pre-order placed without a proof of payment (₱${expectedPayment.toLocaleString()} due).`;
     }
-    const verification: PaymentVerification = verifyPayment(
-      proof.extraction,
-      expectedPayment,
-      await isDuplicateReference(proof.extraction?.reference ?? null)
-    );
-    const paymentNote = verificationNote(verification);
-    orderNotes.push(paymentNote);
+    if (paymentNote) orderNotes.push(paymentNote);
+    const verified = verification?.verified ?? false;
 
     // Verified: checkout → confirmed, pre-order → pre-order.
-    // Not verified: checkout → pending, pre-order → hold pre-order.
+    // Not verified: checkout → pending, pre-order with a down payment due → hold
+    // pre-order, pre-order with nothing due → pre-order straight away.
     const orderStatus = isCheckout
-      ? (verification.verified ? "confirmed" : "pending")
-      : (verification.verified ? "pre-order" : "hold pre-order");
+      ? (verified ? "confirmed" : "pending")
+      : !paymentNeeded
+        ? "pre-order"
+        : (verified ? "pre-order" : "hold pre-order");
 
     const date = new Date().toLocaleDateString("en-PH", {
       year: "numeric",
@@ -580,6 +604,9 @@ export async function POST(req: NextRequest) {
       timeZone: "Asia/Manila",
     });
 
+    // Colors + customer-facing text from /admin/content → Email.
+    const { email: emailContent } = await getSiteContent();
+
     const [sheetResult, emailResult, customerEmailResult, dbResult] = await Promise.allSettled([
       appendToSheet({ date, name, location, phone, email, items }),
       getResend().emails.send({
@@ -587,14 +614,14 @@ export async function POST(req: NextRequest) {
         to: "xzviel@gmail.com",
         subject: isCheckout ? `New Order from ${name}` : `New Pre-Order from ${name}`,
         html: isCheckout
-          ? buildCheckoutEmailHtml(name, location, phone, email, facebook?.trim() || "", payment_method || null, items, orderTotal, date, paymentNote, shippingSummary)
-          : buildPreOrderEmailHtml(name, location, phone, email, facebook?.trim() || "", items, orderTotal, date, paymentNote, shippingSummary),
+          ? buildCheckoutEmailHtml(name, location, phone, email, facebook?.trim() || "", payment_method || null, items, orderTotal, date, paymentNote ?? "", shippingSummary, emailContent.colors)
+          : buildPreOrderEmailHtml(name, location, phone, email, facebook?.trim() || "", items, orderTotal, date, paymentNote ?? "No down payment required for this pre-order.", shippingSummary, emailContent.colors),
       }),
       getResend().emails.send({
         from: process.env.RESEND_FROM ?? "xzvl.store <onboarding@resend.dev>",
         to: email,
         subject: isCheckout ? "Thanks for your order! - xzvl.store" : "Thanks for your pre-order! - xzvl.store",
-        html: buildCustomerEmailHtml(isCheckout, name, items, orderTotal, date, shippingSummary),
+        html: buildCustomerEmailHtml(isCheckout, name, items, orderTotal, date, shippingSummary, emailContent.colors, emailContent.text),
       }),
       insertOrder({
         name, email, phone, location,
@@ -623,11 +650,13 @@ export async function POST(req: NextRequest) {
         shipping_region: shipping?.region || "",
         shipping_phone: phone || "",
       }, {
-        payment_reference: verification.reference,
+        payment_reference: verification?.reference ?? null,
         payment_verification: verification,
-        proof_images: [{ url: payment_proof_url, type: "payment", uploaded_at: new Date().toISOString() }],
-        ...(verification.verified && !isCheckout && requiredDp > 0 ? { down_payment: requiredDp } : {}),
-        ...(verification.verified && verification.date ? { payment_date: `${verification.date}T00:00:00+08:00` } : {}),
+        proof_images: payment_proof_url
+          ? [{ url: payment_proof_url, type: "payment", uploaded_at: new Date().toISOString() }]
+          : [],
+        ...(verified && !isCheckout && requiredDp > 0 ? { down_payment: requiredDp } : {}),
+        ...(verification?.verified && verification.date ? { payment_date: `${verification.date}T00:00:00+08:00` } : {}),
       }, {
         shipping_name: shipping_name?.trim() || name,
         billing_province_id: billing?.province_id || null,
@@ -679,7 +708,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: true, errors, status: orderStatus, verified: verification.verified, flags: verification.flags },
+      { success: true, errors, status: orderStatus, verified, flags: verification?.flags ?? [] },
       { status: 200 }
     );
   } catch (err) {
