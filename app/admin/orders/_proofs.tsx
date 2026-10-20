@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { OrderProofImage, OrderProofType } from "@/lib/supabase";
 import { sizedImageUrl } from "@/lib/image-sizes";
+import type { PaymentExtraction } from "@/lib/payment-proof";
 
 const TYPES: { value: OrderProofType; label: string; active: string }[] = [
   { value: "payment", label: "Payment", active: "border-green-400/60 bg-green-400/10 text-green-400" },
@@ -46,9 +47,12 @@ function TypeToggle({ value, onChange, size = "sm" }: { value: OrderProofType; o
 export default function OrderProofs({
   value,
   onChange,
+  onPaymentRead,
 }: {
   value: OrderProofImage[];
   onChange: (next: OrderProofImage[] | ((prev: OrderProofImage[]) => OrderProofImage[])) => void;
+  /** Called with what OCR read off each uploaded payment screenshot. */
+  onPaymentRead?: (extraction: PaymentExtraction | null, duplicate: boolean) => void;
 }) {
   const [uploadType, setUploadType] = useState<OrderProofType>("payment");
   const [uploading, setUploading] = useState(0);
@@ -68,11 +72,14 @@ export default function OrderProofs({
         try {
           const fd = new FormData();
           fd.append("file", file);
-          fd.append("folder", "order-proofs");
-          const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+          // Payment screenshots go through the same endpoint as /checkout and
+          // /pre-order so they're read (OCR) and checked the same way.
+          if (type !== "payment") fd.append("folder", "order-proofs");
+          const res = await fetch(type === "payment" ? "/api/payment-proof" : "/api/admin/upload", { method: "POST", body: fd });
           const json = await res.json();
           if (!res.ok || !json.url) throw new Error();
           onChange((prev) => [...prev, { url: json.url, type, uploaded_at: new Date().toISOString() }]);
+          if (type === "payment") onPaymentRead?.(json.extraction ?? null, !!json.duplicate);
         } catch {
           setFailed((prev) => [...prev, file.name]);
         } finally {
@@ -122,7 +129,7 @@ export default function OrderProofs({
             {uploading ? "progress_activity" : "add_photo_alternate"}
           </span>
           <span className="tabular-nums text-[11px] text-accent/60">
-            {uploading ? `Uploading ${uploading} image${uploading === 1 ? "" : "s"}…` : "Click or drop images here — you can pick several at once"}
+            {uploading ? `Uploading ${uploading} image${uploading === 1 ? "" : "s"}${uploadType === "payment" ? " and reading payment details" : ""}…` : "Click or drop images here — you can pick several at once"}
           </span>
           <input
             ref={fileRef}

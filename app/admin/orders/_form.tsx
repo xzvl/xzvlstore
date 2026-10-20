@@ -7,6 +7,18 @@ import type { DbProduct, OrderProofImage, OrderStatus } from "@/lib/supabase";
 import OrderProofs from "./_proofs";
 import { ProvinceCityNameFields, matchArea, useAreas, useShippingQuote } from "@/components/AreaFields";
 import { POUCH_LABEL } from "@/lib/shipping";
+import { verifyPayment, verificationNote, type PaymentExtraction } from "@/lib/payment-proof";
+
+// /admin/orders keeps its filters here so the form can send you back to them.
+export const ORDERS_FILTER_KEY = "admin-orders-filter";
+function ordersListHref(): string {
+  try {
+    const qs = sessionStorage.getItem(ORDERS_FILTER_KEY);
+    return qs ? `/admin/orders?${qs}` : "/admin/orders";
+  } catch {
+    return "/admin/orders";
+  }
+}
 
 export const DELIVERY_METHODS = ["J&T Express", "LBC", "Shopee Express", "Grab Express", "Lalamove", "Pickup", "Other"];
 const JNT = "J&T Express";
@@ -398,6 +410,9 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
   // Whether a new J&T quote may overwrite the shipping fee. Off while an
   // existing order's saved fee is untouched; any edit turns it on.
   const [feeAuto, setFeeAuto] = useState(!orderId);
+  // Read after mount: sessionStorage isn't available during server render.
+  const [listHref, setListHref] = useState("/admin/orders");
+  useEffect(() => setListHref(ordersListHref()), []);
 
   useEffect(() => {
     fetch("/api/admin/products").then((r) => r.json()).then(setProducts);
@@ -590,6 +605,20 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shippingQuote.quote]);
 
+  // Same note /checkout and /pre-order add when a proof of payment comes in.
+  // The screenshot may be for the full amount, the down payment or the
+  // remaining balance, so it's checked against whichever one it matches.
+  const addPaymentNote = (extraction: PaymentExtraction | null, duplicate: boolean) => {
+    const shipping = form.delivery_method === "Pickup" ? 0 : parseFloat(form.shipping_fee) || 0;
+    const full = total + shipping;
+    const dp = parseFloat(form.down_payment) || 0;
+    const candidates = [full, ...(dp > 0 && dp < full ? [dp, full - dp] : [])];
+    const expected =
+      candidates.find((c) => extraction?.amounts.some((a) => Math.abs(a - c) < 0.01)) ?? (dp > 0 ? full - dp : full);
+    const note = verificationNote(verifyPayment(extraction, expected, duplicate));
+    setForm((f) => ({ ...f, notes: [...f.notes, note] }));
+  };
+
   const save = async () => {
     if (!form.name.trim()) { setError("Name is required."); return; }
     setSaving(true);
@@ -640,7 +669,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to save order.");
-      router.push("/admin/orders");
+      router.push(ordersListHref());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -662,7 +691,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Link href="/admin/orders" className="inline-flex items-center gap-1 tabular-nums text-[10px] text-accent/60 hover:text-primary transition-colors mb-3">
+          <Link href={listHref} className="inline-flex items-center gap-1 tabular-nums text-[10px] text-accent/60 hover:text-primary transition-colors mb-3">
             <span className="material-symbols-outlined text-[13px]">arrow_back</span>
             Back to Orders
           </Link>
@@ -939,7 +968,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       </div>
 
       {/* Proof of payment / purchase */}
-      {orderId && <OrderProofs value={proofs} onChange={setProofs} />}
+      {orderId && <OrderProofs value={proofs} onChange={setProofs} onPaymentRead={addPaymentNote} />}
 
       {/* Notes */}
       <div className="bg-panel border border-line/30 p-5 space-y-3 rounded-lg">

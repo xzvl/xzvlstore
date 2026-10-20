@@ -7,6 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import type { Order, OrderStatus } from "@/lib/supabase";
 import { ExportOrdersModal } from "./_export";
 import { OrderQuickEditModal } from "./_quick-edit";
+import { ORDERS_FILTER_KEY } from "./_form";
 import { sizedImageUrl } from "@/lib/image-sizes";
 
 const STATUS_TABS: { value: string; label: string; icon: string }[] = [
@@ -498,6 +499,11 @@ function AdminOrdersPageInner() {
     window.addEventListener("popstate", syncFromUrl);
     return () => window.removeEventListener("popstate", syncFromUrl);
   }, []);
+
+  // Remembered so the order form can come back to this filter after saving.
+  useEffect(() => {
+    try { sessionStorage.setItem(ORDERS_FILTER_KEY, params.toString()); } catch {}
+  }, [params]);
 
   const status = params.get("status") ?? "default";
   const productFilter = params.get("product") ?? "all";

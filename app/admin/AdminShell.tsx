@@ -83,11 +83,11 @@ function NavList({
   pathname,
   collapsed = false,
   onNavigate,
-}: {
-  pathname: string;
-  collapsed?: boolean;
-  onNavigate?: () => void;
-}) {
+  }: {
+    pathname: string;
+    collapsed?: boolean;
+    onNavigate?: () => void;
+  }) {
   return (
     <nav className="flex flex-col gap-5 px-3 py-4 flex-1 overflow-y-auto">
       {NAV.map((g) => (
