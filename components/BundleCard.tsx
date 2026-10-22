@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/lib/cart-context";
-import { bundleCartId, bundleCartPrices, bundleImage, percentOff, type ResolvedBundle } from "@/lib/bundle-types";
+import { bundleCartId, bundleCartPrices, bundleImage, bundlePurchaseLimit, percentOff, type ResolvedBundle } from "@/lib/bundle-types";
 import { sizedImageUrl } from "@/lib/image-sizes";
 
 const FALLBACK_IMAGE = "/assets/favicon.webp";
@@ -29,7 +29,7 @@ export default function BundleCard({ bundle }: { bundle: ResolvedBundle }) {
       sale_price,
       image: image ?? FALLBACK_IMAGE,
       stock: bundle.stock,
-      max_purchase_limit: null,
+      max_purchase_limit: bundlePurchaseLimit(bundle),
       bundle: {
         id: bundle.id,
         items: bundle.components.map((c) => ({

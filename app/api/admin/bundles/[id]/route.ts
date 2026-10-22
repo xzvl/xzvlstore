@@ -41,6 +41,8 @@ export async function PATCH(
     updates.items = items;
   }
   if (body.image !== undefined) updates.image = body.image || null;
+  if (body.max_purchase_enabled !== undefined) updates.max_purchase_enabled = Boolean(body.max_purchase_enabled);
+  if (body.max_purchase_limit !== undefined) updates.max_purchase_limit = body.max_purchase_limit ? Number(body.max_purchase_limit) : null;
   if (body.status !== undefined) updates.status = body.status === "inactive" ? "inactive" : "active";
 
   // A pre-order or sneak-peek product keeps the bundle disabled, whichever

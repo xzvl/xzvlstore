@@ -40,6 +40,8 @@ type FreshBundle = {
   regular_total: number;
   image: string | null;
   components: CartBundleItem[];
+  max_purchase_limit: number | null;
+  purchased_in_window: number;
 };
 
 type FreshProduct = {
@@ -237,7 +239,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           ? fetch(`/api/products/status?ids=${encodeURIComponent(productIds.join(","))}`, { headers })
           : null,
         bundleIds.length
-          ? fetch(`/api/bundles/status?ids=${encodeURIComponent(bundleIds.join(","))}`)
+          ? fetch(`/api/bundles/status?ids=${encodeURIComponent(bundleIds.join(","))}`, { headers })
           : null,
       ]);
       if ((productRes && !productRes.ok) || (bundleRes && !bundleRes.ok)) return { changed: false, messages: [] };
@@ -267,10 +269,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
             changed = true;
             continue;
           }
+          const bundleAllowance = b.max_purchase_limit != null
+            ? Math.max(0, b.max_purchase_limit - b.purchased_in_window)
+            : null;
+          if (bundleAllowance === 0) {
+            messages.push(`${item.name} was removed — you've reached its purchase limit for now.`);
+            changed = true;
+            continue;
+          }
+          const bundleCap = effectiveCap(b.stock, bundleAllowance)!;
           let qty = item.qty;
-          if (qty > b.stock) {
-            qty = b.stock;
-            messages.push(`Quantity for ${item.name} was reduced to ${b.stock} (maximum allowed).`);
+          if (qty > bundleCap) {
+            qty = bundleCap;
+            messages.push(`Quantity for ${item.name} was reduced to ${bundleCap} (maximum allowed).`);
             changed = true;
           }
           const prices = bundleCartPrices(b);
@@ -288,6 +299,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             ...prices,
             image: b.image || item.image,
             stock: b.stock,
+            max_purchase_limit: bundleAllowance,
             bundle: { id: b.id, items: b.components },
           });
           continue;

@@ -347,3 +347,11 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- Default on (included). Turn off in /admin/products for products that shouldn't count toward
 -- the inventory value / profit totals shown at the top of the page (samples, giveaways, etc).
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS include_in_totals boolean NOT NULL DEFAULT true;
+
+-- ─── Per-bundle maximum purchase limit (run this against the live DB) ─────────
+-- Same rolling window as the per-product limit. `orders.bundles` records which
+-- bundles an order bought ([{ "id": "...", "qty": 1 }, ...]) so past bundle
+-- purchases can be counted against the limit.
+-- ALTER TABLE bundles ADD COLUMN IF NOT EXISTS max_purchase_enabled boolean NOT NULL DEFAULT false;
+-- ALTER TABLE bundles ADD COLUMN IF NOT EXISTS max_purchase_limit integer;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS bundles jsonb NOT NULL DEFAULT '[]';

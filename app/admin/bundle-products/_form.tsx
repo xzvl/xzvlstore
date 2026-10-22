@@ -57,6 +57,8 @@ export default function BundleForm({ bundleId }: { bundleId?: string }) {
   const [price, setPrice] = useState("");
   const [image, setImage] = useState("");
   const [active, setActive] = useState(true);
+  const [maxPurchaseEnabled, setMaxPurchaseEnabled] = useState(false);
+  const [maxPurchaseLimit, setMaxPurchaseLimit] = useState("");
   const [items, setItems] = useState<BundleItemRef[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(!!bundleId);
@@ -77,6 +79,8 @@ export default function BundleForm({ bundleId }: { bundleId?: string }) {
           setPrice(String(b.price));
           setImage(b.image ?? "");
           setActive(b.status === "active");
+          setMaxPurchaseEnabled(b.max_purchase_enabled ?? false);
+          setMaxPurchaseLimit(b.max_purchase_limit ? String(b.max_purchase_limit) : "");
           setItems(b.items ?? []);
           setLoading(false);
         });
@@ -121,6 +125,11 @@ export default function BundleForm({ bundleId }: { bundleId?: string }) {
       setError("Enter a valid bundle price.");
       return;
     }
+    const limit = Math.floor(Number(maxPurchaseLimit));
+    if (maxPurchaseEnabled && !(limit >= 1)) {
+      setError("Enter a maximum purchase limit of at least 1.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -132,6 +141,8 @@ export default function BundleForm({ bundleId }: { bundleId?: string }) {
           price: bundlePrice,
           image: image || null,
           status: active && !blocked ? "active" : "inactive",
+          max_purchase_enabled: maxPurchaseEnabled,
+          max_purchase_limit: maxPurchaseEnabled ? limit : null,
           items,
         }),
       });
@@ -202,6 +213,26 @@ export default function BundleForm({ bundleId }: { bundleId?: string }) {
             activeClass="border-green-400/50 bg-green-400/10"
             switchClass="bg-green-400"
           />
+          <TogglePill
+            active={maxPurchaseEnabled}
+            onClick={() => setMaxPurchaseEnabled((v) => !v)}
+            title="Maximum Purchase Limit"
+            subtitle="Cap how many of this bundle a single customer can buy"
+            activeClass="border-blue-400/50 bg-blue-400/10"
+          />
+          {maxPurchaseEnabled && (
+            <div>
+              <label className={LABEL}>Maximum Purchase Limit (per customer)</label>
+              <input
+                type="number"
+                min="1"
+                value={maxPurchaseLimit}
+                onChange={(e) => setMaxPurchaseLimit(e.target.value)}
+                placeholder="e.g. 2"
+                className={INPUT}
+              />
+            </div>
+          )}
         </div>
       </div>
 

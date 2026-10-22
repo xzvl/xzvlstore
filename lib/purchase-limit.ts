@@ -35,3 +35,31 @@ export async function getPurchasedQtyMap(
   }
   return map;
 }
+
+// Same as getPurchasedQtyMap, but counts whole bundles from `orders.bundles`.
+export async function getPurchasedBundleQtyMap(
+  customerId: string,
+  bundleIds: string[],
+  windowDays: number = PURCHASE_LIMIT_WINDOW_DAYS
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  if (!customerId || bundleIds.length === 0) return map;
+
+  const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("orders")
+    .select("bundles")
+    .eq("customer_id", customerId)
+    .not("status", "in", "(cancelled,refunded)")
+    .gte("created_at", since);
+
+  for (const order of data ?? []) {
+    const bundles = (order.bundles ?? []) as { id?: string; qty?: number }[];
+    for (const b of bundles) {
+      if (b.id && bundleIds.includes(b.id)) {
+        map.set(b.id, (map.get(b.id) ?? 0) + (Number(b.qty) || 0));
+      }
+    }
+  }
+  return map;
+}

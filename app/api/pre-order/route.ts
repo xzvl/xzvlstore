@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabase } from "@/lib/supabase";
 import { adjustStock } from "@/lib/stock";
-import { getPurchasedQtyMap, PURCHASE_LIMIT_WINDOW_DAYS } from "@/lib/purchase-limit";
+import { getPurchasedBundleQtyMap, getPurchasedQtyMap, PURCHASE_LIMIT_WINDOW_DAYS } from "@/lib/purchase-limit";
 import { downPaymentPerUnit } from "@/lib/store-types";
 import { getBundlesByIds } from "@/lib/bundles";
+import { bundlePurchaseLimit } from "@/lib/bundle-types";
 import { verifyPayment, verificationNote, type PaymentVerification } from "@/lib/payment-proof";
 import { loadPaymentProof, isDuplicateReference } from "@/lib/payment-proof-ocr";
 import { quoteShipping } from "@/lib/jnt";
@@ -61,8 +62,16 @@ async function insertOrder(
   row: Record<string, unknown> & { notes: string[] },
   proofFields: Record<string, unknown> & { proof_images: { url: string; type: string; uploaded_at: string }[] },
   /** J&T area ids + receiver name — dropped if those columns aren't migrated yet. */
-  shippingFields: Record<string, unknown>
+  shippingFields: Record<string, unknown>,
+  /** Bundles bought on this order (for bundle purchase limits) — dropped if not migrated yet. */
+  bundleFields?: { bundles: { id: string; qty: number }[] }
 ) {
+  if (bundleFields) {
+    const withBundles = await supabase.from("orders").insert({ ...row, ...proofFields, ...shippingFields, ...bundleFields });
+    if (!withBundles.error) return withBundles;
+    if (!isMissingColumn(withBundles.error.code)) throw withBundles.error;
+    console.error("[pre-order] Order bundles column missing — run the migration in supabase/schema.sql:", withBundles.error.message);
+  }
   const full = await supabase.from("orders").insert({ ...row, ...proofFields, ...shippingFields });
   if (!full.error) return full;
   if (!isMissingColumn(full.error.code)) throw full.error;
@@ -220,6 +229,29 @@ export async function POST(req: NextRequest) {
       const resolved = new Map(
         (await getBundlesByIds(Array.from(new Set(bundleReqs.map((b) => b.id))))).map((b) => [b.id, b])
       );
+
+      // Per-customer bundle purchase limits, same rolling window as products.
+      if (customer_id) {
+        const limited = Array.from(resolved.values()).filter((b) => bundlePurchaseLimit(b) != null);
+        if (limited.length > 0) {
+          const purchasedMap = await getPurchasedBundleQtyMap(customer_id, limited.map((b) => b.id));
+          for (const b of limited) {
+            const limit = bundlePurchaseLimit(b)!;
+            const orderedQty = bundleReqs.filter((r) => r.id === b.id).reduce((s, r) => s + r.qty, 0);
+            const alreadyPurchased = purchasedMap.get(b.id) ?? 0;
+            if (alreadyPurchased + orderedQty > limit) {
+              const remainingAllowance = Math.max(0, limit - alreadyPurchased);
+              return NextResponse.json(
+                {
+                  error: `Purchase limit reached for "${b.name}" — max ${limit} per customer every ${PURCHASE_LIMIT_WINDOW_DAYS} days (${remainingAllowance} remaining right now).`,
+                },
+                { status: 403 }
+              );
+            }
+          }
+        }
+      }
+
       for (const req of bundleReqs) {
         const b = resolved.get(req.id);
         if (!b || b.status !== "active" || !b.available) {
@@ -421,7 +453,7 @@ export async function POST(req: NextRequest) {
         billing_city_id: billing?.city_id || null,
         shipping_province_id: shipping?.province_id || null,
         shipping_city_id: shipping?.city_id || null,
-      }),
+      }, bundleReqs.length > 0 ? { bundles: bundleReqs } : undefined),
     ]);
 
     const errors: string[] = [];

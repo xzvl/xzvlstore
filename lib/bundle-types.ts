@@ -10,6 +10,9 @@ export type DbBundle = {
   image: string | null;
   items: BundleItemRef[];
   status: "active" | "inactive";
+  /** Caps how many of this bundle one customer can buy per rolling window. */
+  max_purchase_enabled?: boolean | null;
+  max_purchase_limit?: number | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -81,6 +84,10 @@ export function bundleCartPrices(b: { price: number; regular_total: number }) {
   const pay = Math.min(b.price, b.regular_total);
   return { price: b.regular_total, sale_price: pay < b.regular_total ? pay : null };
 }
+
+/** The bundle's per-customer limit, or null when it has none. */
+export const bundlePurchaseLimit = (b: Pick<DbBundle, "max_purchase_enabled" | "max_purchase_limit">) =>
+  b.max_purchase_enabled && b.max_purchase_limit ? b.max_purchase_limit : null;
 
 /** The bundle's own image, else the first included product's image. */
 export const bundleImage = (b: { image: string | null; components: { image: string | null }[] }) =>

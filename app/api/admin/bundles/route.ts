@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
       price,
       items,
       image: body.image || null,
+      max_purchase_enabled: Boolean(body.max_purchase_enabled),
+      max_purchase_limit: body.max_purchase_limit ? Number(body.max_purchase_limit) : null,
       // A pre-order or sneak-peek product keeps the bundle disabled.
       status: body.status === "inactive" || (await hasBlockingProduct(items)) ? "inactive" : "active",
       sort_order: (last?.sort_order ?? -1) + 1,
