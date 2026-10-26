@@ -95,12 +95,12 @@ export default function CustomersPage() {
     load();
   };
 
-  const handleToggleBlock = async (c: Customer) => {
+  const handleToggle = async (c: Customer, field: "is_blocked" | "is_flaker") => {
     setBlockingId(c.id);
     const res = await fetch(`/api/admin/customers/${c.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_blocked: !c.is_blocked }),
+      body: JSON.stringify({ [field]: !c[field] }),
     });
     if (res.ok) {
       const updated = await res.json();
@@ -217,7 +217,15 @@ export default function CustomersPage() {
                         <span className="material-symbols-outlined text-[16px]">edit</span>
                       </Link>
                       <button
-                        onClick={() => handleToggleBlock(c)}
+                        onClick={() => handleToggle(c, "is_flaker")}
+                        disabled={blockingId === c.id}
+                        className={`transition-colors flex-shrink-0 disabled:opacity-40 ${c.is_flaker ? "text-amber-400 hover:text-green-400" : "text-accent/50 hover:text-amber-400"}`}
+                        title={c.is_flaker ? "Remove flaker" : "Mark as flaker"}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">{c.is_flaker ? "remove_moderator" : "warning"}</span>
+                      </button>
+                      <button
+                        onClick={() => handleToggle(c, "is_blocked")}
                         disabled={blockingId === c.id}
                         className={`transition-colors flex-shrink-0 disabled:opacity-40 ${c.is_blocked ? "text-red-400 hover:text-green-400" : "text-accent/50 hover:text-red-400"}`}
                         title={c.is_blocked ? "Unblock" : "Block"}
@@ -329,7 +337,15 @@ export default function CustomersPage() {
                           <span className="material-symbols-outlined text-[16px]">edit</span>
                         </Link>
                         <button
-                          onClick={() => handleToggleBlock(c)}
+                          onClick={() => handleToggle(c, "is_flaker")}
+                          disabled={blockingId === c.id}
+                          className={`p-1.5 transition-colors disabled:opacity-40 ${c.is_flaker ? "text-amber-400 hover:text-green-400" : "text-accent/50 hover:text-amber-400"}`}
+                          title={c.is_flaker ? "Remove flaker" : "Mark as flaker"}
+                        >
+                          <span className="material-symbols-outlined text-[16px]">{c.is_flaker ? "remove_moderator" : "warning"}</span>
+                        </button>
+                        <button
+                          onClick={() => handleToggle(c, "is_blocked")}
                           disabled={blockingId === c.id}
                           className={`p-1.5 transition-colors disabled:opacity-40 ${c.is_blocked ? "text-red-400 hover:text-green-400" : "text-accent/50 hover:text-red-400"}`}
                           title={c.is_blocked ? "Unblock" : "Block"}

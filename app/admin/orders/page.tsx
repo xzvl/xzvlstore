@@ -69,7 +69,26 @@ type Customer = {
   last_name: string;
   email: string;
   facebook_url: string | null;
+  is_blocked: boolean;
+  is_flaker: boolean;
 };
+
+// Highlight for orders placed by a banned (red) or flaker (yellow) account.
+// Banned wins when an account is both.
+const ACCOUNT_FLAG_STYLES = {
+  blocked: { card: "border-red-500/50 bg-red-500/10", tag: "border-red-500/40 bg-red-500/10 text-red-400", label: "banned" },
+  flaker: { card: "border-yellow-400/50 bg-yellow-400/10", tag: "border-yellow-400/40 bg-yellow-400/10 text-yellow-400", label: "flaker" },
+} as const;
+
+function AccountFlagTag({ flag }: { flag: keyof typeof ACCOUNT_FLAG_STYLES | null }) {
+  if (!flag) return null;
+  const s = ACCOUNT_FLAG_STYLES[flag];
+  return (
+    <span className={`tabular-nums text-[9px] uppercase border px-1.5 py-px flex-shrink-0 tracking-wider font-medium rounded ${s.tag}`}>
+      {s.label}
+    </span>
+  );
+}
 
 // ─── Date filter helpers ──────────────────────────────────────────────────────
 
@@ -780,8 +799,10 @@ function AdminOrdersPageInner() {
             <div className="space-y-2">
               {visibleOrders.map((order) => {
                 const facebookUrl = order.facebook || (order.customer_id ? customerMap[order.customer_id]?.facebook_url ?? undefined : undefined);
+                const orderCustomer = order.customer_id ? customerMap[order.customer_id] : undefined;
+                const accountFlag = orderCustomer?.is_blocked ? "blocked" : orderCustomer?.is_flaker ? "flaker" : null;
                 return (
-                <div key={order.id} className="bg-panel border border-line/30 overflow-hidden rounded-lg">
+                <div key={order.id} className={`border overflow-hidden rounded-lg ${accountFlag ? ACCOUNT_FLAG_STYLES[accountFlag].card : "bg-panel border-line/30"}`}>
 
                   {/* ── Mobile layout (hidden on md+) ── */}
                   <div className="md:hidden px-4 py-3">
@@ -796,6 +817,7 @@ function AdminOrdersPageInner() {
                         )}
                         <span className="truncate"><CustomerNameLink order={order} facebookUrl={facebookUrl} /></span>
                         <CopyIconButton text={order.name} />
+                        <AccountFlagTag flag={accountFlag} />
                       </p>
                       {order.location && (
                         <p className="tabular-nums text-[11px] text-accent/60 mt-0.5">{order.location}</p>
@@ -875,6 +897,7 @@ function AdminOrdersPageInner() {
                           )}
                           <span className="truncate"><CustomerNameLink order={order} facebookUrl={facebookUrl} /></span>
                           <CopyIconButton text={order.name} />
+                          <AccountFlagTag flag={accountFlag} />
                         </p>
                         {order.location && (
                           <p className="tabular-nums text-[11px] text-accent/60 flex-shrink-0">{order.location}</p>
