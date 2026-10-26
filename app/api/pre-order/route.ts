@@ -143,11 +143,14 @@ export async function POST(req: NextRequest) {
     if (customer_id) {
       const { data: customer } = await supabase
         .from("customers")
-        .select("is_blocked")
+        .select("is_blocked, is_flaker")
         .eq("id", customer_id)
         .single();
       if (customer?.is_blocked) {
         return NextResponse.json({ error: "This account has been blocked and cannot place orders." }, { status: 403 });
+      }
+      if (!isCheckout && customer?.is_flaker) {
+        return NextResponse.json({ error: "This account can't place pre-orders. You can still order available items through checkout." }, { status: 403 });
       }
 
       const productIds = Array.from(new Set(items.map((it) => it.product_id).filter((id): id is string => !!id)));

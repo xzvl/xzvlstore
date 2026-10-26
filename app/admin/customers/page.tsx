@@ -18,6 +18,7 @@ type Customer = {
   billing_state: string;
   is_blocked: boolean;
   block_reason: string | null;
+  is_flaker: boolean;
   created_at: string;
 };
 
@@ -186,6 +187,11 @@ export default function CustomersPage() {
                           blocked
                         </span>
                       )}
+                      {c.is_flaker && (
+                        <span className="tabular-nums text-[9px] uppercase border border-amber-500/40 bg-amber-500/10 text-amber-400 px-1.5 py-px flex-shrink-0 tracking-wider font-medium rounded">
+                          flaker
+                        </span>
+                      )}
                       <span className={`tabular-nums text-[9px] uppercase border px-1.5 py-px flex-shrink-0 tracking-wider font-medium rounded ${PROVIDER_COLORS[c.auth_provider] ?? PROVIDER_COLORS.email}`}>
                         {c.auth_provider}
                       </span>
@@ -277,6 +283,11 @@ export default function CustomersPage() {
                         {c.is_blocked && (
                           <span className="tabular-nums text-[9px] uppercase border border-red-500/40 bg-red-500/10 text-red-400 px-1.5 py-px flex-shrink-0 tracking-wider font-medium rounded">
                             blocked
+                          </span>
+                        )}
+                        {c.is_flaker && (
+                          <span className="tabular-nums text-[9px] uppercase border border-amber-500/40 bg-amber-500/10 text-amber-400 px-1.5 py-px flex-shrink-0 tracking-wider font-medium rounded">
+                            flaker
                           </span>
                         )}
                       </div>

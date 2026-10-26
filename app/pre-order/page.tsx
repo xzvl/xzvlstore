@@ -9,6 +9,7 @@ import { useCart } from "@/lib/cart-context";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlockedBanner from "@/components/BlockedBanner";
+import FlakerBanner from "@/components/FlakerBanner";
 import PaymentMethodPicker from "@/components/PaymentMethodPicker";
 import PaymentProofUpload, { type UploadedPaymentProof } from "@/components/PaymentProofUpload";
 import { useSiteContent } from "@/components/SiteContentProvider";
@@ -465,7 +466,7 @@ type ProfileAddresses = {
 };
 
 export default function PreOrderPage() {
-  const { isBlocked } = useCart();
+  const { isBlocked, isFlaker } = useCart();
   const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -622,7 +623,7 @@ export default function PreOrderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isBlocked) return;
+    if (isBlocked || isFlaker) return;
     const phoneErr = validatePhone(contact.phone);
     const emailErr = validateEmail(contact.email);
     const facebookErr = validateFacebook(contact.facebook);
@@ -805,6 +806,7 @@ export default function PreOrderPage() {
         </div>
 
         <BlockedBanner />
+        <FlakerBanner />
 
         {/* Auth banner */}
         {!userEmail ? (
@@ -1094,7 +1096,7 @@ export default function PreOrderPage() {
           </div>
 
           <div className="pt-2">
-            <button type="submit" disabled={submitting || preOrderProducts.length === 0 || isBlocked}
+            <button type="submit" disabled={submitting || preOrderProducts.length === 0 || isBlocked || isFlaker}
               className="w-full sm:w-auto px-12 py-4 bg-primary text-white font-mono text-[12px] tracking-[0.15em] uppercase hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3">
               <span className="material-symbols-outlined text-[18px]">{submitting ? "hourglass_empty" : "send"}</span>
               {submitting ? "Submitting…" : "Submit Pre-Order"}

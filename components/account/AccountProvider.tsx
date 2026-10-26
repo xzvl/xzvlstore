@@ -17,6 +17,7 @@ export type Profile = {
   shipping_address_1: string; shipping_address_2: string; shipping_city: string;
   shipping_postcode: string; shipping_region: string; shipping_state: string; shipping_phone: string;
   is_blocked: boolean; block_reason: string;
+  is_flaker: boolean; flaker_reason: string;
 };
 
 const EMPTY_PROFILE: Profile = {
@@ -26,6 +27,7 @@ const EMPTY_PROFILE: Profile = {
   shipping_address_1: "", shipping_address_2: "", shipping_city: "",
   shipping_postcode: "", shipping_region: "Philippines", shipping_state: "", shipping_phone: "",
   is_blocked: false, block_reason: "",
+  is_flaker: false, flaker_reason: "",
 };
 
 export const validateFacebook = (v: string) => {
@@ -309,6 +311,34 @@ export default function AccountProvider({ children }: { children: React.ReactNod
                       <div
                         className="text-[13px] text-fg leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-fg [&_p]:mb-2"
                         dangerouslySetInnerHTML={{ __html: profile.block_reason }}
+                      />
+                    ) : (
+                      <p className="text-[13px] text-accent/60 italic">
+                        No reason was provided. Please contact support for more information.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Flaker notice */}
+              {profile.is_flaker && !profile.is_blocked && (
+                <div className="border border-amber-500/40 bg-amber-500/5 rounded-lg overflow-hidden">
+                  <div className="flex items-center gap-3 px-5 py-4 border-b border-amber-500/20 bg-amber-500/10">
+                    <span className="material-symbols-outlined text-amber-400 text-[24px] flex-shrink-0">warning</span>
+                    <div>
+                      <p className="font-semibold text-[15px] text-amber-400">Pre-orders unavailable</p>
+                      <p className="text-[12px] text-accent/70 mt-0.5 leading-relaxed">
+                        Your account can&apos;t place pre-orders. You can still order available items through checkout.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="px-5 py-4">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-amber-400/80 mb-2">Reason</p>
+                    {profile.flaker_reason ? (
+                      <div
+                        className="text-[13px] text-fg leading-relaxed prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_strong]:text-fg [&_p]:mb-2"
+                        dangerouslySetInnerHTML={{ __html: profile.flaker_reason }}
                       />
                     ) : (
                       <p className="text-[13px] text-accent/60 italic">

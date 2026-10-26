@@ -36,6 +36,8 @@ type FormState = {
   shipping_phone: string;
   is_blocked: boolean;
   block_reason: string;
+  is_flaker: boolean;
+  flaker_reason: string;
 };
 
 const EMPTY: FormState = {
@@ -46,6 +48,7 @@ const EMPTY: FormState = {
   shipping_address_1: "", shipping_address_2: "", shipping_city: "", shipping_state: "",
   shipping_postcode: "", shipping_region: "Philippines", shipping_phone: "",
   is_blocked: false, block_reason: "",
+  is_flaker: false, flaker_reason: "",
 };
 
 function AddressBlock({
@@ -143,6 +146,8 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
           shipping_phone: data.shipping_phone ?? "",
           is_blocked: data.is_blocked ?? false,
           block_reason: data.block_reason ?? "",
+          is_flaker: data.is_flaker ?? false,
+          flaker_reason: data.flaker_reason ?? "",
         });
         setLoading(false);
       });
@@ -301,6 +306,38 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
               Reason Block
             </label>
             <RichTextEditor value={form.block_reason} onChange={(html) => set$("block_reason", html)} />
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setForm(f => ({ ...f, is_flaker: !f.is_flaker }))}
+          className={`w-full flex items-center justify-between px-4 py-3 border transition-colors ${
+            form.is_flaker
+              ? "border-amber-500/50 bg-amber-500/10"
+              : "border-line/50 bg-deep hover:border-accent/30"
+          }`}
+        >
+          <div>
+            <p className="tabular-nums text-[11px] text-left text-fg font-medium">Flaker Account</p>
+            <p className="tabular-nums text-[10px] text-accent/60 text-left mt-0.5">
+              Flakers can still order on checkout but cannot place pre-orders
+            </p>
+          </div>
+          <div className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${form.is_flaker ? "bg-amber-500" : "bg-line/40"}`}>
+            <span
+              className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-white transition-transform"
+              style={{ transform: `translateX(${form.is_flaker ? "0.125rem" : "-1.125rem"})` }}
+            />
+          </div>
+        </button>
+
+        {form.is_flaker && (
+          <div>
+            <label className="block tabular-nums text-[10px] uppercase text-amber-400/70 mb-1.5 tracking-wider font-medium">
+              Reason Become Flaker
+            </label>
+            <RichTextEditor value={form.flaker_reason} onChange={(html) => set$("flaker_reason", html)} />
           </div>
         )}
       </div>

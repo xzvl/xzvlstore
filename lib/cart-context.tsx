@@ -83,6 +83,8 @@ type CartContextType = {
   // any auth state change (sign in/out) so it stays accurate without reload.
   isBlocked: boolean;
   blockReason: string | null;
+  // Flakers can still check out but can't place orders on /pre-order.
+  isFlaker: boolean;
 };
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -119,6 +121,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [notice, setNotice] = useState<string[] | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockReason, setBlockReason] = useState<string | null>(null);
+  const [isFlaker, setIsFlaker] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,7 +129,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     async function checkBlockedStatus() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) {
-        if (!cancelled) { setIsBlocked(false); setBlockReason(null); }
+        if (!cancelled) { setIsBlocked(false); setBlockReason(null); setIsFlaker(false); }
         return;
       }
       try {
@@ -137,6 +140,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const data = await res.json();
         setIsBlocked(!!data.is_blocked);
         setBlockReason(data.block_reason || null);
+        setIsFlaker(!!data.is_flaker);
       } catch {}
     }
 
@@ -359,7 +363,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQty, clearCart, total, count, revalidateCart, notice, dismissNotice, isBlocked, blockReason }}
+      value={{ items, addItem, removeItem, updateQty, clearCart, total, count, revalidateCart, notice, dismissNotice, isBlocked, blockReason, isFlaker }}
     >
       {children}
       {notice && notice.length > 0 && <CartNotice messages={notice} onDismiss={dismissNotice} />}

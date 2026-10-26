@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const { data, error } = await supabase
     .from("customers")
-    .select("id, first_name, last_name, email, auth_provider, facebook_url, instagram_url, tiktok_url, twitter_url, billing_phone, billing_city, billing_state, billing_address_1, billing_address_2, billing_postcode, billing_region, shipping_address_1, shipping_address_2, shipping_city, shipping_state, shipping_postcode, shipping_region, shipping_phone, is_blocked, block_reason, created_at")
+    .select("id, first_name, last_name, email, auth_provider, facebook_url, instagram_url, tiktok_url, twitter_url, billing_phone, billing_city, billing_state, billing_address_1, billing_address_2, billing_postcode, billing_region, shipping_address_1, shipping_address_2, shipping_city, shipping_state, shipping_postcode, shipping_region, shipping_phone, is_blocked, block_reason, is_flaker, created_at")
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     shipping_city = "", shipping_state = "", shipping_postcode = "",
     shipping_region = "Philippines", shipping_phone = "",
     is_blocked = false, block_reason = "",
+    is_flaker = false, flaker_reason = "",
   } = body;
 
   if (!email) return NextResponse.json({ error: "Email is required." }, { status: 400 });
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
       shipping_address_1, shipping_address_2, shipping_city, shipping_state,
       shipping_postcode, shipping_region, shipping_phone,
       is_blocked: Boolean(is_blocked), block_reason: block_reason || null,
+      is_flaker: Boolean(is_flaker), flaker_reason: flaker_reason || null,
     })
     .eq("id", authData.user.id)
     .select()

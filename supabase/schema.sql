@@ -355,3 +355,8 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE bundles ADD COLUMN IF NOT EXISTS max_purchase_enabled boolean NOT NULL DEFAULT false;
 -- ALTER TABLE bundles ADD COLUMN IF NOT EXISTS max_purchase_limit integer;
 -- ALTER TABLE orders ADD COLUMN IF NOT EXISTS bundles jsonb NOT NULL DEFAULT '[]';
+
+-- ─── Flaker accounts (run this against the live DB) ───────────────────────────
+-- A flaker can still buy through /checkout but can't place orders on /pre-order.
+-- ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_flaker boolean NOT NULL DEFAULT false;
+-- ALTER TABLE customers ADD COLUMN IF NOT EXISTS flaker_reason text;
