@@ -534,16 +534,18 @@ export default function CheckoutPage() {
   );
 
   const saveToProfileCheckbox = canSaveAddress && (
-    <label className="flex items-center gap-2 font-mono text-[11px] tracking-wide text-accent/60 hover:text-fg cursor-pointer w-fit">
-      <input
-        type="checkbox"
-        checked={saveToProfile}
-        onChange={(e) => setSaveToProfile(e.target.checked)}
-        style={{ accentColor: "rgb(var(--c-primary))" }}
-        className="w-3.5 h-3.5"
-      />
+    <button
+      type="button"
+      role="switch"
+      aria-checked={saveToProfile}
+      onClick={() => setSaveToProfile((v) => !v)}
+      className="flex items-center gap-2 font-mono text-[11px] tracking-wide text-accent/60 hover:text-primary transition-colors"
+    >
+      <div className={`w-8 h-4 rounded-full border transition-colors relative ${saveToProfile ? "bg-primary/20 border-primary" : "bg-panel border-line"}`}>
+        <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${saveToProfile ? "left-4 bg-primary" : "left-0.5 bg-line"}`} />
+      </div>
       Save this address and contact info to my profile
-    </label>
+    </button>
   );
 
   return (
