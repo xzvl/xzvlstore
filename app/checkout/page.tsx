@@ -202,6 +202,9 @@ export default function CheckoutPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [autoFilled, setAutoFilled] = useState(false);
+  // Logged-in customers with no saved billing/shipping address can save this one.
+  const [canSaveAddress, setCanSaveAddress] = useState(false);
+  const [saveToProfile, setSaveToProfile] = useState(true);
 
   useEffect(() => {
     revalidateCart();
@@ -241,6 +244,7 @@ export default function CheckoutPage() {
       });
       if (!res.ok) {
         setForm((f) => ({ ...f, email: user.email ?? "" }));
+        setCanSaveAddress(true);
         return;
       }
       const profile = await res.json();
@@ -261,6 +265,7 @@ export default function CheckoutPage() {
           postcode: profile.billing_postcode || f.billing.postcode,
         },
       }));
+      setCanSaveAddress(!profile.billing_address_1 && !profile.shipping_address_1);
       setAutoFilled(true);
     });
   }, []);
@@ -315,6 +320,27 @@ export default function CheckoutPage() {
   });
   const shippingFee = isJnt ? shippingQuote.quote?.fee ?? null : 0;
   const grandTotal = total + (shippingFee ?? 0);
+
+  // Best effort — the order is already placed, so a failed save is ignored.
+  async function saveAddressToProfile(billing: AddressForm, shipping: AddressForm) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return;
+    const phone = form.phone.trim();
+    const fields = (k: "billing" | "shipping", a: AddressForm) => ({
+      [`${k}_address_1`]: a.address_1.trim(),
+      [`${k}_address_2`]: a.address_2.trim(),
+      [`${k}_city`]: a.city.trim(),
+      [`${k}_state`]: a.state.trim(),
+      [`${k}_postcode`]: a.postcode.trim(),
+      [`${k}_region`]: REGION,
+      [`${k}_phone`]: phone,
+    });
+    await fetch("/api/account/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ facebook_url: form.facebook.trim(), ...fields("billing", billing), ...fields("shipping", shipping) }),
+    }).catch(() => {});
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -402,6 +428,9 @@ export default function CheckoutPage() {
       }
 
       const data = await res.json();
+      if (canSaveAddress && saveToProfile) {
+        await saveAddressToProfile(form.billing, isJnt && form.ship_to_different ? form.shipping : form.billing);
+      }
       setOrderNumber(data.order_number ?? null);
       setPaymentVerified(!!data.verified);
       clearCart();
@@ -502,6 +531,19 @@ export default function CheckoutPage() {
       onChange={(p) => { setProof(p); if (p) setProofError(""); }}
       error={proofError}
     />
+  );
+
+  const saveToProfileCheckbox = canSaveAddress && (
+    <label className="flex items-center gap-2 font-mono text-[11px] tracking-wide text-accent/60 hover:text-fg cursor-pointer w-fit">
+      <input
+        type="checkbox"
+        checked={saveToProfile}
+        onChange={(e) => setSaveToProfile(e.target.checked)}
+        style={{ accentColor: "rgb(var(--c-primary))" }}
+        className="w-3.5 h-3.5"
+      />
+      Save this address and contact info to my profile
+    </label>
   );
 
   return (
@@ -736,6 +778,8 @@ export default function CheckoutPage() {
                         Ship to a different address
                       </button>
 
+                      {saveToProfileCheckbox}
+
                       {form.ship_to_different ? (
                         <AddressFields
                           prefix="shipping"
@@ -763,6 +807,7 @@ export default function CheckoutPage() {
                       </p>
                     </div>
                   )}
+                  {!isJnt && saveToProfileCheckbox}
                 </div>
 
                 {/* Payment method */}

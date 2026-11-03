@@ -102,7 +102,10 @@ export function useShippingQuote({
 
 // ─── Combobox ─────────────────────────────────────────────────────────────────
 
-const norm = (s: string) => s.trim().toLowerCase().replace(/[\s-]+/g, " ");
+// Pasted text often carries accents (Parañaque), punctuation or odd spacing;
+// J&T names are plain upper-case and hyphenated.
+const norm = (s: string) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
 /** Finds the area a typed/saved name refers to (display name or J&T name). */
 export const matchArea = (areas: Area[], text: string) => {
@@ -134,6 +137,9 @@ export function AreaCombobox({
 }) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  // True once the user types/pastes after opening — from then on the text
+  // always filters, even when it exactly matches (and so selects) an area.
+  const [typed, setTyped] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -156,14 +162,21 @@ export function AreaCombobox({
 
   const filtered = useMemo(() => {
     const selected = areas.find((a) => a.id === selectedId);
-    // Showing the chosen name shouldn't hide the rest of the list.
-    const t = selected && selected.name === value ? "" : norm(value);
-    return t ? areas.filter((a) => norm(a.name).includes(t) || norm(a.nativeName).includes(t)) : areas;
-  }, [areas, value, selectedId]);
+    // Opening on an already-chosen name shouldn't hide the rest of the list.
+    const t = !typed && selected && selected.name === value ? "" : norm(value);
+    if (!t) return areas;
+    // Every typed word must appear, in any order ("manila metro" still finds Metro Manila).
+    const words = t.split(" ");
+    return areas.filter((a) => {
+      const hay = `${norm(a.name)} ${norm(a.nativeName)}`;
+      return words.every((w) => hay.includes(w));
+    });
+  }, [areas, value, selectedId, typed]);
 
   const pick = (a: Area) => {
     onChange(a.name, a);
     setOpen(false);
+    setTyped(false);
   };
 
   useEffect(() => {
@@ -178,12 +191,13 @@ export function AreaCombobox({
         disabled={disabled}
         autoComplete="off"
         placeholder={disabled ? "Select a province first" : placeholder}
-        onFocus={() => { setOpen(true); setHighlight(0); }}
+        onFocus={() => { setOpen(true); setHighlight(0); setTyped(false); }}
         onChange={(e) => {
           const text = e.target.value;
           onChange(text, matchArea(areas, text) ?? null);
           setOpen(true);
           setHighlight(0);
+          setTyped(true);
         }}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setHighlight((h) => Math.min(h + 1, filtered.length - 1)); }

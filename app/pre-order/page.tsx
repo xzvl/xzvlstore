@@ -472,6 +472,9 @@ export default function PreOrderPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [autoFilled, setAutoFilled] = useState(false);
   const [profileAddresses, setProfileAddresses] = useState<ProfileAddresses | null>(null);
+  // Logged-in customers with no saved billing/shipping address can save this one.
+  const [canSaveAddress, setCanSaveAddress] = useState(false);
+  const [saveToProfile, setSaveToProfile] = useState(true);
   const [purchasedMap, setPurchasedMap] = useState<Record<string, number>>({});
 
   const [contact, setContact] = useState<ContactForm>({
@@ -529,6 +532,7 @@ export default function PreOrderPage() {
       if (!res.ok) {
         // profile not yet created — at least fill email
         setContact(prev => ({ ...prev, email: user.email ?? "" }));
+        setCanSaveAddress(true);
         return;
       }
       const profile = await res.json();
@@ -560,6 +564,7 @@ export default function PreOrderPage() {
         shipping_postcode: profile.shipping_postcode || "",
         shipping_region: profile.shipping_region || "Philippines",
       });
+      setCanSaveAddress(!profile.billing_address_1 && !profile.shipping_address_1);
       setAutoFilled(true);
     });
   }, []);
@@ -621,6 +626,25 @@ export default function PreOrderPage() {
   const updateQty = (id: string, qty: number) => setRows((prev) => prev.map((r) => r.id === id ? { ...r, qty } : r));
   const removeRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
 
+  // Best effort — the order is already placed, so a failed save is ignored.
+  const saveAddressToProfile = async (address: { address_1: string; address_2: string; city: string; state: string; postcode: string; region: string }) => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return;
+    const phone = contact.phone.trim();
+    await fetch("/api/account/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({
+        facebook_url: contact.facebook.trim(),
+        ...Object.fromEntries((["billing", "shipping"] as const).flatMap((k) => [
+          [`${k}_address_1`, address.address_1], [`${k}_address_2`, address.address_2],
+          [`${k}_city`, address.city], [`${k}_state`, address.state],
+          [`${k}_postcode`, address.postcode], [`${k}_region`, address.region], [`${k}_phone`, phone],
+        ])),
+      }),
+    }).catch(() => {});
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isBlocked || isFlaker) return;
@@ -679,6 +703,7 @@ export default function PreOrderPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Failed to submit order.");
+      if (canSaveAddress && saveToProfile) await saveAddressToProfile(address);
       setSubmittedProducts(filledRows.map((r) => preOrderProducts.find((p) => p.id === r.productId)!));
       setSubmittedDownPayment(downPaymentDue);
       setSubmittedVerified(!!data.verified);
@@ -937,6 +962,13 @@ export default function PreOrderPage() {
                   labelClass={labelClass}
                 />
               </div>
+              {canSaveAddress && (
+                <label className="flex items-center gap-2 font-mono text-[12px] text-fg/60 hover:text-fg cursor-pointer w-fit">
+                  <input type="checkbox" checked={saveToProfile} onChange={(e) => setSaveToProfile(e.target.checked)}
+                    style={{ accentColor: "rgb(var(--c-primary))" }} className="w-3.5 h-3.5" />
+                  Save this address and contact info to my profile
+                </label>
+              )}
             </div>
           </section>
 
