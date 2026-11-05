@@ -7,6 +7,7 @@ import type { DbProduct, OrderProofImage, OrderStatus } from "@/lib/supabase";
 import OrderProofs from "./_proofs";
 import { ProvinceCityNameFields, matchArea, useAreas, useShippingQuote } from "@/components/AreaFields";
 import { POUCH_LABEL } from "@/lib/shipping";
+import { withHttps } from "@/lib/url";
 import { verifyPayment, verificationNote, type PaymentExtraction } from "@/lib/payment-proof";
 
 // /admin/orders keeps its filters here so the form can send you back to them.
@@ -627,7 +628,7 @@ export default function OrderForm({ orderId }: { orderId?: string }) {
       const payload = {
         customer_id: form.customer_id || null,
         name: form.name, email: form.email, phone: form.phone, location: form.location,
-        facebook: form.facebook || null,
+        facebook: withHttps(form.facebook),
         status: form.status,
         created_at: form.order_date ? fromPHLocal(form.order_date) : undefined,
         payment_date: !paymentLinked && form.payment_date ? fromPHLocal(form.payment_date) : null,

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
 import { bundleCartId, bundleCartPrices, bundleImage, bundlePurchaseLimit, percentOff, type ResolvedBundle } from "@/lib/bundle-types";
 import { sizedImageUrl } from "@/lib/image-sizes";
@@ -49,7 +50,7 @@ export default function BundleCard({ bundle }: { bundle: ResolvedBundle }) {
   return (
     <div className="group flex flex-col bg-panel border border-line/25 hover:border-primary/40 transition-all duration-200">
       {/* Image */}
-      <div className="relative aspect-square bg-canvas overflow-hidden">
+      <Link href={`/bundle/${bundle.id}`} className="relative block aspect-square bg-canvas overflow-hidden">
         {image ? (
           <Image
             src={sizedImageUrl(image, "medium") ?? image}
@@ -72,11 +73,13 @@ export default function BundleCard({ bundle }: { bundle: ResolvedBundle }) {
             −{off}%
           </span>
         )}
-      </div>
+      </Link>
 
       {/* Info */}
       <div className="flex flex-col gap-2 p-3 flex-1">
-        <h3 className="font-inter font-bold text-[13px] leading-snug text-fg line-clamp-2">{bundle.name}</h3>
+        <Link href={`/bundle/${bundle.id}`}>
+          <h3 className="font-inter font-bold text-[13px] leading-snug text-fg line-clamp-2 hover:text-primary transition-colors">{bundle.name}</h3>
+        </Link>
 
         <ul className="space-y-0.5">
           {bundle.components.map((c) => (

@@ -9,6 +9,7 @@ import { ExportOrdersModal } from "./_export";
 import { OrderQuickEditModal } from "./_quick-edit";
 import { ORDERS_FILTER_KEY } from "./_form";
 import { sizedImageUrl } from "@/lib/image-sizes";
+import { withHttps } from "@/lib/url";
 
 const STATUS_TABS: { value: string; label: string; icon: string }[] = [
   { value: "default", label: "Default", icon: "inbox" },
@@ -483,7 +484,7 @@ function CustomerNameLink({ order, facebookUrl }: { order: Order; facebookUrl?: 
   if (facebookUrl) {
     return (
       <a
-        href={facebookUrl}
+        href={withHttps(facebookUrl)}
         target="_blank"
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}

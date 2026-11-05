@@ -25,6 +25,8 @@ export type BundleComponent = {
   slug: string;
   sku: string | null;
   image: string | null;
+  /** The product's extra gallery images (main image excluded). */
+  gallery_images: string[];
   qty: number;
   /** The product's normal selling price (sale price if set, else regular price). */
   unit_price: number;

@@ -14,7 +14,7 @@ export async function resolveBundles(rows: DbBundle[]): Promise<ResolvedBundle[]
   const { data: products } = ids.length
     ? await supabase
         .from("products")
-        .select("id, name, slug, sku, price, sale_price, stock, main_image, image, status, sneak_peek, pre_order")
+        .select("id, name, slug, sku, price, sale_price, stock, main_image, image, gallery_images, status, sneak_peek, pre_order")
         .in("id", ids)
     : { data: [] };
   const byId = new Map((products ?? []).map((p) => [p.id as string, p]));
@@ -24,7 +24,7 @@ export async function resolveBundles(rows: DbBundle[]): Promise<ResolvedBundle[]
       const p = byId.get(it.product_id);
       if (!p) {
         return {
-          product_id: it.product_id, name: "Deleted product", slug: "", sku: null, image: null,
+          product_id: it.product_id, name: "Deleted product", slug: "", sku: null, image: null, gallery_images: [],
           qty: it.qty, unit_price: 0, stock: 0, pre_order: false, sneak_peek: false, available: false,
         };
       }
@@ -34,6 +34,7 @@ export async function resolveBundles(rows: DbBundle[]): Promise<ResolvedBundle[]
         slug: (p.slug as string | null) || toSlug(p.name as string),
         sku: (p.sku as string | null) ?? null,
         image: (p.main_image as string | null) ?? ((p.image as string | null) || null),
+        gallery_images: ((p.gallery_images as string[] | null) ?? []).filter(Boolean),
         qty: it.qty,
         unit_price: Number(p.sale_price ?? p.price) || 0,
         stock: Number(p.stock) || 0,
@@ -100,4 +101,12 @@ export async function getBundlesByIds(ids: string[]): Promise<ResolvedBundle[]> 
   if (ids.length === 0) return [];
   const { data } = await supabase.from("bundles").select("*").in("id", ids);
   return resolveBundles((data ?? []) as DbBundle[]);
+}
+
+/** One bundle by id (any status), resolved with its products. */
+export async function getBundleById(id: string): Promise<ResolvedBundle | null> {
+  const { data } = await supabase.from("bundles").select("*").eq("id", id).maybeSingle();
+  if (!data) return null;
+  const [resolved] = await resolveBundles([data as DbBundle]);
+  return resolved ?? null;
 }

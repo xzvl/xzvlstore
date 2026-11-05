@@ -104,7 +104,7 @@ function CartItem({
   const [error, setError] = useState<string | null>(null);
   const unitPrice = item.sale_price ?? item.price;
   const subtotal = unitPrice * item.qty;
-  const href = item.bundle ? "/bundles" : `/product/${item.slug}`;
+  const href = item.bundle ? `/bundle/${item.bundle.id}` : `/product/${item.slug}`;
 
   const purchaseLimitBinding =
     item.max_purchase_limit != null &&

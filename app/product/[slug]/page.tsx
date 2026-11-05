@@ -322,7 +322,7 @@ export default async function ProductPage({
                         {productBundles.map((b) => (
                           <Link
                             key={b.id}
-                            href="/bundles"
+                            href={`/bundle/${b.id}`}
                             className="font-mono text-[12px] text-primary hover:underline"
                           >
                             {b.name} — ₱{b.price.toLocaleString()}
