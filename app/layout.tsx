@@ -6,6 +6,7 @@ import { getSiteContent, isMaintenanceForced } from "@/lib/get-site-content";
 import { SiteContentProvider } from "@/components/SiteContentProvider";
 import MaintenanceGate from "@/components/MaintenanceGate";
 import HoldPreOrderReminder from "@/components/HoldPreOrderReminder";
+import MessengerChat from "@/components/MessengerChat";
 import { THEME_INIT_SCRIPT, themeCss } from "@/lib/theme";
 
 const inter = Inter({
@@ -69,6 +70,7 @@ export default async function RootLayout({
             <MaintenanceGate forced={isMaintenanceForced()}>
               {children}
               <HoldPreOrderReminder />
+              <MessengerChat />
             </MaintenanceGate>
           </SiteContentProvider>
         </CartProvider>

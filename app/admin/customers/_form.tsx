@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ProvinceCityNameFields } from "@/components/AreaFields";
+import type { Order } from "@/lib/supabase";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
@@ -392,7 +393,99 @@ export default function CustomerForm({ customerId }: { customerId?: string }) {
         </div>
       </div>
 
+      {customerId && <CustomerOrders customerId={customerId} />}
+
       {error && <p className="tabular-nums text-[11px] text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: "text-yellow-400 border-yellow-400/30 bg-yellow-400/10",
+  "pre-order": "text-purple-400 border-purple-400/30 bg-purple-400/10",
+  "hold pre-order": "text-fuchsia-400 border-fuchsia-400/30 bg-fuchsia-400/10",
+  processing: "text-orange-400 border-orange-400/30 bg-orange-400/10",
+  confirmed: "text-blue-400 border-blue-400/30 bg-blue-400/10",
+  shipped: "text-cyan-400 border-cyan-400/30 bg-cyan-400/10",
+  completed: "text-emerald-400 border-emerald-400/30 bg-emerald-400/10",
+  cancelled: "text-accent/60 border-accent/20 bg-accent/5",
+  refunded: "text-accent/60 border-accent/20 bg-accent/5",
+};
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Manila" });
+
+// The customer's orders, newest payment date first (sorted by the API).
+function CustomerOrders({ customerId }: { customerId: string }) {
+  const [orders, setOrders] = useState<Order[] | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch(`/api/admin/customers/${customerId}/orders`)
+      .then(async r => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error ?? "Failed to load orders.");
+        setOrders(data);
+      })
+      .catch(err => setError(err instanceof Error ? err.message : "Failed to load orders."));
+  }, [customerId]);
+
+  const total = (orders ?? [])
+    .filter(o => o.status !== "cancelled" && o.status !== "refunded")
+    .reduce((sum, o) => sum + (o.estimated_total ?? 0), 0);
+
+  return (
+    <div className="bg-panel border border-line/30 p-5 space-y-3 rounded-lg">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="tabular-nums text-[13px] font-semibold text-fg">
+          Orders{orders && <span className="text-accent/50 font-normal ml-1.5">({orders.length})</span>}
+        </p>
+        {orders && orders.length > 0 && (
+          <p className="tabular-nums text-[11px] text-accent/60">
+            Total spent <span className="text-primary font-bold">₱{total.toLocaleString()}</span>
+          </p>
+        )}
+      </div>
+
+      {error ? (
+        <p className="tabular-nums text-[11px] text-red-400">{error}</p>
+      ) : !orders ? (
+        <div className="flex items-center gap-2 tabular-nums text-[12px] text-accent/60 py-4">
+          <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+          Loading…
+        </div>
+      ) : orders.length === 0 ? (
+        <p className="tabular-nums text-[12px] text-accent/50 py-4 text-center">No orders yet.</p>
+      ) : (
+        <div className="divide-y divide-line/15 border border-line/20 rounded-md">
+          {orders.map(o => (
+            <Link
+              key={o.id}
+              href={`/admin/orders/${o.id}`}
+              className="flex items-start justify-between gap-4 px-4 py-3 hover:bg-deep transition-colors"
+            >
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-[13px] text-fg font-semibold">
+                  {o.order_number != null ? `#${o.order_number}` : "Order"}
+                  <span className={`ml-2 align-middle tabular-nums text-[9px] uppercase px-1.5 py-px border tracking-wider font-medium rounded ${STATUS_COLORS[o.status] ?? "text-accent/60"}`}>
+                    {o.status}
+                  </span>
+                </p>
+                <p className="tabular-nums text-[11px] text-accent/60 truncate">
+                  {(o.items ?? []).map(it => `${it.product} ×${it.qty}`).join(", ") || "—"}
+                </p>
+                <p className="tabular-nums text-[10px] text-accent/50">
+                  Paid {fmtDate(o.payment_date ?? o.created_at)}
+                  {o.payment_method && ` · ${o.payment_method}`}
+                </p>
+              </div>
+              <span className="tabular-nums text-[13px] text-primary font-bold flex-shrink-0">
+                ₱{(o.estimated_total ?? 0).toLocaleString()}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

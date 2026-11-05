@@ -20,6 +20,7 @@ type Customer = {
   block_reason: string | null;
   is_flaker: boolean;
   created_at: string;
+  order_count: number;
 };
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -57,6 +58,15 @@ function SocialIcons({ c }: { c: Customer }) {
           <span className="material-symbols-outlined !text-[14px]">{s.icon}</span>
         </a>
       ))}
+    </span>
+  );
+}
+
+function OrderCount({ n }: { n: number }) {
+  return (
+    <span className={`inline-flex items-center gap-1 ${n > 0 ? "text-fg font-medium" : "text-accent/40"}`} title={`${n} ${n === 1 ? "order" : "orders"}`}>
+      <span className="material-symbols-outlined !text-[14px]">receipt_long</span>
+      {n}
     </span>
   );
 }
@@ -208,11 +218,14 @@ export default function CustomersPage() {
                       )}
                     </p>
 
-                    {/* Row 3: location | pencil | trash */}
+                    {/* Row 3: location | orders | pencil | trash */}
                     <div className="flex items-center gap-2">
                       <p className="tabular-nums text-[11px] text-accent/60 flex-1 truncate">
                         {[c.billing_city, c.billing_state].filter(Boolean).join(", ") || "—"}
                       </p>
+                      <span className="tabular-nums text-[11px] flex-shrink-0">
+                        <OrderCount n={c.order_count} />
+                      </span>
                       <Link href={`/admin/customers/${c.id}`} className="text-accent/50 hover:text-primary transition-colors flex-shrink-0" title="Edit">
                         <span className="material-symbols-outlined text-[16px]">edit</span>
                       </Link>
@@ -263,7 +276,7 @@ export default function CustomersPage() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-line/40">
-                {["", "Name", "Email", "Provider", "Location", "Phone", ""].map((h, i) => (
+                {["", "Name", "Email", "Provider", "Location", "Phone", "Orders", ""].map((h, i) => (
                   <th key={i} className="text-left tabular-nums text-[10px] uppercase text-accent/60 px-3 py-3 whitespace-nowrap tracking-wider font-medium">
                     {h}
                   </th>
@@ -326,6 +339,11 @@ export default function CustomersPage() {
                       {c.billing_phone || "—"}
                     </td>
 
+                    {/* Orders */}
+                    <td className="px-3 py-3 tabular-nums text-[12px] whitespace-nowrap">
+                      <OrderCount n={c.order_count} />
+                    </td>
+
                     {/* Actions */}
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1 justify-end">
@@ -366,7 +384,7 @@ export default function CustomersPage() {
                   {/* Delete confirmation row */}
                   {confirmId === c.id && (
                     <tr className="border-b border-line/15 bg-red-500/[0.06]">
-                      <td colSpan={7} className="px-5 py-3">
+                      <td colSpan={8} className="px-5 py-3">
                         <div className="flex items-center justify-between gap-4">
                           <p className="tabular-nums text-[11px] text-red-300">
                             Delete <span className="text-white">{[c.first_name, c.last_name].filter(Boolean).join(" ") || c.email}</span>? This also deletes their account and cannot be undone.

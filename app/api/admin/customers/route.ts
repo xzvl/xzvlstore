@@ -6,14 +6,52 @@ import { supabase } from "@/lib/supabase";
 // edge — serving a stale customer list forever. Force it dynamic.
 export const dynamic = "force-dynamic";
 
+// PostgREST caps a select at 1000 rows, so page through.
+const PAGE = 1000;
+
+// Order owners: customer_id when set, otherwise the order's email (guest /
+// admin-made orders) — same rule as /api/admin/customers/[id]/orders.
+async function orderOwners() {
+  const rows: { customer_id: string | null; email: string | null }[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("customer_id, email")
+      .order("id")
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...(data ?? []));
+    if (!data || data.length < PAGE) return rows;
+  }
+}
+
 export async function GET() {
-  const { data, error } = await supabase
-    .from("customers")
-    .select("id, first_name, last_name, email, auth_provider, facebook_url, instagram_url, tiktok_url, twitter_url, billing_phone, billing_city, billing_state, billing_address_1, billing_address_2, billing_postcode, billing_region, shipping_address_1, shipping_address_2, shipping_city, shipping_state, shipping_postcode, shipping_region, shipping_phone, is_blocked, block_reason, is_flaker, created_at")
-    .order("created_at", { ascending: false });
+  const [{ data, error }, owners] = await Promise.all([
+    supabase
+      .from("customers")
+      .select("id, first_name, last_name, email, auth_provider, facebook_url, instagram_url, tiktok_url, twitter_url, billing_phone, billing_city, billing_state, billing_address_1, billing_address_2, billing_postcode, billing_region, shipping_address_1, shipping_address_2, shipping_city, shipping_state, shipping_postcode, shipping_region, shipping_phone, is_blocked, block_reason, is_flaker, created_at")
+      .order("created_at", { ascending: false }),
+    orderOwners().catch((err: Error) => err),
+  ]);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data ?? [], { headers: { "Cache-Control": "no-store" } });
+  if (owners instanceof Error) return NextResponse.json({ error: owners.message }, { status: 500 });
+
+  const byId = new Map<string, number>();
+  const byEmail = new Map<string, number>();
+  for (const o of owners) {
+    if (o.customer_id) byId.set(o.customer_id, (byId.get(o.customer_id) ?? 0) + 1);
+    else if (o.email) {
+      const email = o.email.toLowerCase();
+      byEmail.set(email, (byEmail.get(email) ?? 0) + 1);
+    }
+  }
+
+  const customers = (data ?? []).map((c) => ({
+    ...c,
+    order_count: (byId.get(c.id) ?? 0) + (c.email ? byEmail.get(c.email.toLowerCase()) ?? 0 : 0),
+  }));
+  return NextResponse.json(customers, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: NextRequest) {
